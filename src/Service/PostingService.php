@@ -34,12 +34,7 @@ final readonly class PostingService
 
         try {
             return $this->entityManager->wrapInTransaction(function () use ($type, $idempotencyKey, $instructions, $metadata): LedgerTransaction {
-                $transaction = new LedgerTransaction($type, $idempotencyKey, $metadata);
-                foreach ($instructions as $instruction) {
-                    $transaction->addPosting($instruction->account, $instruction->amountMinor);
-                }
-                $transaction->post();
-                $this->entityManager->persist($transaction);
+                $transaction = $this->postManaged($type, $idempotencyKey, $instructions, $metadata);
                 $this->entityManager->flush();
 
                 return $transaction;
@@ -53,6 +48,27 @@ final readonly class PostingService
 
             throw $exception;
         }
+    }
+
+    /** @param non-empty-list<PostingInstruction> $instructions */
+    public function postManaged(TransactionType $type, string $idempotencyKey, array $instructions, array $metadata = []): LedgerTransaction
+    {
+        $idempotencyKey = trim($idempotencyKey);
+        $this->validate($idempotencyKey, $instructions);
+
+        $existing = $this->findExisting($idempotencyKey);
+        if ($existing instanceof LedgerTransaction) {
+            return $existing;
+        }
+
+        $transaction = new LedgerTransaction($type, $idempotencyKey, $metadata);
+        foreach ($instructions as $instruction) {
+            $transaction->addPosting($instruction->account, $instruction->amountMinor);
+        }
+        $transaction->post();
+        $this->entityManager->persist($transaction);
+
+        return $transaction;
     }
 
     /** @param non-empty-list<PostingInstruction> $instructions */
