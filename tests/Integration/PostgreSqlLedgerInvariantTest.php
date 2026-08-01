@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Integration;
 
 use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\DriverManager;
 use Doctrine\DBAL\Exception;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Uid\Uuid;
@@ -97,6 +98,37 @@ final class PostgreSqlLedgerInvariantTest extends KernelTestCase
         self::assertSame(0, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM posting WHERE transaction_id = ?', [$rolledBackId]));
     }
 
+    public function testIndependentConnectionsCannotReuseIdempotencyKey(): void
+    {
+        [, $accountA, $accountB] = $this->seedWalletAndAccounts();
+        $idempotencyKey = 'independent-'.Uuid::v7();
+        $firstId = $this->seedBalancedTransaction('credit', $accountA, $accountB, $idempotencyKey);
+        $secondConnection = DriverManager::getConnection($this->connection->getParams());
+
+        try {
+            $secondConnection->beginTransaction();
+            $now = (new \DateTimeImmutable())->format('Y-m-d H:i:s');
+            $secondConnection->insert('ledger_transaction', [
+                'id' => Uuid::v7()->toRfc4122(),
+                'type' => 'credit',
+                'status' => 'pending',
+                'idempotency_key' => $idempotencyKey,
+                'request_hash' => hash('sha256', $idempotencyKey.'-different'),
+                'metadata' => '{}',
+                'created_at' => $now,
+                'posted_at' => null,
+            ]);
+            self::fail('A second connection must not reuse an existing idempotency key.');
+        } catch (Exception) {
+            self::assertSame(1, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM ledger_transaction WHERE id = ?', [$firstId]));
+        } finally {
+            if ($secondConnection->isTransactionActive()) {
+                $secondConnection->rollBack();
+            }
+            $secondConnection->close();
+        }
+    }
+
     private function seedWalletAndAccounts(): array
     {
         $walletId = Uuid::v7()->toRfc4122();
@@ -112,11 +144,11 @@ final class PostgreSqlLedgerInvariantTest extends KernelTestCase
         return [$walletId, $accountA, $accountB];
     }
 
-    private function seedBalancedTransaction(string $type, string $accountA, string $accountB): string
+    private function seedBalancedTransaction(string $type, string $accountA, string $accountB, ?string $idempotencyKey = null): string
     {
         $id = Uuid::v7()->toRfc4122();
         $this->connection->beginTransaction();
-        $this->insertTransaction($id, $type, $type.'-'.Uuid::v7(), 'posted');
+        $this->insertTransaction($id, $type, $idempotencyKey ?? $type.'-'.Uuid::v7(), 'posted');
         $this->insertPosting($id, $accountA, 1000, 1);
         $this->insertPosting($id, $accountB, -1000, 2);
         $this->connection->commit();
