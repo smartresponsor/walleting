@@ -64,7 +64,12 @@ class LedgerTransaction
             throw new \LogicException('Postings can only be added to a pending transaction.');
         }
 
-        $posting = new Posting($this, $account, $amountMinor, $id);
+        $firstPosting = $this->postings->first();
+        if ($firstPosting instanceof Posting && $firstPosting->currency() !== $account->currency()) {
+            throw new \InvalidArgumentException('A ledger transaction cannot contain multiple currencies.');
+        }
+
+        $posting = new Posting($this, $account, $amountMinor, $this->postings->count() + 1, $id);
         $this->postings->add($posting);
 
         return $posting;
