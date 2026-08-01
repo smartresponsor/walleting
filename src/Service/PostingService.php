@@ -99,3 +99,7 @@ final readonly class PostingService
     }
 
     private function findExisting(string $idempotencyKey): ?LedgerTransaction
+    {
+        return $this->entityManager->getRepository(LedgerTransaction::class)->findOneBy(['idempotencyKey' => $idempotencyKey]);
+    }
+}

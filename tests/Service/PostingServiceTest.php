@@ -45,3 +45,9 @@ final class PostingServiceTest extends TestCase
     public function testZeroInstructionIsRejected(): void
     {
         $wallet = new Wallet('vendor', 'vendor-1');
+        $account = new Account($wallet, 'cash', 'USD', AccountCategory::Asset);
+
+        $this->expectException(\InvalidArgumentException::class);
+        new PostingInstruction($account, 0);
+    }
+}
