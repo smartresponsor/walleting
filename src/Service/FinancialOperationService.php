@@ -49,12 +49,16 @@ final readonly class FinancialOperationService
     /** @param non-empty-list<PostingInstruction> $instructions */
     public function refund(LedgerTransaction $original, string $idempotencyKey, array $instructions): LedgerTransaction
     {
+        $this->assertExactInverse($original, $instructions);
+
         return $this->linkedPosting(TransactionType::Refund, $original, $idempotencyKey, $instructions);
     }
 
     /** @param non-empty-list<PostingInstruction> $instructions */
     public function reverse(LedgerTransaction $original, string $idempotencyKey, array $instructions): LedgerTransaction
     {
+        $this->assertExactInverse($original, $instructions);
+
         return $this->linkedPosting(TransactionType::Reverse, $original, $idempotencyKey, $instructions);
     }
 
@@ -90,6 +94,7 @@ final readonly class FinancialOperationService
         if (!$original instanceof LedgerTransaction) {
             throw new \LogicException('Funding must have a successful ledger transaction before reversal.');
         }
+        $this->assertExactInverse($original, $instructions);
 
         return $this->entityManager->wrapInTransaction(function () use ($funding, $original, $idempotencyKey, $instructions): LedgerTransaction {
             $transaction = $this->postingService->postManaged(TransactionType::Reverse, $idempotencyKey, $instructions, ['operation' => 'funding_reversal', 'funding_key' => $funding->idempotencyKey(), 'original_transaction_id' => $original->id()->toRfc4122()]);
@@ -108,6 +113,7 @@ final readonly class FinancialOperationService
         if (!$original instanceof LedgerTransaction) {
             throw new \LogicException('Withdrawal must have a successful ledger transaction before reversal.');
         }
+        $this->assertExactInverse($original, $instructions);
 
         return $this->entityManager->wrapInTransaction(function () use ($withdrawal, $original, $idempotencyKey, $instructions): LedgerTransaction {
             $transaction = $this->postingService->postManaged(TransactionType::Reverse, $idempotencyKey, $instructions, ['operation' => 'withdrawal_reversal', 'withdrawal_key' => $withdrawal->idempotencyKey(), 'original_transaction_id' => $original->id()->toRfc4122()]);
@@ -121,6 +127,8 @@ final readonly class FinancialOperationService
 
     private function transitionReservation(Reservation $reservation, string $idempotencyKey, array $instructions, TransactionType $type, string $operation): LedgerTransaction
     {
+        $this->assertReservationSettlement($reservation, $instructions);
+
         return $this->entityManager->wrapInTransaction(function () use ($reservation, $idempotencyKey, $instructions, $type, $operation): LedgerTransaction {
             $transaction = $this->postingService->postManaged($type, $idempotencyKey, $instructions, ['operation' => $operation, 'reservation_key' => $reservation->idempotencyKey()]);
             $this->entityManager->persist(new FinancialOperationLink($type, $reservation->reserveTransaction(), $transaction, $reservation));
@@ -129,6 +137,54 @@ final readonly class FinancialOperationService
 
             return $transaction;
         });
+    }
+
+    /** @param non-empty-list<PostingInstruction> $instructions */
+    private function assertExactInverse(LedgerTransaction $original, array $instructions): void
+    {
+        $expected = [];
+        foreach ($original->postings() as $posting) {
+            $key = $posting->account()->id()->toRfc4122().'|'.(-$posting->amountMinor());
+            $expected[$key] = ($expected[$key] ?? 0) + 1;
+        }
+
+        $actual = [];
+        foreach ($instructions as $instruction) {
+            $key = $instruction->account->id()->toRfc4122().'|'.$instruction->amountMinor;
+            $actual[$key] = ($actual[$key] ?? 0) + 1;
+        }
+
+        ksort($expected);
+        ksort($actual);
+        if ($expected !== $actual) {
+            throw new \DomainException('Refund and reversal postings must exactly invert the original transaction.');
+        }
+    }
+
+    /** @param non-empty-list<PostingInstruction> $instructions */
+    private function assertReservationSettlement(Reservation $reservation, array $instructions): void
+    {
+        $positive = 0;
+        $negative = 0;
+        $reservedAccountDebit = 0;
+
+        foreach ($instructions as $instruction) {
+            if ($instruction->account->currency() !== $reservation->currency()) {
+                throw new \DomainException('Reservation settlement currency must match the reservation currency.');
+            }
+            if ($instruction->amountMinor > 0) {
+                $positive += $instruction->amountMinor;
+            } else {
+                $negative += -$instruction->amountMinor;
+            }
+            if ($instruction->account === $reservation->account() && $instruction->amountMinor < 0) {
+                $reservedAccountDebit += -$instruction->amountMinor;
+            }
+        }
+
+        if ($positive !== $reservation->amountMinor() || $negative !== $reservation->amountMinor() || $reservedAccountDebit !== $reservation->amountMinor()) {
+            throw new \DomainException('Reservation settlement must move exactly the reserved amount from the reserved account.');
+        }
     }
 
     private function linkedPosting(TransactionType $type, LedgerTransaction $original, string $idempotencyKey, array $instructions): LedgerTransaction

@@ -49,6 +49,47 @@ final class FinancialOperationServiceTest extends TestCase
         self::assertSame(ReservationStatus::Captured, $reservation->status());
     }
 
+    public function testReservationSettlementRejectsMismatchedAmount(): void
+    {
+        $entityManager = $this->entityManager();
+        $service = new FinancialOperationService($entityManager, new PostingService($entityManager));
+        $wallet = new Wallet('vendor', 'vendor-reservation-mismatch');
+        $available = new Account($wallet, 'available', 'USD', AccountCategory::Asset);
+        $reserved = new Account($wallet, 'reserved', 'USD', AccountCategory::Reserve);
+        $reservation = $service->reserve($wallet, $reserved, 500, 'USD', 'reserve-mismatch-1', [
+            new PostingInstruction($available, -500),
+            new PostingInstruction($reserved, 500),
+        ]);
+
+        $this->expectException(\DomainException::class);
+        $service->capture($reservation, 'capture-mismatch-1', [
+            new PostingInstruction($reserved, -400),
+            new PostingInstruction($available, 400),
+        ]);
+    }
+
+    public function testFundingReversalRejectsDifferentPostingTopology(): void
+    {
+        $entityManager = $this->entityManager();
+        $service = new FinancialOperationService($entityManager, new PostingService($entityManager));
+        $wallet = new Wallet('vendor', 'vendor-reversal-mismatch');
+        $cash = new Account($wallet, 'cash', 'USD', AccountCategory::Asset);
+        $clearing = new Account($wallet, 'clearing', 'USD', AccountCategory::Clearing);
+        $other = new Account($wallet, 'other', 'USD', AccountCategory::Liability);
+        $instrument = new PaymentInstrument($wallet, PaymentInstrumentType::Card, 'provider', 'instrument-mismatch', 'Card');
+        $funding = new Funding($wallet, $instrument, 700, 'USD', 'funding-mismatch-1');
+        $service->succeedFunding($funding, 'funding-mismatch-post-1', [
+            new PostingInstruction($cash, 700),
+            new PostingInstruction($clearing, -700),
+        ]);
+
+        $this->expectException(\DomainException::class);
+        $service->reverseFunding($funding, 'funding-mismatch-reverse-1', [
+            new PostingInstruction($cash, -700),
+            new PostingInstruction($other, 700),
+        ]);
+    }
+
     public function testFundingAndWithdrawalReversalsRecordLedgerTransactions(): void
     {
         $entityManager = $this->entityManager();
