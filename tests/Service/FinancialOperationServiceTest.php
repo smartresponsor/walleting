@@ -5,10 +5,16 @@ declare(strict_types=1);
 namespace App\Tests\Service;
 
 use App\Entity\Account;
+use App\Entity\Funding;
+use App\Entity\PaymentInstrument;
 use App\Entity\Wallet;
+use App\Entity\Withdrawal;
 use App\Enum\AccountCategory;
+use App\Enum\FundingStatus;
+use App\Enum\PaymentInstrumentType;
 use App\Enum\ReservationStatus;
 use App\Enum\TransactionType;
+use App\Enum\WithdrawalStatus;
 use App\Ledger\PostingInstruction;
 use App\Service\FinancialOperationService;
 use App\Service\PostingService;
@@ -41,6 +47,44 @@ final class FinancialOperationServiceTest extends TestCase
         ]);
         self::assertSame(TransactionType::Capture, $transaction->type());
         self::assertSame(ReservationStatus::Captured, $reservation->status());
+    }
+
+    public function testFundingAndWithdrawalReversalsRecordLedgerTransactions(): void
+    {
+        $entityManager = $this->entityManager();
+        $service = new FinancialOperationService($entityManager, new PostingService($entityManager));
+        $wallet = new Wallet('vendor', 'vendor-reversal');
+        $cash = new Account($wallet, 'cash', 'USD', AccountCategory::Asset);
+        $clearing = new Account($wallet, 'clearing', 'USD', AccountCategory::Clearing);
+        $instrument = new PaymentInstrument($wallet, PaymentInstrumentType::Card, 'provider', 'instrument-1', 'Card');
+
+        $funding = new Funding($wallet, $instrument, 700, 'USD', 'funding-1');
+        $fundingTransaction = $service->succeedFunding($funding, 'funding-post-1', [
+            new PostingInstruction($cash, 700),
+            new PostingInstruction($clearing, -700),
+        ]);
+        $fundingReversal = $service->reverseFunding($funding, 'funding-reverse-1', [
+            new PostingInstruction($cash, -700),
+            new PostingInstruction($clearing, 700),
+        ]);
+
+        self::assertSame(FundingStatus::Reversed, $funding->status());
+        self::assertSame($fundingTransaction, $funding->transaction());
+        self::assertSame($fundingReversal, $funding->reversalTransaction());
+
+        $withdrawal = new Withdrawal($wallet, $instrument, 400, 'USD', 'withdrawal-1');
+        $withdrawalTransaction = $service->succeedWithdrawal($withdrawal, 'withdrawal-post-1', [
+            new PostingInstruction($cash, -400),
+            new PostingInstruction($clearing, 400),
+        ]);
+        $withdrawalReversal = $service->reverseWithdrawal($withdrawal, 'withdrawal-reverse-1', [
+            new PostingInstruction($cash, 400),
+            new PostingInstruction($clearing, -400),
+        ]);
+
+        self::assertSame(WithdrawalStatus::Reversed, $withdrawal->status());
+        self::assertSame($withdrawalTransaction, $withdrawal->transaction());
+        self::assertSame($withdrawalReversal, $withdrawal->reversalTransaction());
     }
 
     public function testTransactionFailurePropagatesWithoutReturningPartialResult(): void

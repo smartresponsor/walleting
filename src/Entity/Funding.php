@@ -29,6 +29,10 @@ class Funding
     #[ORM\JoinColumn(name: 'transaction_id', nullable: true, onDelete: 'RESTRICT')]
     private ?LedgerTransaction $transaction = null;
 
+    #[ORM\OneToOne(targetEntity: LedgerTransaction::class)]
+    #[ORM\JoinColumn(name: 'reversal_transaction_id', nullable: true, unique: true, onDelete: 'RESTRICT')]
+    private ?LedgerTransaction $reversalTransaction = null;
+
     #[ORM\Column(name: 'amount_minor', type: 'bigint')]
     private int $amountMinor;
 
@@ -78,14 +82,16 @@ class Funding
         $this->status = FundingStatus::Failed;
     }
 
-    public function reverse(): void
+    public function reverse(LedgerTransaction $transaction): void
     {
         if (FundingStatus::Succeeded !== $this->status) { throw new \LogicException('Only succeeded funding can be reversed.'); }
+        $this->reversalTransaction = $transaction;
         $this->status = FundingStatus::Reversed;
     }
 
     public function status(): FundingStatus { return $this->status; }
     public function transaction(): ?LedgerTransaction { return $this->transaction; }
+    public function reversalTransaction(): ?LedgerTransaction { return $this->reversalTransaction; }
     public function amountMinor(): int { return $this->amountMinor; }
     public function currency(): string { return $this->currency; }
     public function idempotencyKey(): string { return $this->idempotencyKey; }

@@ -83,6 +83,42 @@ final readonly class FinancialOperationService
         });
     }
 
+    /** @param non-empty-list<PostingInstruction> $instructions */
+    public function reverseFunding(Funding $funding, string $idempotencyKey, array $instructions): LedgerTransaction
+    {
+        $original = $funding->transaction();
+        if (!$original instanceof LedgerTransaction) {
+            throw new \LogicException('Funding must have a successful ledger transaction before reversal.');
+        }
+
+        return $this->entityManager->wrapInTransaction(function () use ($funding, $original, $idempotencyKey, $instructions): LedgerTransaction {
+            $transaction = $this->postingService->postManaged(TransactionType::Reverse, $idempotencyKey, $instructions, ['operation' => 'funding_reversal', 'funding_key' => $funding->idempotencyKey(), 'original_transaction_id' => $original->id()->toRfc4122()]);
+            $this->entityManager->persist(new FinancialOperationLink(TransactionType::Reverse, $original, $transaction));
+            $funding->reverse($transaction);
+            $this->entityManager->flush();
+
+            return $transaction;
+        });
+    }
+
+    /** @param non-empty-list<PostingInstruction> $instructions */
+    public function reverseWithdrawal(Withdrawal $withdrawal, string $idempotencyKey, array $instructions): LedgerTransaction
+    {
+        $original = $withdrawal->transaction();
+        if (!$original instanceof LedgerTransaction) {
+            throw new \LogicException('Withdrawal must have a successful ledger transaction before reversal.');
+        }
+
+        return $this->entityManager->wrapInTransaction(function () use ($withdrawal, $original, $idempotencyKey, $instructions): LedgerTransaction {
+            $transaction = $this->postingService->postManaged(TransactionType::Reverse, $idempotencyKey, $instructions, ['operation' => 'withdrawal_reversal', 'withdrawal_key' => $withdrawal->idempotencyKey(), 'original_transaction_id' => $original->id()->toRfc4122()]);
+            $this->entityManager->persist(new FinancialOperationLink(TransactionType::Reverse, $original, $transaction));
+            $withdrawal->reverse($transaction);
+            $this->entityManager->flush();
+
+            return $transaction;
+        });
+    }
+
     private function transitionReservation(Reservation $reservation, string $idempotencyKey, array $instructions, TransactionType $type, string $operation): LedgerTransaction
     {
         return $this->entityManager->wrapInTransaction(function () use ($reservation, $idempotencyKey, $instructions, $type, $operation): LedgerTransaction {
