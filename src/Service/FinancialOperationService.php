@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Service;
 
 use App\Entity\Account;
+use App\Entity\FinancialOperationLink;
 use App\Entity\Funding;
 use App\Entity\LedgerTransaction;
 use App\Entity\Reservation;
@@ -86,6 +87,7 @@ final readonly class FinancialOperationService
     {
         return $this->entityManager->wrapInTransaction(function () use ($reservation, $idempotencyKey, $instructions, $type, $operation): LedgerTransaction {
             $transaction = $this->postingService->postManaged($type, $idempotencyKey, $instructions, ['operation' => $operation, 'reservation_key' => $reservation->idempotencyKey()]);
+            $this->entityManager->persist(new FinancialOperationLink($type, $reservation->reserveTransaction(), $transaction, $reservation));
             'capture' === $operation ? $reservation->capture() : $reservation->release();
             $this->entityManager->flush();
 
@@ -97,6 +99,7 @@ final readonly class FinancialOperationService
     {
         return $this->entityManager->wrapInTransaction(function () use ($type, $original, $idempotencyKey, $instructions): LedgerTransaction {
             $transaction = $this->postingService->postManaged($type, $idempotencyKey, $instructions, ['original_transaction_id' => $original->id()->toRfc4122()]);
+            $this->entityManager->persist(new FinancialOperationLink($type, $original, $transaction));
             $this->entityManager->flush();
 
             return $transaction;

@@ -29,6 +29,9 @@ class LedgerTransaction
     #[ORM\Column(name: 'idempotency_key', length: 128, unique: true)]
     private string $idempotencyKey;
 
+    #[ORM\Column(name: 'request_hash', length: 64)]
+    private string $requestHash;
+
     #[ORM\Column(type: 'json')]
     private array $metadata;
 
@@ -42,17 +45,19 @@ class LedgerTransaction
     #[ORM\OneToMany(mappedBy: 'transaction', targetEntity: Posting::class, cascade: ['persist'])]
     private Collection $postings;
 
-    public function __construct(TransactionType $type, string $idempotencyKey, array $metadata = [], ?Uuid $id = null)
+    public function __construct(TransactionType $type, string $idempotencyKey, array $metadata = [], ?Uuid $id = null, ?string $requestHash = null)
     {
         $idempotencyKey = trim($idempotencyKey);
-        if ('' === $idempotencyKey) {
-            throw new \InvalidArgumentException('Idempotency key is required.');
+        $requestHash ??= hash('sha256', $type->value.'|'.$idempotencyKey);
+        if ('' === $idempotencyKey || 1 !== preg_match('/^[a-f0-9]{64}$/', $requestHash)) {
+            throw new \InvalidArgumentException('Idempotency key and SHA-256 request hash are required.');
         }
 
         $this->id = $id ?? Uuid::v7();
         $this->type = $type;
         $this->status = TransactionStatus::Pending;
         $this->idempotencyKey = $idempotencyKey;
+        $this->requestHash = $requestHash;
         $this->metadata = $metadata;
         $this->createdAt = new \DateTimeImmutable();
         $this->postings = new ArrayCollection();
@@ -97,6 +102,7 @@ class LedgerTransaction
     public function type(): TransactionType { return $this->type; }
     public function status(): TransactionStatus { return $this->status; }
     public function idempotencyKey(): string { return $this->idempotencyKey; }
+    public function requestHash(): string { return $this->requestHash; }
     public function metadata(): array { return $this->metadata; }
     public function createdAt(): \DateTimeImmutable { return $this->createdAt; }
     public function postedAt(): ?\DateTimeImmutable { return $this->postedAt; }

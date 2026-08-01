@@ -83,6 +83,7 @@ class Reservation
     }
 
     public function id(): Uuid { return $this->id; }
+    public function reserveTransaction(): LedgerTransaction { return $this->reserveTransaction; }
     public function status(): ReservationStatus { return $this->status; }
     public function amountMinor(): int { return $this->amountMinor; }
     public function currency(): string { return $this->currency; }

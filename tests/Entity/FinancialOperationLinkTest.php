@@ -1,0 +1,44 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Tests\Entity;
+
+use App\Entity\Account;
+use App\Entity\FinancialOperationLink;
+use App\Entity\LedgerTransaction;
+use App\Entity\Reservation;
+use App\Entity\Wallet;
+use App\Enum\AccountCategory;
+use App\Enum\TransactionType;
+use PHPUnit\Framework\TestCase;
+
+final class FinancialOperationLinkTest extends TestCase
+{
+    public function testCaptureRequiresMatchingReservationSource(): void
+    {
+        $wallet = new Wallet('vendor', 'vendor-1');
+        $account = new Account($wallet, 'reserve', 'USD', AccountCategory::Reserve);
+        $reserve = new LedgerTransaction(TransactionType::Reserve, 'reserve-link-1');
+        $capture = new LedgerTransaction(TransactionType::Capture, 'capture-link-1');
+        $reservation = new Reservation($wallet, $account, $reserve, 500, 'USD', 'reservation-link-1');
+
+        $link = new FinancialOperationLink(TransactionType::Capture, $reserve, $capture, $reservation);
+
+        self::assertSame($reserve, $link->sourceTransaction());
+        self::assertSame($capture, $link->resultTransaction());
+        self::assertSame($reservation, $link->reservation());
+    }
+
+    public function testRefundRejectsReservationAssociation(): void
+    {
+        $wallet = new Wallet('vendor', 'vendor-1');
+        $account = new Account($wallet, 'reserve', 'USD', AccountCategory::Reserve);
+        $source = new LedgerTransaction(TransactionType::Credit, 'credit-link-1');
+        $result = new LedgerTransaction(TransactionType::Refund, 'refund-link-1');
+        $reservation = new Reservation($wallet, $account, $source, 500, 'USD', 'reservation-link-2');
+
+        $this->expectException(\InvalidArgumentException::class);
+        new FinancialOperationLink(TransactionType::Refund, $source, $result, $reservation);
+    }
+}
