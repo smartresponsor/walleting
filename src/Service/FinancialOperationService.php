@@ -17,8 +17,11 @@ use Doctrine\ORM\EntityManagerInterface;
 
 final readonly class FinancialOperationService
 {
-    public function __construct(private EntityManagerInterface $entityManager, private PostingService $postingService)
-    {
+    public function __construct(
+        private EntityManagerInterface $entityManager,
+        private PostingService $postingService,
+        private ?OutboxService $outboxService = null,
+    ) {
     }
 
     /** @param non-empty-list<PostingInstruction> $instructions */
@@ -28,6 +31,7 @@ final readonly class FinancialOperationService
             $transaction = $this->postingService->postManaged(TransactionType::Reserve, $idempotencyKey, $instructions, ['operation' => 'reserve']);
             $reservation = new Reservation($wallet, $account, $transaction, $amountMinor, $currency, $idempotencyKey, $expiresAt);
             $this->entityManager->persist($reservation);
+            $this->emitReservation('wallet.reservation.created', $reservation, $transaction);
             $this->entityManager->flush();
 
             return $reservation;
@@ -68,6 +72,7 @@ final readonly class FinancialOperationService
         return $this->entityManager->wrapInTransaction(function () use ($funding, $idempotencyKey, $instructions): LedgerTransaction {
             $transaction = $this->postingService->postManaged(TransactionType::Credit, $idempotencyKey, $instructions, ['operation' => 'funding', 'funding_key' => $funding->idempotencyKey()]);
             $funding->succeed($transaction);
+            $this->emitFunding('wallet.funding.succeeded', $funding, $transaction);
             $this->entityManager->flush();
 
             return $transaction;
@@ -81,6 +86,7 @@ final readonly class FinancialOperationService
             $withdrawal->start();
             $transaction = $this->postingService->postManaged(TransactionType::Debit, $idempotencyKey, $instructions, ['operation' => 'withdrawal', 'withdrawal_key' => $withdrawal->idempotencyKey()]);
             $withdrawal->succeed($transaction);
+            $this->emitWithdrawal('wallet.withdrawal.succeeded', $withdrawal, $transaction);
             $this->entityManager->flush();
 
             return $transaction;
@@ -196,5 +202,54 @@ final readonly class FinancialOperationService
 
             return $transaction;
         });
+    }
+
+    private function emitReservation(string $messageType, Reservation $reservation, LedgerTransaction $transaction): void
+    {
+        $this->outboxService?->enqueueManaged(
+            $messageType,
+            $messageType.':'.$reservation->id()->toRfc4122(),
+            [
+                'reservation_id' => $reservation->id()->toRfc4122(),
+                'reservation_key' => $reservation->idempotencyKey(),
+                'status' => $reservation->status()->value,
+                'amount_minor' => $reservation->amountMinor(),
+                'currency' => $reservation->currency(),
+                'transaction_id' => $transaction->id()->toRfc4122(),
+            ],
+            ledgerTransaction: $transaction,
+        );
+    }
+
+    private function emitFunding(string $messageType, Funding $funding, LedgerTransaction $transaction): void
+    {
+        $this->outboxService?->enqueueManaged(
+            $messageType,
+            $messageType.':'.$funding->idempotencyKey(),
+            [
+                'funding_key' => $funding->idempotencyKey(),
+                'status' => $funding->status()->value,
+                'amount_minor' => $funding->amountMinor(),
+                'currency' => $funding->currency(),
+                'transaction_id' => $transaction->id()->toRfc4122(),
+            ],
+            ledgerTransaction: $transaction,
+        );
+    }
+
+    private function emitWithdrawal(string $messageType, Withdrawal $withdrawal, LedgerTransaction $transaction): void
+    {
+        $this->outboxService?->enqueueManaged(
+            $messageType,
+            $messageType.':'.$withdrawal->idempotencyKey(),
+            [
+                'withdrawal_key' => $withdrawal->idempotencyKey(),
+                'status' => $withdrawal->status()->value,
+                'amount_minor' => $withdrawal->amountMinor(),
+                'currency' => $withdrawal->currency(),
+                'transaction_id' => $transaction->id()->toRfc4122(),
+            ],
+            ledgerTransaction: $transaction,
+        );
     }
 }
