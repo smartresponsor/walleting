@@ -15,7 +15,11 @@ final class Version20260802034500 extends AbstractMigration
     {
         $this->abortIf('postgresql' !== $this->connection->getDatabasePlatform()->getName(), 'Walleting requires PostgreSQL.');
         $this->addSql('ALTER TABLE provider_event ADD payload_hash VARCHAR(64) DEFAULT NULL');
-        $this->addSql("UPDATE provider_event SET payload_hash = encode(sha256(convert_to(payload::text, 'UTF8')), 'hex')");
+        foreach ($this->connection->fetchAllAssociative('SELECT id, payload FROM provider_event') as $row) {
+            $payload = json_decode((string) $row['payload'], true, 512, JSON_THROW_ON_ERROR);
+            $payloadHash = hash('sha256', json_encode($this->normalize($payload), JSON_THROW_ON_ERROR));
+            $this->connection->update('provider_event', ['payload_hash' => $payloadHash], ['id' => $row['id']]);
+        }
         $this->addSql('ALTER TABLE provider_event ALTER payload_hash SET NOT NULL');
         $this->addSql('ALTER TABLE provider_event ADD funding_id UUID DEFAULT NULL');
         $this->addSql('ALTER TABLE provider_event ADD withdrawal_id UUID DEFAULT NULL');
@@ -31,5 +35,18 @@ final class Version20260802034500 extends AbstractMigration
         $this->addSql('DROP TRIGGER provider_event_identity_immutable ON provider_event');
         $this->addSql('DROP FUNCTION walleting_reject_provider_event_identity_mutation()');
         $this->addSql('ALTER TABLE provider_event DROP COLUMN withdrawal_id, DROP COLUMN funding_id, DROP COLUMN payload_hash');
+    }
+
+    private function normalize(array $value): array
+    {
+        ksort($value);
+        foreach ($value as &$item) {
+            if (is_array($item)) {
+                $item = $this->normalize($item);
+            }
+        }
+        unset($item);
+
+        return $value;
     }
 }

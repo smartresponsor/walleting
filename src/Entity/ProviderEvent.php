@@ -58,6 +58,7 @@ class ProviderEvent
     public function status(): ProviderEventStatus { return $this->status; }
     public function provider(): string { return $this->provider; }
     public function externalId(): string { return $this->externalId; }
+    public function eventType(): string { return $this->eventType; }
     public function payload(): array { return $this->payload; }
     public function payloadHash(): string { return $this->payloadHash; }
     public function funding(): ?Funding { return $this->funding; }

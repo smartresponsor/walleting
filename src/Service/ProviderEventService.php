@@ -17,20 +17,23 @@ final readonly class ProviderEventService
 
     public function receive(string $provider, string $externalId, string $eventType, array $payload): ProviderEvent
     {
-        $existing = $this->entityManager->getRepository(ProviderEvent::class)->findOneBy(['provider' => trim($provider), 'externalId' => trim($externalId)]);
-        if ($existing instanceof ProviderEvent) {
-            $candidate = new ProviderEvent($provider, $externalId, $eventType, $payload);
-            if (!hash_equals($existing->payloadHash(), $candidate->payloadHash())) {
-                throw new \DomainException('Provider event identity is already bound to a different payload.');
+        return $this->entityManager->wrapInTransaction(function () use ($provider, $externalId, $eventType, $payload): ProviderEvent {
+            $existing = $this->entityManager->getRepository(ProviderEvent::class)->findOneBy(['provider' => trim($provider), 'externalId' => trim($externalId)]);
+            if ($existing instanceof ProviderEvent) {
+                $candidate = new ProviderEvent($provider, $externalId, $eventType, $payload);
+                if ($existing->eventType() !== $candidate->eventType() || !hash_equals($existing->payloadHash(), $candidate->payloadHash())) {
+                    throw new \DomainException('Provider event identity is already bound to different event content.');
+                }
+
+                return $existing;
             }
 
-            return $existing;
-        }
+            $event = new ProviderEvent($provider, $externalId, $eventType, $payload);
+            $this->entityManager->persist($event);
+            $this->entityManager->flush();
 
-        $event = new ProviderEvent($provider, $externalId, $eventType, $payload);
-        $this->entityManager->persist($event);
-
-        return $event;
+            return $event;
+        });
     }
 
     public function processFunding(ProviderEvent $event, Funding $funding): void
