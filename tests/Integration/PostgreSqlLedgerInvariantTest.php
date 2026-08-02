@@ -21,7 +21,7 @@ final class PostgreSqlLedgerInvariantTest extends KernelTestCase
         self::assertSame('postgresql', $this->connection->getDatabasePlatform()->getName());
 
         $schema = $this->connection->createSchemaManager();
-        foreach (['wallet', 'account', 'ledger_transaction', 'posting', 'reservation', 'financial_operation_link'] as $table) {
+        foreach (['wallet', 'account', 'account_balance', 'ledger_transaction', 'posting', 'reservation', 'financial_operation_link'] as $table) {
             self::assertTrue($schema->tablesExist([$table]), sprintf('Migrated table "%s" is missing.', $table));
         }
     }
@@ -126,6 +126,23 @@ final class PostgreSqlLedgerInvariantTest extends KernelTestCase
                 $secondConnection->rollBack();
             }
             $secondConnection->close();
+        }
+    }
+
+    public function testAccountBalanceProjectionIsAtomicAndDerived(): void
+    {
+        [, $accountA, $accountB] = $this->seedWalletAndAccounts();
+        $this->seedBalancedTransaction('credit', $accountA, $accountB);
+
+        self::assertSame(1000, (int) $this->connection->fetchOne('SELECT balance_minor FROM account_balance WHERE account_id = ?', [$accountA]));
+        self::assertSame(-1000, (int) $this->connection->fetchOne('SELECT balance_minor FROM account_balance WHERE account_id = ?', [$accountB]));
+        self::assertSame(1, (int) $this->connection->fetchOne('SELECT posting_count FROM account_balance WHERE account_id = ?', [$accountA]));
+
+        try {
+            $this->connection->executeStatement('UPDATE account_balance SET balance_minor = 0 WHERE account_id = ?', [$accountA]);
+            self::fail('Direct account balance mutation must be rejected.');
+        } catch (Exception $exception) {
+            self::assertStringContainsString('derived from postings', $exception->getMessage());
         }
     }
 
