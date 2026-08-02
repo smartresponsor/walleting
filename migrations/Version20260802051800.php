@@ -21,6 +21,8 @@ final class Version20260802051800 extends AbstractMigration
         $this->addSql('ALTER TABLE outbox_message ADD CONSTRAINT fk_outbox_provider_event FOREIGN KEY (provider_event_id) REFERENCES provider_event (id) ON DELETE RESTRICT');
         $this->addSql('ALTER TABLE outbox_message ADD CONSTRAINT chk_outbox_reference CHECK (ledger_transaction_id IS NOT NULL OR provider_event_id IS NOT NULL)');
         $this->addSql('ALTER TABLE outbox_message ADD CONSTRAINT chk_outbox_attempt_count CHECK (attempt_count >= 0)');
+        $this->addSql("ALTER TABLE outbox_message ADD CONSTRAINT chk_outbox_status CHECK (status IN ('pending', 'claimed', 'dispatched', 'failed'))");
+        $this->addSql("ALTER TABLE outbox_message ADD CONSTRAINT chk_outbox_lifecycle CHECK ((status = 'pending' AND claimed_at IS NULL AND dispatched_at IS NULL AND last_error IS NULL) OR (status = 'claimed' AND claimed_at IS NOT NULL AND dispatched_at IS NULL) OR (status = 'failed' AND claimed_at IS NOT NULL AND dispatched_at IS NULL AND last_error IS NOT NULL) OR (status = 'dispatched' AND claimed_at IS NOT NULL AND dispatched_at IS NOT NULL AND last_error IS NULL))");
     }
 
     public function down(Schema $schema): void
