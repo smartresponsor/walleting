@@ -30,10 +30,13 @@ class Account
     #[ORM\Column(enumType: AccountCategory::class)]
     private AccountCategory $category;
 
+    #[ORM\Column(name: 'allow_negative')]
+    private bool $allowNegative;
+
     #[ORM\Column(name: 'created_at', type: 'datetime_immutable')]
     private \DateTimeImmutable $createdAt;
 
-    public function __construct(Wallet $wallet, string $code, string $currency, AccountCategory $category, ?Uuid $id = null)
+    public function __construct(Wallet $wallet, string $code, string $currency, AccountCategory $category, ?Uuid $id = null, ?bool $allowNegative = null)
     {
         $code = trim($code);
         $currency = strtoupper(trim($currency));
@@ -50,6 +53,7 @@ class Account
         $this->code = $code;
         $this->currency = $currency;
         $this->category = $category;
+        $this->allowNegative = $allowNegative ?? !in_array($category, [AccountCategory::Asset, AccountCategory::Reserve], true);
         $this->createdAt = new \DateTimeImmutable();
     }
 
@@ -58,5 +62,6 @@ class Account
     public function code(): string { return $this->code; }
     public function currency(): string { return $this->currency; }
     public function category(): AccountCategory { return $this->category; }
+    public function allowsNegativeBalance(): bool { return $this->allowNegative; }
     public function createdAt(): \DateTimeImmutable { return $this->createdAt; }
 }

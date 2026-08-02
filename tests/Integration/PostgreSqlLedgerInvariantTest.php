@@ -129,6 +129,27 @@ final class PostgreSqlLedgerInvariantTest extends KernelTestCase
         }
     }
 
+    public function testSpendableAccountCannotOverdraw(): void
+    {
+        [, $accountA, $accountB] = $this->seedWalletAndAccounts();
+        $transactionId = Uuid::v7()->toRfc4122();
+
+        $this->connection->beginTransaction();
+        try {
+            $this->insertTransaction($transactionId, 'debit', 'overdraft-'.Uuid::v7(), 'posted');
+            $this->insertPosting($transactionId, $accountA, -1, 1);
+            $this->insertPosting($transactionId, $accountB, 1, 2);
+            $this->connection->commit();
+            self::fail('A non-negative account must reject overdraft.');
+        } catch (Exception $exception) {
+            self::assertStringContainsString('insufficient available balance', $exception->getMessage());
+        } finally {
+            if ($this->connection->isTransactionActive()) {
+                $this->connection->rollBack();
+            }
+        }
+    }
+
     public function testAccountBalanceProjectionIsAtomicAndDerived(): void
     {
         [, $accountA, $accountB] = $this->seedWalletAndAccounts();
@@ -154,8 +175,8 @@ final class PostgreSqlLedgerInvariantTest extends KernelTestCase
         $now = (new \DateTimeImmutable())->format('Y-m-d H:i:s');
 
         $this->connection->insert('wallet', ['id' => $walletId, 'owner_type' => 'integration', 'owner_id' => Uuid::v7()->toRfc4122(), 'status' => 'active', 'created_at' => $now]);
-        foreach ([[$accountA, 'asset'], [$accountB, 'clearing']] as [$id, $category]) {
-            $this->connection->insert('account', ['id' => $id, 'wallet_id' => $walletId, 'code' => $category.'-'.substr($id, 0, 8), 'currency' => 'USD', 'category' => $category, 'created_at' => $now]);
+        foreach ([[$accountA, 'asset', false], [$accountB, 'clearing', true]] as [$id, $category, $allowNegative]) {
+            $this->connection->insert('account', ['id' => $id, 'wallet_id' => $walletId, 'code' => $category.'-'.substr($id, 0, 8), 'currency' => 'USD', 'category' => $category, 'allow_negative' => $allowNegative, 'created_at' => $now]);
         }
 
         return [$walletId, $accountA, $accountB];
