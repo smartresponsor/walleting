@@ -30,6 +30,12 @@ class ReconciliationRun
     private \DateTimeImmutable $createdAt;
     #[ORM\Column(name: 'failure_message', type: 'text', nullable: true)]
     private ?string $failureMessage = null;
+    #[ORM\Column(name: 'checked_count', type: 'integer')]
+    private int $checkedCount = 0;
+    #[ORM\Column(name: 'matched_count', type: 'integer')]
+    private int $matchedCount = 0;
+    #[ORM\Column(name: 'mismatch_count', type: 'integer')]
+    private int $mismatchCount = 0;
 
     public function __construct(string $provider, string $runKey, ?Uuid $id = null)
     {
@@ -39,9 +45,15 @@ class ReconciliationRun
     }
 
     public function start(): void { if (ReconciliationRunStatus::Pending !== $this->status) { throw new \LogicException('Only pending reconciliation can start.'); } $this->status = ReconciliationRunStatus::Running; $this->startedAt = new \DateTimeImmutable(); }
-    public function complete(): void { if (ReconciliationRunStatus::Running !== $this->status) { throw new \LogicException('Only running reconciliation can complete.'); } $this->status = ReconciliationRunStatus::Completed; $this->completedAt = new \DateTimeImmutable(); }
+    public function recordMatch(): void { $this->assertRunning(); ++$this->checkedCount; ++$this->matchedCount; }
+    public function recordMismatch(): void { $this->assertRunning(); ++$this->checkedCount; ++$this->mismatchCount; }
+    public function complete(): void { $this->assertRunning(); $this->status = ReconciliationRunStatus::Completed; $this->completedAt = new \DateTimeImmutable(); }
     public function fail(string $message): void { if (!in_array($this->status, [ReconciliationRunStatus::Pending, ReconciliationRunStatus::Running], true)) { throw new \LogicException('Reconciliation cannot fail from its current status.'); } $message = trim($message); if ('' === $message) { throw new \InvalidArgumentException('Failure message is required.'); } $this->status = ReconciliationRunStatus::Failed; $this->failureMessage = $message; $this->completedAt = new \DateTimeImmutable(); }
+    private function assertRunning(): void { if (ReconciliationRunStatus::Running !== $this->status) { throw new \LogicException('Reconciliation counters can only change while running.'); } }
     public function status(): ReconciliationRunStatus { return $this->status; }
+    public function checkedCount(): int { return $this->checkedCount; }
+    public function matchedCount(): int { return $this->matchedCount; }
+    public function mismatchCount(): int { return $this->mismatchCount; }
     public function provider(): string { return $this->provider; }
     public function runKey(): string { return $this->runKey; }
 }
