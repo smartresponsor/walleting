@@ -56,7 +56,7 @@ final readonly class OutboxService
 
         return $this->entityManager->wrapInTransaction(function () use ($limit): array {
             $rows = $this->connection->fetchFirstColumn(
-                "SELECT id FROM outbox_message WHERE status IN ('pending', 'failed') AND available_at <= CURRENT_TIMESTAMP ORDER BY created_at FOR UPDATE SKIP LOCKED LIMIT ?",
+                "SELECT id FROM outbox_message WHERE status IN ('pending', 'failed') AND available_at <= CURRENT_TIMESTAMP ORDER BY created_at, id FOR UPDATE SKIP LOCKED LIMIT ?",
                 [$limit],
                 [ParameterType::INTEGER],
             );
