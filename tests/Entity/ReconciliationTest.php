@@ -4,9 +4,13 @@ declare(strict_types=1);
 
 namespace App\Tests\Entity;
 
+use App\Entity\Funding;
+use App\Entity\PaymentInstrument;
 use App\Entity\ProviderEvent;
+use App\Entity\Wallet;
 use App\Entity\ReconciliationMismatch;
 use App\Entity\ReconciliationRun;
+use App\Enum\PaymentInstrumentType;
 use App\Enum\ProviderEventStatus;
 use App\Enum\ReconciliationMismatchStatus;
 use App\Enum\ReconciliationMismatchType;
@@ -22,6 +26,23 @@ final class ReconciliationTest extends TestCase
         self::assertSame(ProviderEventStatus::Processed, $event->status());
         $this->expectException(\LogicException::class);
         $event->markProcessed();
+    }
+
+    public function testProviderEventPayloadHashIsCanonicalAndLinksFunding(): void
+    {
+        $first = new ProviderEvent('stripe', 'evt_2', 'payment.succeeded', ['b' => 2, 'a' => ['y' => 2, 'x' => 1]]);
+        $second = new ProviderEvent('stripe', 'evt_2', 'payment.succeeded', ['a' => ['x' => 1, 'y' => 2], 'b' => 2]);
+        self::assertSame($first->payloadHash(), $second->payloadHash());
+
+        $wallet = new Wallet('vendor', 'provider-event-vendor');
+        $instrument = new PaymentInstrument($wallet, PaymentInstrumentType::Card, 'stripe', 'pm_1', 'Card');
+        $funding = new Funding($wallet, $instrument, 1000, 'USD', 'provider-funding-1');
+        $first->processFunding($funding);
+
+        self::assertSame(ProviderEventStatus::Processed, $first->status());
+        self::assertSame($funding, $first->funding());
+        $this->expectException(\LogicException::class);
+        $first->processFunding($funding);
     }
 
     public function testReconciliationRunLifecycle(): void
