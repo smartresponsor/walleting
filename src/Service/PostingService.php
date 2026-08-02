@@ -13,8 +13,10 @@ use Doctrine\ORM\EntityManagerInterface;
 
 final readonly class PostingService
 {
-    public function __construct(private EntityManagerInterface $entityManager)
-    {
+    public function __construct(
+        private EntityManagerInterface $entityManager,
+        private ?OutboxService $outboxService = null,
+    ) {
     }
 
     /** @param non-empty-list<PostingInstruction> $instructions */
@@ -75,6 +77,7 @@ final readonly class PostingService
         }
         $transaction->post();
         $this->entityManager->persist($transaction);
+        $this->emitPosted($transaction);
 
         return $transaction;
     }
@@ -161,5 +164,21 @@ final readonly class PostingService
         unset($item);
 
         return $value;
+    }
+
+    private function emitPosted(LedgerTransaction $transaction): void
+    {
+        $this->outboxService?->enqueueManaged(
+            'ledger.transaction.posted',
+            'ledger.transaction.posted:'.$transaction->id()->toRfc4122(),
+            [
+                'transaction_id' => $transaction->id()->toRfc4122(),
+                'transaction_type' => $transaction->type()->value,
+                'idempotency_key' => $transaction->idempotencyKey(),
+                'request_hash' => $transaction->requestHash(),
+                'metadata' => $transaction->metadata(),
+            ],
+            ledgerTransaction: $transaction,
+        );
     }
 }
