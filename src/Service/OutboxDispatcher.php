@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Service;
 
 use App\Entity\OutboxMessage;
+use App\Outbox\OutboxDispatchReport;
 use App\Outbox\OutboxMessageHandlerInterface;
 use App\Outbox\PermanentOutboxFailure;
 use Symfony\Component\DependencyInjection\Attribute\AutowireIterator;
@@ -32,14 +33,27 @@ final readonly class OutboxDispatcher
 
     public function dispatchBatch(int $limit): int
     {
+        return $this->dispatchBatchReport($limit)->dispatched;
+    }
+
+    public function dispatchBatchReport(int $limit): OutboxDispatchReport
+    {
+        $messages = $this->outboxService->claimBatch($limit);
         $dispatched = 0;
-        foreach ($this->outboxService->claimBatch($limit) as $message) {
-            if ($this->dispatch($message)) {
-                ++$dispatched;
-            }
+        $retryScheduled = 0;
+        $dead = 0;
+
+        foreach ($messages as $message) {
+            $this->dispatch($message);
+            match ($message->status()) {
+                \App\Enum\OutboxMessageStatus::Dispatched => ++$dispatched,
+                \App\Enum\OutboxMessageStatus::Failed => ++$retryScheduled,
+                \App\Enum\OutboxMessageStatus::Dead => ++$dead,
+                default => throw new \LogicException('Dispatch left an outbox message in an invalid terminal state.'),
+            };
         }
 
-        return $dispatched;
+        return new OutboxDispatchReport(count($messages), $dispatched, $retryScheduled, $dead);
     }
 
     public function dispatch(OutboxMessage $message): bool
