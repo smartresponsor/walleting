@@ -7,6 +7,7 @@ namespace App\Service;
 use App\Entity\LedgerTransaction;
 use App\Entity\OutboxMessage;
 use App\Entity\ProviderEvent;
+use App\Outbox\OutboxHealthSnapshot;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\ParameterType;
 use Doctrine\ORM\EntityManagerInterface;
@@ -74,6 +75,36 @@ final readonly class OutboxService
 
             return $messages;
         });
+    }
+
+    public function healthSnapshot(): OutboxHealthSnapshot
+    {
+        $statusCounts = [];
+        foreach ($this->connection->fetchAllAssociative('SELECT status, COUNT(*) AS count FROM outbox_message GROUP BY status ORDER BY status') as $row) {
+            $statusCounts[(string) $row['status']] = (int) $row['count'];
+        }
+
+        $oldestAge = $this->connection->fetchOne("SELECT EXTRACT(EPOCH FROM (CURRENT_TIMESTAMP - MIN(created_at)))::INT FROM outbox_message WHERE status IN ('pending', 'failed') AND available_at <= CURRENT_TIMESTAMP");
+
+        return new OutboxHealthSnapshot(
+            $statusCounts,
+            false === $oldestAge || null === $oldestAge ? null : (int) $oldestAge,
+            $statusCounts['dead'] ?? 0,
+        );
+    }
+
+    /** @return list<array<string, mixed>> */
+    public function deadLetters(int $limit): array
+    {
+        if ($limit < 1 || $limit > 500) {
+            throw new \InvalidArgumentException('Outbox dead-letter limit must be between 1 and 500.');
+        }
+
+        return $this->connection->fetchAllAssociative(
+            "SELECT id, message_type, deduplication_key, attempt_count, last_error, claimed_at, created_at FROM outbox_message WHERE status = 'dead' ORDER BY claimed_at DESC, id DESC LIMIT ?",
+            [$limit],
+            [ParameterType::INTEGER],
+        );
     }
 
     public function recoverStaleClaims(int $timeoutSeconds, int $limit): int
