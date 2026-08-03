@@ -106,6 +106,7 @@ final readonly class FinancialOperationService
             $transaction = $this->postingService->postManaged(TransactionType::Reverse, $idempotencyKey, $instructions, ['operation' => 'funding_reversal', 'funding_key' => $funding->idempotencyKey(), 'original_transaction_id' => $original->id()->toRfc4122()]);
             $this->entityManager->persist(new FinancialOperationLink(TransactionType::Reverse, $original, $transaction));
             $funding->reverse($transaction);
+            $this->emitFunding('wallet.funding.reversed', $funding, $transaction);
             $this->entityManager->flush();
 
             return $transaction;
@@ -125,6 +126,7 @@ final readonly class FinancialOperationService
             $transaction = $this->postingService->postManaged(TransactionType::Reverse, $idempotencyKey, $instructions, ['operation' => 'withdrawal_reversal', 'withdrawal_key' => $withdrawal->idempotencyKey(), 'original_transaction_id' => $original->id()->toRfc4122()]);
             $this->entityManager->persist(new FinancialOperationLink(TransactionType::Reverse, $original, $transaction));
             $withdrawal->reverse($transaction);
+            $this->emitWithdrawal('wallet.withdrawal.reversed', $withdrawal, $transaction);
             $this->entityManager->flush();
 
             return $transaction;
@@ -139,6 +141,7 @@ final readonly class FinancialOperationService
             $transaction = $this->postingService->postManaged($type, $idempotencyKey, $instructions, ['operation' => $operation, 'reservation_key' => $reservation->idempotencyKey()]);
             $this->entityManager->persist(new FinancialOperationLink($type, $reservation->reserveTransaction(), $transaction, $reservation));
             'capture' === $operation ? $reservation->capture() : $reservation->release();
+            $this->emitReservation('wallet.reservation.'.$operation.'d', $reservation, $transaction);
             $this->entityManager->flush();
 
             return $transaction;
@@ -198,10 +201,26 @@ final readonly class FinancialOperationService
         return $this->entityManager->wrapInTransaction(function () use ($type, $original, $idempotencyKey, $instructions): LedgerTransaction {
             $transaction = $this->postingService->postManaged($type, $idempotencyKey, $instructions, ['original_transaction_id' => $original->id()->toRfc4122()]);
             $this->entityManager->persist(new FinancialOperationLink($type, $original, $transaction));
+            $this->emitLinkedTransaction($type, $original, $transaction);
             $this->entityManager->flush();
 
             return $transaction;
         });
+    }
+
+    private function emitLinkedTransaction(TransactionType $type, LedgerTransaction $original, LedgerTransaction $transaction): void
+    {
+        $messageType = 'ledger.transaction.'.$type->value;
+        $this->outboxService?->enqueueManaged(
+            $messageType,
+            $messageType.':'.$transaction->id()->toRfc4122(),
+            [
+                'transaction_id' => $transaction->id()->toRfc4122(),
+                'original_transaction_id' => $original->id()->toRfc4122(),
+                'operation' => $type->value,
+            ],
+            ledgerTransaction: $transaction,
+        );
     }
 
     private function emitReservation(string $messageType, Reservation $reservation, LedgerTransaction $transaction): void

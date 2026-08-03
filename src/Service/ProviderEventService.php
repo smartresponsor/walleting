@@ -11,8 +11,10 @@ use Doctrine\ORM\EntityManagerInterface;
 
 final readonly class ProviderEventService
 {
-    public function __construct(private EntityManagerInterface $entityManager)
-    {
+    public function __construct(
+        private EntityManagerInterface $entityManager,
+        private ?OutboxService $outboxService = null,
+    ) {
     }
 
     public function receive(string $provider, string $externalId, string $eventType, array $payload): ProviderEvent
@@ -30,6 +32,7 @@ final readonly class ProviderEventService
 
             $event = new ProviderEvent($provider, $externalId, $eventType, $payload);
             $this->entityManager->persist($event);
+            $this->emit('provider.event.received', $event);
             $this->entityManager->flush();
 
             return $event;
@@ -38,11 +41,35 @@ final readonly class ProviderEventService
 
     public function processFunding(ProviderEvent $event, Funding $funding): void
     {
-        $this->entityManager->wrapInTransaction(function () use ($event, $funding): void { $event->processFunding($funding); $this->entityManager->flush(); });
+        $this->entityManager->wrapInTransaction(function () use ($event, $funding): void {
+            $event->processFunding($funding);
+            $this->emit('provider.event.processed', $event);
+            $this->entityManager->flush();
+        });
     }
 
     public function processWithdrawal(ProviderEvent $event, Withdrawal $withdrawal): void
     {
-        $this->entityManager->wrapInTransaction(function () use ($event, $withdrawal): void { $event->processWithdrawal($withdrawal); $this->entityManager->flush(); });
+        $this->entityManager->wrapInTransaction(function () use ($event, $withdrawal): void {
+            $event->processWithdrawal($withdrawal);
+            $this->emit('provider.event.processed', $event);
+            $this->entityManager->flush();
+        });
+    }
+
+    private function emit(string $messageType, ProviderEvent $event): void
+    {
+        $this->outboxService?->enqueueManaged(
+            $messageType,
+            $messageType.':'.$event->provider().':'.$event->externalId(),
+            [
+                'provider' => $event->provider(),
+                'external_id' => $event->externalId(),
+                'event_type' => $event->eventType(),
+                'status' => $event->status()->value,
+                'payload_hash' => $event->payloadHash(),
+            ],
+            providerEvent: $event,
+        );
     }
 }
