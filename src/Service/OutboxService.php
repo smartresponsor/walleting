@@ -76,6 +76,22 @@ final readonly class OutboxService
         });
     }
 
+    public function recoverStaleClaims(int $timeoutSeconds, int $limit): int
+    {
+        if ($timeoutSeconds < 1 || $timeoutSeconds > 86400) {
+            throw new \InvalidArgumentException('Outbox claim timeout must be between 1 and 86400 seconds.');
+        }
+        if ($limit < 1 || $limit > 500) {
+            throw new \InvalidArgumentException('Outbox recovery limit must be between 1 and 500.');
+        }
+
+        return $this->entityManager->wrapInTransaction(fn (): int => $this->connection->executeStatement(
+            "UPDATE outbox_message SET status = 'failed', available_at = CURRENT_TIMESTAMP, last_error = 'Claim lease expired before acknowledgement.' WHERE id IN (SELECT id FROM outbox_message WHERE status = 'claimed' AND claimed_at < CURRENT_TIMESTAMP - (? * INTERVAL '1 second') ORDER BY claimed_at, id FOR UPDATE SKIP LOCKED LIMIT ?)",
+            [$timeoutSeconds, $limit],
+            [ParameterType::INTEGER, ParameterType::INTEGER],
+        ));
+    }
+
     public function markDispatched(OutboxMessage $message): void
     {
         $this->entityManager->wrapInTransaction(function () use ($message): void {
