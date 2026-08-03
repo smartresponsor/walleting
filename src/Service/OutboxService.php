@@ -91,4 +91,12 @@ final readonly class OutboxService
             $this->entityManager->flush();
         });
     }
+
+    public function markTerminalFailure(OutboxMessage $message, string $error): void
+    {
+        $this->entityManager->wrapInTransaction(function () use ($message, $error): void {
+            $message->markDead($error);
+            $this->entityManager->flush();
+        });
+    }
 }

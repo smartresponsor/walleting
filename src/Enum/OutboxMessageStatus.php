@@ -10,4 +10,5 @@ enum OutboxMessageStatus: string
     case Claimed = 'claimed';
     case Dispatched = 'dispatched';
     case Failed = 'failed';
+    case Dead = 'dead';
 }

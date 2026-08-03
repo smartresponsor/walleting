@@ -115,16 +115,27 @@ class OutboxMessage
 
     public function markFailed(string $error, \DateTimeImmutable $availableAt): void
     {
+        $this->assertClaimedFailure($error);
+        $this->status = OutboxMessageStatus::Failed;
+        $this->lastError = trim($error);
+        $this->availableAt = $availableAt;
+    }
+
+    public function markDead(string $error): void
+    {
+        $this->assertClaimedFailure($error);
+        $this->status = OutboxMessageStatus::Dead;
+        $this->lastError = trim($error);
+    }
+
+    private function assertClaimedFailure(string $error): void
+    {
         if (OutboxMessageStatus::Claimed !== $this->status) {
             throw new \LogicException('Only claimed outbox messages can fail.');
         }
-        $error = trim($error);
-        if ('' === $error) {
+        if ('' === trim($error)) {
             throw new \InvalidArgumentException('Outbox failure error is required.');
         }
-        $this->status = OutboxMessageStatus::Failed;
-        $this->lastError = $error;
-        $this->availableAt = $availableAt;
     }
 
     private function normalize(array $value): array

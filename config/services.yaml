@@ -2,6 +2,10 @@ services:
     _defaults:
         autowire: true
         autoconfigure: true
+    _instanceof:
+        App\Outbox\OutboxMessageHandlerInterface:
+            tags: ['app.outbox_message_handler']
+
     App\:
         resource: '../src/'
         exclude: ['../src/Entity/', '../src/Kernel.php']

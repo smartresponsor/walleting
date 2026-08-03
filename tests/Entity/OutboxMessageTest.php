@@ -43,6 +43,16 @@ final class OutboxMessageTest extends TestCase
         new OutboxMessage('ledger.posted', 'missing-reference', []);
     }
 
+    public function testClaimedMessageCanBecomeDeadLetter(): void
+    {
+        $message = new OutboxMessage('ledger.posted', 'dead-letter-1', [], $this->transaction());
+        $message->claim();
+        $message->markDead('unsupported message type');
+
+        self::assertSame(OutboxMessageStatus::Dead, $message->status());
+        self::assertSame('unsupported message type', $message->lastError());
+    }
+
     private function transaction(): LedgerTransaction
     {
         $wallet = new Wallet('vendor', 'outbox-vendor');
