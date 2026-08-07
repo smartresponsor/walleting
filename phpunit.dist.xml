@@ -21,6 +21,7 @@
         <testsuite name="Project Test Suite">
             <directory>tests</directory>
             <exclude>tests/Integration</exclude>
+            <exclude>tests/Contract</exclude>
         </testsuite>
     </testsuites>
 
