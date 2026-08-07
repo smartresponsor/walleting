@@ -1,8 +1,18 @@
 framework:
     messenger:
+        failure_transport: outbox_failed
+
         transports:
             outbox_events:
                 dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
+                serializer: App\Messenger\OutboxEventSerializer
+                retry_strategy:
+                    max_retries: 3
+                    delay: 1000
+                    multiplier: 2
+                    max_delay: 30000
+            outbox_failed:
+                dsn: 'doctrine://default?queue_name=walleting_outbox_failed'
                 serializer: App\Messenger\OutboxEventSerializer
 
         routing:
@@ -13,5 +23,8 @@ when@test:
         messenger:
             transports:
                 outbox_events:
+                    dsn: 'in-memory://'
+                    serializer: App\Messenger\OutboxEventSerializer
+                outbox_failed:
                     dsn: 'in-memory://'
                     serializer: App\Messenger\OutboxEventSerializer
