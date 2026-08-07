@@ -15,6 +15,6 @@ final class PostingDbalExecutorContractTest extends PostingExecutorContractTest
     {
         $outboxService = new OutboxService($this->entityManager, $this->connection);
 
-        return new PostingDbalExecutor($this->connection, $outboxService);
+        return new PostingDbalExecutor($this->connection, $outboxService, new \App\Service\PostingRetryPolicy());
     }
 }

@@ -63,7 +63,7 @@ final class PostingServiceTest extends TestCase
         return new PostingService(
             $entityManager,
             $outboxService,
-            new PostingDbalExecutor($connection, $outboxService),
+            new PostingDbalExecutor($connection, $outboxService, new \App\Service\PostingRetryPolicy()),
         );
     }
 }

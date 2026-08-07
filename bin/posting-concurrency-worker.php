@@ -7,6 +7,7 @@ use App\Kernel;
 use App\Ledger\PostingInstruction;
 use App\Service\OutboxService;
 use App\Service\PostingDbalExecutor;
+use App\Service\PostingRetryPolicy;
 use App\Service\PostingService;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
@@ -53,10 +54,20 @@ try {
     }
 
     $outboxService = new OutboxService($entityManager, $connection);
+    $retryPolicy = new PostingRetryPolicy(
+        maxAttempts: (int) (getenv('WALLETING_POSTING_MAX_ATTEMPTS') ?: 3),
+        baseDelayMilliseconds: (int) (getenv('WALLETING_POSTING_BASE_DELAY_MS') ?: 25),
+        maxDelayMilliseconds: (int) (getenv('WALLETING_POSTING_MAX_DELAY_MS') ?: 250),
+    );
     $service = new PostingService(
         $entityManager,
         $outboxService,
-        new PostingDbalExecutor($connection, $outboxService),
+        new PostingDbalExecutor(
+            $connection,
+            $outboxService,
+            $retryPolicy,
+            (int) (getenv('WALLETING_POSTING_LOCK_TIMEOUT_MS') ?: 1000),
+        ),
     );
 
     $transaction = $service->transfer($idempotencyKey, [

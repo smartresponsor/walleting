@@ -9,6 +9,7 @@ use App\Enum\TransactionStatus;
 use App\Ledger\PostingInstruction;
 use App\Service\OutboxService;
 use App\Service\PostingDbalExecutor;
+use App\Service\PostingRetryPolicy;
 use App\Service\PostingService;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\ParameterType;
@@ -41,7 +42,7 @@ final class PostgreSqlPostingServiceTest extends KernelTestCase
         $service = new PostingService(
             $this->entityManager,
             $outboxService,
-            new PostingDbalExecutor($this->connection, $outboxService),
+            new PostingDbalExecutor($this->connection, $outboxService, new PostingRetryPolicy()),
         );
         $key = 'dbal-hot-path-'.Uuid::v7();
         $instructions = [
@@ -101,6 +102,59 @@ final class PostgreSqlPostingServiceTest extends KernelTestCase
         self::assertSame(-2000, (int) $this->connection->fetchOne('SELECT balance_minor FROM account_balance WHERE account_id = ?', [$clearingId]));
         self::assertSame(2, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM ledger_transaction WHERE idempotency_key IN (?, ?)', [$keyA, $keyB]));
         self::assertSame(2, (int) $this->connection->fetchOne("SELECT COUNT(*) FROM outbox_message WHERE message_type = 'ledger.transaction.posted' AND ledger_transaction_id IN (SELECT id FROM ledger_transaction WHERE idempotency_key IN (?, ?))", [$keyA, $keyB]));
+    }
+
+    public function testTransientLockTimeoutIsRetriedAfterCompetingLockReleases(): void
+    {
+        [$accountAId, $accountBId, $clearingId] = $this->seedTransferAccounts();
+        $this->seedBalances($accountAId, $accountBId, $clearingId);
+
+        $locker = \Doctrine\DBAL\DriverManager::getConnection($this->connection->getParams());
+        $locker->beginTransaction();
+        $locker->fetchOne('SELECT id FROM account WHERE id = ? FOR UPDATE', [$accountAId]);
+
+        $token = Uuid::v7()->toRfc4122();
+        $barrier = sys_get_temp_dir().DIRECTORY_SEPARATOR.'walleting-retry-barrier-'.$token;
+        $ready = $barrier.'.ready';
+        @unlink($barrier);
+        @unlink($ready);
+        $worker = dirname(__DIR__, 2).DIRECTORY_SEPARATOR.'bin'.DIRECTORY_SEPARATOR.'posting-concurrency-worker.php';
+        $key = 'retry-lock-'.Uuid::v7();
+        foreach ([
+            'WALLETING_POSTING_LOCK_TIMEOUT_MS=100',
+            'WALLETING_POSTING_MAX_ATTEMPTS=3',
+            'WALLETING_POSTING_BASE_DELAY_MS=25',
+            'WALLETING_POSTING_MAX_DELAY_MS=50',
+        ] as $setting) {
+            putenv($setting);
+        }
+        $process = $this->startWorker([$worker, $accountAId, $accountBId, '100', $key, $barrier, $ready]);
+
+        try {
+            $this->awaitWorkersReady([$ready]);
+            touch($barrier);
+            usleep(150000);
+            $locker->commit();
+            $result = $this->finishWorker($process);
+        } finally {
+            if ($locker->isTransactionActive()) {
+                $locker->rollBack();
+            }
+            $locker->close();
+            foreach ([
+                'WALLETING_POSTING_LOCK_TIMEOUT_MS',
+                'WALLETING_POSTING_MAX_ATTEMPTS',
+                'WALLETING_POSTING_BASE_DELAY_MS',
+                'WALLETING_POSTING_MAX_DELAY_MS',
+            ] as $name) {
+                putenv($name);
+            }
+            @unlink($barrier);
+            @unlink($ready);
+        }
+
+        self::assertTrue($result['ok'], $result['error'] ?? 'Retry worker failed.');
+        self::assertSame(1, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM ledger_transaction WHERE idempotency_key = ?', [$key]));
     }
 
     /** @param list<string> $readyFiles */

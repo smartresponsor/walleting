@@ -17,12 +17,36 @@ final readonly class PostingDbalExecutor implements PostingExecutorInterface
     public function __construct(
         private Connection $connection,
         private OutboxService $outboxService,
+        private PostingRetryPolicy $retryPolicy,
+        private int $lockTimeoutMilliseconds = 1000,
     ) {
+        if ($lockTimeoutMilliseconds < 1 || $lockTimeoutMilliseconds > 60000) {
+            throw new \InvalidArgumentException('Posting lock timeout must be between 1 and 60000 milliseconds.');
+        }
     }
 
     public function execute(string $idempotencyKey, FinancialPostingRequest $request): string
     {
+        $attempt = 0;
+        while (true) {
+            ++$attempt;
+            try {
+                return $this->executeOnce($idempotencyKey, $request);
+            } catch (\Throwable $exception) {
+                if (!$this->retryPolicy->shouldRetry($exception, $attempt)) {
+                    throw $exception;
+                }
+
+                usleep($this->retryPolicy->delayMicroseconds($attempt));
+            }
+        }
+    }
+
+    private function executeOnce(string $idempotencyKey, FinancialPostingRequest $request): string
+    {
         return $this->connection->transactional(function (Connection $connection) use ($idempotencyKey, $request): string {
+            $connection->executeStatement('SET TRANSACTION ISOLATION LEVEL READ COMMITTED');
+            $connection->executeStatement(sprintf("SET LOCAL lock_timeout = '%dms'", $this->lockTimeoutMilliseconds));
             $accountIds = array_values(array_unique(array_map(
                 static fn (PostingInstruction $instruction): string => $instruction->account->id()->toRfc4122(),
                 $request->instructions,
