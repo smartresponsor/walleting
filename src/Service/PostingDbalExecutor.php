@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Service;
 
 use App\Enum\TransactionStatus;
-use App\Enum\TransactionType;
+use App\Ledger\FinancialPostingRequest;
 use App\Ledger\PostingInstruction;
 use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Connection;
@@ -20,18 +20,12 @@ final readonly class PostingDbalExecutor
     ) {
     }
 
-    /** @param non-empty-list<PostingInstruction> $instructions */
-    public function execute(
-        TransactionType $type,
-        string $idempotencyKey,
-        string $requestHash,
-        array $instructions,
-        array $metadata,
-    ): string {
-        return $this->connection->transactional(function (Connection $connection) use ($type, $idempotencyKey, $requestHash, $instructions, $metadata): string {
+    public function execute(string $idempotencyKey, FinancialPostingRequest $request): string
+    {
+        return $this->connection->transactional(function (Connection $connection) use ($idempotencyKey, $request): string {
             $accountIds = array_values(array_unique(array_map(
                 static fn (PostingInstruction $instruction): string => $instruction->account->id()->toRfc4122(),
-                $instructions,
+                $request->instructions,
             )));
             sort($accountIds, SORT_STRING);
 
@@ -44,33 +38,29 @@ final readonly class PostingDbalExecutor
                 throw new \RuntimeException('Every posting account must already exist before standalone posting.');
             }
 
-            return $this->insertPostedTransaction($connection, $type, $idempotencyKey, $requestHash, $instructions, $metadata);
+            return $this->insertPostedTransaction($connection, $idempotencyKey, $request);
         });
     }
 
-    /** @param non-empty-list<PostingInstruction> $instructions */
     private function insertPostedTransaction(
         Connection $connection,
-        TransactionType $type,
         string $idempotencyKey,
-        string $requestHash,
-        array $instructions,
-        array $metadata,
+        FinancialPostingRequest $request,
     ): string {
         $transactionId = Uuid::v7()->toRfc4122();
         $timestamp = (new \DateTimeImmutable())->format('Y-m-d H:i:s');
         $connection->insert('ledger_transaction', [
             'id' => $transactionId,
-            'type' => $type->value,
+            'type' => $request->type->value,
             'status' => TransactionStatus::Posted->value,
             'idempotency_key' => $idempotencyKey,
-            'request_hash' => $requestHash,
-            'metadata' => json_encode($metadata, JSON_THROW_ON_ERROR),
+            'request_hash' => $request->hash(),
+            'metadata' => json_encode($request->metadata, JSON_THROW_ON_ERROR),
             'created_at' => $timestamp,
             'posted_at' => $timestamp,
         ]);
 
-        foreach ($instructions as $index => $instruction) {
+        foreach ($request->instructions as $index => $instruction) {
             $connection->insert('posting', [
                 'id' => Uuid::v7()->toRfc4122(),
                 'transaction_id' => $transactionId,
@@ -84,10 +74,10 @@ final readonly class PostingDbalExecutor
 
         $this->outboxService->enqueueLedgerTransactionPostedDbal(
             $transactionId,
-            $type->value,
+            $request->type->value,
             $idempotencyKey,
-            $requestHash,
-            $metadata,
+            $request->hash(),
+            $request->metadata,
         );
 
         return $transactionId;

@@ -7,6 +7,7 @@ namespace App\Service;
 use App\Entity\LedgerTransaction;
 use App\Enum\TransactionStatus;
 use App\Enum\TransactionType;
+use App\Ledger\FinancialPostingRequest;
 use App\Ledger\PostingInstruction;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\ORM\EntityManagerInterface;
@@ -30,7 +31,8 @@ final readonly class PostingService
     ): LedgerTransaction {
         $idempotencyKey = trim($idempotencyKey);
         $this->validate($idempotencyKey, $instructions);
-        $requestHash = $this->requestHash($type, $instructions, $metadata);
+        $request = new FinancialPostingRequest($type, $instructions, $metadata);
+        $requestHash = $request->hash();
 
         $existing = $this->findExisting($idempotencyKey);
         if ($existing instanceof LedgerTransaction) {
@@ -40,13 +42,7 @@ final readonly class PostingService
         }
 
         try {
-            $transactionId = $this->postingDbalExecutor->execute(
-                $type,
-                $idempotencyKey,
-                $requestHash,
-                $instructions,
-                $metadata,
-            );
+            $transactionId = $this->postingDbalExecutor->execute($idempotencyKey, $request);
 
             $transaction = $this->entityManager->find(LedgerTransaction::class, Uuid::fromString($transactionId));
             if (!$transaction instanceof LedgerTransaction) {
@@ -71,7 +67,8 @@ final readonly class PostingService
     {
         $idempotencyKey = trim($idempotencyKey);
         $this->validate($idempotencyKey, $instructions);
-        $requestHash = $this->requestHash($type, $instructions, $metadata);
+        $request = new FinancialPostingRequest($type, $instructions, $metadata);
+        $requestHash = $request->hash();
 
         $existing = $this->findExisting($idempotencyKey);
         if ($existing instanceof LedgerTransaction) {
@@ -139,40 +136,11 @@ final readonly class PostingService
         return $this->entityManager->getRepository(LedgerTransaction::class)->findOneBy(['idempotencyKey' => $idempotencyKey]);
     }
 
-    /** @param non-empty-list<PostingInstruction> $instructions */
-    private function requestHash(TransactionType $type, array $instructions, array $metadata): string
-    {
-        $payload = [
-            'type' => $type->value,
-            'postings' => array_map(static fn (PostingInstruction $instruction): array => [
-                'account_id' => $instruction->account->id()->toRfc4122(),
-                'amount_minor' => $instruction->amountMinor,
-                'currency' => $instruction->account->currency(),
-            ], $instructions),
-            'metadata' => $this->normalize($metadata),
-        ];
-
-        return hash('sha256', json_encode($payload, JSON_THROW_ON_ERROR));
-    }
-
     private function assertSameRequest(LedgerTransaction $existing, string $requestHash): void
     {
         if (!hash_equals($existing->requestHash(), $requestHash)) {
             throw new \DomainException('Idempotency key is already bound to a different financial request.');
         }
-    }
-
-    private function normalize(array $value): array
-    {
-        ksort($value);
-        foreach ($value as &$item) {
-            if (is_array($item)) {
-                $item = $this->normalize($item);
-            }
-        }
-        unset($item);
-
-        return $value;
     }
 
     private function emitPosted(LedgerTransaction $transaction): void
