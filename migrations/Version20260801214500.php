@@ -16,7 +16,7 @@ final class Version20260801214500 extends AbstractMigration
 
     public function up(Schema $schema): void
     {
-        $this->abortIf('postgresql' !== $this->connection->getDatabasePlatform()->getName(), 'Walleting requires PostgreSQL.');
+        $this->abortIf(!$this->connection->getDatabasePlatform() instanceof \Doctrine\DBAL\Platforms\PostgreSQLPlatform, 'Walleting requires PostgreSQL.');
         $this->addSql("CREATE TABLE financial_operation_link (id UUID NOT NULL, operation_type VARCHAR(255) NOT NULL, source_transaction_id UUID NOT NULL, result_transaction_id UUID NOT NULL, reservation_id UUID DEFAULT NULL, created_at TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL, PRIMARY KEY(id), CONSTRAINT chk_financial_operation_type CHECK (operation_type IN ('capture', 'release', 'refund', 'reverse')), CONSTRAINT chk_financial_operation_reservation CHECK ((operation_type IN ('capture', 'release') AND reservation_id IS NOT NULL) OR (operation_type IN ('refund', 'reverse') AND reservation_id IS NULL)))");
         $this->addSql("CREATE UNIQUE INDEX uniq_financial_operation_source_type ON financial_operation_link (source_transaction_id, operation_type)");
         $this->addSql("CREATE UNIQUE INDEX uniq_financial_operation_result ON financial_operation_link (result_transaction_id)");

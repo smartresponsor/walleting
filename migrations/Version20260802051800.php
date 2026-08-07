@@ -13,7 +13,7 @@ final class Version20260802051800 extends AbstractMigration
 
     public function up(Schema $schema): void
     {
-        $this->abortIf('postgresql' !== $this->connection->getDatabasePlatform()->getName(), 'Walleting requires PostgreSQL.');
+        $this->abortIf(!$this->connection->getDatabasePlatform() instanceof \Doctrine\DBAL\Platforms\PostgreSQLPlatform, 'Walleting requires PostgreSQL.');
         $this->addSql("CREATE TABLE outbox_message (id UUID NOT NULL, ledger_transaction_id UUID DEFAULT NULL, provider_event_id UUID DEFAULT NULL, message_type VARCHAR(191) NOT NULL, deduplication_key VARCHAR(191) NOT NULL, payload JSON NOT NULL, payload_hash VARCHAR(64) NOT NULL, status VARCHAR(255) NOT NULL, attempt_count INT NOT NULL, available_at TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL, claimed_at TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT NULL, dispatched_at TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT NULL, last_error TEXT DEFAULT NULL, created_at TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL, PRIMARY KEY(id))");
         $this->addSql('CREATE UNIQUE INDEX uniq_outbox_deduplication_key ON outbox_message (deduplication_key)');
         $this->addSql('CREATE INDEX idx_outbox_dispatchable ON outbox_message (status, available_at, created_at)');

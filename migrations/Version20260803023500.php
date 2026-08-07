@@ -13,7 +13,7 @@ final class Version20260803023500 extends AbstractMigration
 
     public function up(Schema $schema): void
     {
-        $this->abortIf('postgresql' !== $this->connection->getDatabasePlatform()->getName(), 'Walleting requires PostgreSQL.');
+        $this->abortIf(!$this->connection->getDatabasePlatform() instanceof \Doctrine\DBAL\Platforms\PostgreSQLPlatform, 'Walleting requires PostgreSQL.');
         $this->addSql('ALTER TABLE outbox_message DROP CONSTRAINT chk_outbox_status');
         $this->addSql('ALTER TABLE outbox_message DROP CONSTRAINT chk_outbox_lifecycle');
         $this->addSql("ALTER TABLE outbox_message ADD CONSTRAINT chk_outbox_status CHECK (status IN ('pending', 'claimed', 'dispatched', 'failed', 'dead'))");

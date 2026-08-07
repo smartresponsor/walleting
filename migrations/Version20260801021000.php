@@ -16,7 +16,7 @@ final class Version20260801021000 extends AbstractMigration
 
     public function up(Schema $schema): void
     {
-        $this->abortIf('postgresql' !== $this->connection->getDatabasePlatform()->getName(), 'Walleting requires PostgreSQL.');
+        $this->abortIf(!$this->connection->getDatabasePlatform() instanceof \Doctrine\DBAL\Platforms\PostgreSQLPlatform, 'Walleting requires PostgreSQL.');
 
         $this->addSql("CREATE TABLE wallet (id UUID NOT NULL, owner_type VARCHAR(64) NOT NULL, owner_id VARCHAR(128) NOT NULL, status VARCHAR(255) NOT NULL, created_at TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL, PRIMARY KEY(id))");
         $this->addSql("CREATE UNIQUE INDEX uniq_wallet_owner ON wallet (owner_type, owner_id)");

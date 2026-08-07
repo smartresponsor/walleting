@@ -16,7 +16,7 @@ final class Version20260802013500 extends AbstractMigration
 
     public function up(Schema $schema): void
     {
-        $this->abortIf('postgresql' !== $this->connection->getDatabasePlatform()->getName(), 'Walleting requires PostgreSQL.');
+        $this->abortIf(!$this->connection->getDatabasePlatform() instanceof \Doctrine\DBAL\Platforms\PostgreSQLPlatform, 'Walleting requires PostgreSQL.');
 
         $this->addSql("ALTER TABLE account ADD allow_negative BOOLEAN NOT NULL DEFAULT TRUE");
         $this->addSql("UPDATE account SET allow_negative = FALSE WHERE category IN ('asset', 'reserve')");

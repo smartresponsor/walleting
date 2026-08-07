@@ -31,12 +31,7 @@
             "assets:install %PUBLIC_DIR%": "symfony-cmd"
         },
         "test": "phpunit",
-        "test:integration": [
-            "@php bin/console doctrine:database:create --if-not-exists --env=test",
-            "@php bin/console doctrine:migrations:migrate --no-interaction --env=test",
-            "@php bin/console doctrine:migrations:status --env=test",
-            "phpunit -c phpunit.integration.xml"
-        ],
+        "test:integration": "@php bin/test-integration.php",
         "lint": ["@php bin/console lint:container", "@php bin/console doctrine:schema:validate --skip-sync"]
     },
     "config": {

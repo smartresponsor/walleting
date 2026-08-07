@@ -13,7 +13,7 @@ final class Version20260802044200 extends AbstractMigration
 
     public function up(Schema $schema): void
     {
-        $this->abortIf('postgresql' !== $this->connection->getDatabasePlatform()->getName(), 'Walleting requires PostgreSQL.');
+        $this->abortIf(!$this->connection->getDatabasePlatform() instanceof \Doctrine\DBAL\Platforms\PostgreSQLPlatform, 'Walleting requires PostgreSQL.');
         $this->addSql('ALTER TABLE reconciliation_run ADD checked_count INT DEFAULT 0 NOT NULL');
         $this->addSql('ALTER TABLE reconciliation_run ADD matched_count INT DEFAULT 0 NOT NULL');
         $this->addSql('ALTER TABLE reconciliation_run ADD mismatch_count INT DEFAULT 0 NOT NULL');

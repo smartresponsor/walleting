@@ -16,7 +16,7 @@ final class Version20260802005500 extends AbstractMigration
 
     public function up(Schema $schema): void
     {
-        $this->abortIf('postgresql' !== $this->connection->getDatabasePlatform()->getName(), 'Walleting requires PostgreSQL.');
+        $this->abortIf(!$this->connection->getDatabasePlatform() instanceof \Doctrine\DBAL\Platforms\PostgreSQLPlatform, 'Walleting requires PostgreSQL.');
 
         $this->addSql("CREATE TABLE account_balance (account_id UUID NOT NULL, balance_minor BIGINT NOT NULL DEFAULT 0, currency VARCHAR(3) NOT NULL, posting_count BIGINT NOT NULL DEFAULT 0, updated_at TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL, PRIMARY KEY(account_id), CONSTRAINT chk_account_balance_posting_count_nonnegative CHECK (posting_count >= 0))");
         $this->addSql("ALTER TABLE account_balance ADD CONSTRAINT fk_account_balance_account FOREIGN KEY (account_id) REFERENCES account (id) ON DELETE RESTRICT NOT DEFERRABLE INITIALLY IMMEDIATE");

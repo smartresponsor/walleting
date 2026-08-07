@@ -16,7 +16,7 @@ final class Version20260807071100 extends AbstractMigration
 
     public function up(Schema $schema): void
     {
-        $this->abortIf('postgresql' !== $this->connection->getDatabasePlatform()->getName(), 'Walleting requires PostgreSQL.');
+        $this->abortIf(!$this->connection->getDatabasePlatform() instanceof \Doctrine\DBAL\Platforms\PostgreSQLPlatform, 'Walleting requires PostgreSQL.');
 
         $this->addSql('CREATE INDEX idx_posting_account_transaction ON posting (account_id, transaction_id)');
         $this->addSql('CREATE INDEX idx_posting_transaction_account ON posting (transaction_id, account_id)');

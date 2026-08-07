@@ -7,6 +7,7 @@ namespace App\Tests\Integration;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\DriverManager;
 use Doctrine\DBAL\Exception;
+use Doctrine\DBAL\ParameterType;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Uid\Uuid;
 
@@ -18,7 +19,7 @@ final class PostgreSqlLedgerInvariantTest extends KernelTestCase
     {
         self::bootKernel();
         $this->connection = self::getContainer()->get('doctrine.dbal.default_connection');
-        self::assertSame('postgresql', $this->connection->getDatabasePlatform()->getName());
+        self::assertInstanceOf(\Doctrine\DBAL\Platforms\PostgreSQLPlatform::class, $this->connection->getDatabasePlatform());
 
         $schema = $this->connection->createSchemaManager();
         foreach (['wallet', 'account', 'account_balance', 'ledger_transaction', 'posting', 'reservation', 'financial_operation_link'] as $table) {
@@ -176,7 +177,7 @@ final class PostgreSqlLedgerInvariantTest extends KernelTestCase
 
         $this->connection->insert('wallet', ['id' => $walletId, 'owner_type' => 'integration', 'owner_id' => Uuid::v7()->toRfc4122(), 'status' => 'active', 'created_at' => $now]);
         foreach ([[$accountA, 'asset', false], [$accountB, 'clearing', true]] as [$id, $category, $allowNegative]) {
-            $this->connection->insert('account', ['id' => $id, 'wallet_id' => $walletId, 'code' => $category.'-'.substr($id, 0, 8), 'currency' => 'USD', 'category' => $category, 'allow_negative' => $allowNegative, 'created_at' => $now]);
+            $this->connection->insert('account', ['id' => $id, 'wallet_id' => $walletId, 'code' => $category.'-'.substr($id, 0, 8), 'currency' => 'USD', 'category' => $category, 'allow_negative' => $allowNegative, 'created_at' => $now], ['allow_negative' => ParameterType::BOOLEAN]);
         }
 
         return [$walletId, $accountA, $accountB];

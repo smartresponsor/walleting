@@ -13,7 +13,7 @@ final class Version20260802034500 extends AbstractMigration
 
     public function up(Schema $schema): void
     {
-        $this->abortIf('postgresql' !== $this->connection->getDatabasePlatform()->getName(), 'Walleting requires PostgreSQL.');
+        $this->abortIf(!$this->connection->getDatabasePlatform() instanceof \Doctrine\DBAL\Platforms\PostgreSQLPlatform, 'Walleting requires PostgreSQL.');
         $this->addSql('ALTER TABLE provider_event ADD payload_hash VARCHAR(64) DEFAULT NULL');
         foreach ($this->connection->fetchAllAssociative('SELECT id, payload FROM provider_event') as $row) {
             $payload = json_decode((string) $row['payload'], true, 512, JSON_THROW_ON_ERROR);

@@ -6,3 +6,7 @@ framework:
     messenger:
         transports:
             async: 'in-memory://'
+
+when@test:
+    framework:
+        test: true

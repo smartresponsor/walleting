@@ -7,6 +7,7 @@ namespace App\Tests\Integration;
 use App\Entity\Account;
 use App\Service\StatementQueryService;
 use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\ParameterType;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Uid\Uuid;
@@ -21,7 +22,7 @@ final class PostgreSqlStatementQueryTest extends KernelTestCase
         self::bootKernel();
         $this->connection = self::getContainer()->get('doctrine.dbal.default_connection');
         $this->entityManager = self::getContainer()->get('doctrine.orm.entity_manager');
-        self::assertSame('postgresql', $this->connection->getDatabasePlatform()->getName());
+        self::assertInstanceOf(\Doctrine\DBAL\Platforms\PostgreSQLPlatform::class, $this->connection->getDatabasePlatform());
     }
 
     public function testStatementGroupingRunningBalanceDateFilteringAndCursorContinuity(): void
@@ -98,7 +99,7 @@ final class PostgreSqlStatementQueryTest extends KernelTestCase
             'category' => 'asset',
             'allow_negative' => false,
             'created_at' => $now,
-        ]);
+        ], ['allow_negative' => ParameterType::BOOLEAN]);
         $this->connection->insert('account', [
             'id' => $counterpartyId,
             'wallet_id' => $walletId,
@@ -107,7 +108,7 @@ final class PostgreSqlStatementQueryTest extends KernelTestCase
             'category' => 'clearing',
             'allow_negative' => true,
             'created_at' => $now,
-        ]);
+        ], ['allow_negative' => ParameterType::BOOLEAN]);
 
         return [$accountId, $counterpartyId];
     }
