@@ -9,8 +9,10 @@ use App\Entity\Wallet;
 use App\Enum\AccountCategory;
 use App\Service\LedgerQueryService;
 use Doctrine\DBAL\Connection;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\TestCase;
 
+#[AllowMockObjectsWithoutExpectations]
 final class LedgerQueryServiceTest extends TestCase
 {
     public function testHistoryReturnsDeterministicNextCursor(): void
