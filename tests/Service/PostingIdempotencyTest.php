@@ -40,7 +40,7 @@ final class PostingIdempotencyTest extends TestCase
         $service = new PostingService(
             $entityManager,
             $outboxService,
-            new PostingDbalExecutor($connection, $outboxService, new \App\Service\PostingRetryPolicy()),
+            new PostingDbalExecutor($connection, $outboxService, new \App\Service\PostingRetryPolicy(), new \App\Service\NullPostingTelemetry()),
         );
 
         $this->expectException(\DomainException::class);

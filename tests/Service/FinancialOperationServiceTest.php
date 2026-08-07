@@ -159,7 +159,7 @@ final class FinancialOperationServiceTest extends TestCase
         return new PostingService(
             $entityManager,
             $outboxService,
-            new PostingDbalExecutor($connection, $outboxService, new \App\Service\PostingRetryPolicy()),
+            new PostingDbalExecutor($connection, $outboxService, new \App\Service\PostingRetryPolicy(), new \App\Service\NullPostingTelemetry()),
         );
     }
 

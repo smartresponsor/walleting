@@ -25,6 +25,20 @@ final readonly class PostingRetryPolicy
         }
     }
 
+    public function retryReason(\Throwable $exception): ?string
+    {
+        if ($exception instanceof DriverException) {
+            return match ($exception->getSQLState()) {
+                '40001' => 'serialization_failure',
+                '40P01' => 'deadlock',
+                '55P03' => 'lock_timeout',
+                default => $exception instanceof RetryableException ? 'retryable_database_error' : null,
+            };
+        }
+
+        return $exception instanceof RetryableException ? 'retryable_database_error' : null;
+    }
+
     public function shouldRetry(\Throwable $exception, int $attempt): bool
     {
         if ($attempt < 1 || $attempt >= $this->maxAttempts) {

@@ -7,6 +7,7 @@ namespace App\Service;
 use App\Enum\TransactionStatus;
 use App\Ledger\FinancialPostingRequest;
 use App\Ledger\PostingInstruction;
+use App\Posting\PostingExecutionMetric;
 use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\ParameterType;
@@ -18,6 +19,7 @@ final readonly class PostingDbalExecutor implements PostingExecutorInterface
         private Connection $connection,
         private OutboxService $outboxService,
         private PostingRetryPolicy $retryPolicy,
+        private PostingTelemetryInterface $telemetry,
         private int $lockTimeoutMilliseconds = 1000,
     ) {
         if ($lockTimeoutMilliseconds < 1 || $lockTimeoutMilliseconds > 60000) {
@@ -27,18 +29,68 @@ final readonly class PostingDbalExecutor implements PostingExecutorInterface
 
     public function execute(string $idempotencyKey, FinancialPostingRequest $request): string
     {
+        $startedAt = hrtime(true);
         $attempt = 0;
         while (true) {
             ++$attempt;
+            $attemptStartedAt = hrtime(true);
             try {
-                return $this->executeOnce($idempotencyKey, $request);
+                $transactionId = $this->executeOnce($idempotencyKey, $request);
+                $attemptDuration = $this->elapsedMilliseconds($attemptStartedAt);
+                $this->recordMetric(new PostingExecutionMetric(
+                    'completed',
+                    $request->type->value,
+                    $attempt,
+                    $attempt - 1,
+                    null,
+                    $attemptDuration,
+                    $this->elapsedMilliseconds($startedAt),
+                    null,
+                ));
+
+                return $transactionId;
             } catch (\Throwable $exception) {
+                $attemptDuration = $this->elapsedMilliseconds($attemptStartedAt);
+                $reason = $this->retryPolicy->retryReason($exception);
                 if (!$this->retryPolicy->shouldRetry($exception, $attempt)) {
+                    $this->recordMetric(new PostingExecutionMetric(
+                        'failed',
+                        $request->type->value,
+                        $attempt,
+                        $attempt - 1,
+                        $reason,
+                        $attemptDuration,
+                        $this->elapsedMilliseconds($startedAt),
+                        'lock_timeout' === $reason ? $attemptDuration : null,
+                    ));
                     throw $exception;
                 }
 
+                $this->recordMetric(new PostingExecutionMetric(
+                    'retry',
+                    $request->type->value,
+                    $attempt,
+                    $attempt,
+                    $reason,
+                    $attemptDuration,
+                    $this->elapsedMilliseconds($startedAt),
+                    'lock_timeout' === $reason ? $attemptDuration : null,
+                ));
                 usleep($this->retryPolicy->delayMicroseconds($attempt));
             }
+        }
+    }
+
+    private function elapsedMilliseconds(int $startedAt): int
+    {
+        return max(0, (int) floor((hrtime(true) - $startedAt) / 1_000_000));
+    }
+
+    private function recordMetric(PostingExecutionMetric $metric): void
+    {
+        try {
+            $this->telemetry->record($metric);
+        } catch (\Throwable) {
         }
     }
 

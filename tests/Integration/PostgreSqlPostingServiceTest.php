@@ -42,7 +42,7 @@ final class PostgreSqlPostingServiceTest extends KernelTestCase
         $service = new PostingService(
             $this->entityManager,
             $outboxService,
-            new PostingDbalExecutor($this->connection, $outboxService, new PostingRetryPolicy()),
+            new PostingDbalExecutor($this->connection, $outboxService, new PostingRetryPolicy(), new \App\Service\NullPostingTelemetry()),
         );
         $key = 'dbal-hot-path-'.Uuid::v7();
         $instructions = [

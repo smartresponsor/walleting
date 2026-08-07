@@ -18,8 +18,12 @@ final class PostingRetryPolicyTest extends TestCase
     {
         $policy = new PostingRetryPolicy(maxAttempts: 3, baseDelayMilliseconds: 10, maxDelayMilliseconds: 100);
 
-        self::assertTrue($policy->shouldRetry(new DeadlockException($this->driverException('40P01'), null), 1));
-        self::assertTrue($policy->shouldRetry(new DeadlockException($this->driverException('40001'), null), 2));
+        $deadlock = new DeadlockException($this->driverException('40P01'), null);
+        $serialization = new DeadlockException($this->driverException('40001'), null);
+        self::assertSame('deadlock', $policy->retryReason($deadlock));
+        self::assertSame('serialization_failure', $policy->retryReason($serialization));
+        self::assertTrue($policy->shouldRetry($deadlock, 1));
+        self::assertTrue($policy->shouldRetry($serialization, 2));
         self::assertFalse($policy->shouldRetry(new DeadlockException($this->driverException('40P01'), null), 3));
     }
 
@@ -28,6 +32,7 @@ final class PostingRetryPolicyTest extends TestCase
         $policy = new PostingRetryPolicy();
         $exception = new DriverException($this->driverException('55P03'), null);
 
+        self::assertSame('lock_timeout', $policy->retryReason($exception));
         self::assertTrue($policy->shouldRetry($exception, 1));
     }
 

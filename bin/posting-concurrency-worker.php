@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Entity\Account;
 use App\Kernel;
 use App\Ledger\PostingInstruction;
+use App\Service\NullPostingTelemetry;
 use App\Service\OutboxService;
 use App\Service\PostingDbalExecutor;
 use App\Service\PostingRetryPolicy;
@@ -66,6 +67,7 @@ try {
             $connection,
             $outboxService,
             $retryPolicy,
+            new NullPostingTelemetry(),
             (int) (getenv('WALLETING_POSTING_LOCK_TIMEOUT_MS') ?: 1000),
         ),
     );
