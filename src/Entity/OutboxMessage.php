@@ -159,5 +159,6 @@ class OutboxMessage
     public function status(): OutboxMessageStatus { return $this->status; }
     public function attemptCount(): int { return $this->attemptCount; }
     public function availableAt(): \DateTimeImmutable { return $this->availableAt; }
+    public function createdAt(): \DateTimeImmutable { return $this->createdAt; }
     public function lastError(): ?string { return $this->lastError; }
 }

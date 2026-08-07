@@ -21,7 +21,11 @@ final class MessengerOutboxMessageHandlerTest extends TestCase
     public function testHandlerPublishesTransportNeutralOutboxEvent(): void
     {
         $transaction = $this->transaction();
-        $message = new OutboxMessage('wallet.funding.succeeded', 'funding:123', ['amount' => 1250, 'currency' => 'USD'], $transaction);
+        $message = new OutboxMessage('wallet.funding.succeeded', 'funding:123', [
+            'amount' => 1250,
+            'currency' => 'USD',
+            'metadata' => ['correlation_id' => 'corr-123', 'causation_id' => 'cause-456'],
+        ], $transaction);
 
         $bus = $this->createMock(MessageBusInterface::class);
         $bus->expects(self::once())
@@ -31,9 +35,18 @@ final class MessengerOutboxMessageHandlerTest extends TestCase
                 self::assertSame($message->id()->toRfc4122(), $published->messageId);
                 self::assertSame('wallet.funding.succeeded', $published->type);
                 self::assertSame('funding:123', $published->deduplicationKey);
-                self::assertSame(['amount' => 1250, 'currency' => 'USD'], $published->payload);
+                self::assertSame([
+                    'amount' => 1250,
+                    'currency' => 'USD',
+                    'metadata' => ['correlation_id' => 'corr-123', 'causation_id' => 'cause-456'],
+                ], $published->payload);
                 self::assertSame($transaction->id()->toRfc4122(), $published->ledgerTransactionId);
                 self::assertNull($published->providerEventExternalId);
+                self::assertSame(OutboxEvent::SCHEMA_VERSION, $published->schemaVersion);
+                self::assertSame(OutboxEvent::SOURCE, $published->source);
+                self::assertSame($message->createdAt()->format(DATE_ATOM), $published->occurredAt);
+                self::assertSame('corr-123', $published->correlationId);
+                self::assertSame('cause-456', $published->causationId);
 
                 return true;
             }))
