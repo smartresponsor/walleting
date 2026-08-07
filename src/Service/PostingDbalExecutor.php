@@ -12,7 +12,7 @@ use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\ParameterType;
 use Symfony\Component\Uid\Uuid;
 
-final readonly class PostingDbalExecutor
+final readonly class PostingDbalExecutor implements PostingExecutorInterface
 {
     public function __construct(
         private Connection $connection,

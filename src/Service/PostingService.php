@@ -18,7 +18,7 @@ final readonly class PostingService
     public function __construct(
         private EntityManagerInterface $entityManager,
         private OutboxService $outboxService,
-        private PostingDbalExecutor $postingDbalExecutor,
+        private PostingExecutorInterface $postingExecutor,
     ) {
     }
 
@@ -42,7 +42,7 @@ final readonly class PostingService
         }
 
         try {
-            $transactionId = $this->postingDbalExecutor->execute($idempotencyKey, $request);
+            $transactionId = $this->postingExecutor->execute($idempotencyKey, $request);
 
             $transaction = $this->entityManager->find(LedgerTransaction::class, Uuid::fromString($transactionId));
             if (!$transaction instanceof LedgerTransaction) {
