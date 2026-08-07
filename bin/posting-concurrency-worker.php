@@ -6,6 +6,7 @@ use App\Entity\Account;
 use App\Kernel;
 use App\Ledger\PostingInstruction;
 use App\Service\OutboxService;
+use App\Service\PostingDbalExecutor;
 use App\Service\PostingService;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
@@ -51,10 +52,11 @@ try {
         throw new RuntimeException('Posting worker accounts could not be loaded.');
     }
 
+    $outboxService = new OutboxService($entityManager, $connection);
     $service = new PostingService(
         $entityManager,
-        new OutboxService($entityManager, $connection),
-        $connection,
+        $outboxService,
+        new PostingDbalExecutor($connection, $outboxService),
     );
 
     $transaction = $service->transfer($idempotencyKey, [

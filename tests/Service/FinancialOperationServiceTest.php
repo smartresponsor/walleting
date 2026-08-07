@@ -17,7 +17,10 @@ use App\Enum\TransactionType;
 use App\Enum\WithdrawalStatus;
 use App\Ledger\PostingInstruction;
 use App\Service\FinancialOperationService;
+use App\Service\OutboxService;
+use App\Service\PostingDbalExecutor;
 use App\Service\PostingService;
+use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\EntityRepository;
 use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
@@ -30,7 +33,7 @@ final class FinancialOperationServiceTest extends TestCase
     public function testReserveAndCaptureUseSingleManagedTransactionBoundary(): void
     {
         $entityManager = $this->entityManager();
-        $service = new FinancialOperationService($entityManager, new PostingService($entityManager));
+        $service = new FinancialOperationService($entityManager, $this->postingService($entityManager));
         $wallet = new Wallet('vendor', 'vendor-1');
         $available = new Account($wallet, 'available', 'USD', AccountCategory::Asset);
         $reserved = new Account($wallet, 'reserved', 'USD', AccountCategory::Reserve);
@@ -52,7 +55,7 @@ final class FinancialOperationServiceTest extends TestCase
     public function testReservationSettlementRejectsMismatchedAmount(): void
     {
         $entityManager = $this->entityManager();
-        $service = new FinancialOperationService($entityManager, new PostingService($entityManager));
+        $service = new FinancialOperationService($entityManager, $this->postingService($entityManager));
         $wallet = new Wallet('vendor', 'vendor-reservation-mismatch');
         $available = new Account($wallet, 'available', 'USD', AccountCategory::Asset);
         $reserved = new Account($wallet, 'reserved', 'USD', AccountCategory::Reserve);
@@ -71,7 +74,7 @@ final class FinancialOperationServiceTest extends TestCase
     public function testFundingReversalRejectsDifferentPostingTopology(): void
     {
         $entityManager = $this->entityManager();
-        $service = new FinancialOperationService($entityManager, new PostingService($entityManager));
+        $service = new FinancialOperationService($entityManager, $this->postingService($entityManager));
         $wallet = new Wallet('vendor', 'vendor-reversal-mismatch');
         $cash = new Account($wallet, 'cash', 'USD', AccountCategory::Asset);
         $clearing = new Account($wallet, 'clearing', 'USD', AccountCategory::Clearing);
@@ -93,7 +96,7 @@ final class FinancialOperationServiceTest extends TestCase
     public function testFundingAndWithdrawalReversalsRecordLedgerTransactions(): void
     {
         $entityManager = $this->entityManager();
-        $service = new FinancialOperationService($entityManager, new PostingService($entityManager));
+        $service = new FinancialOperationService($entityManager, $this->postingService($entityManager));
         $wallet = new Wallet('vendor', 'vendor-reversal');
         $cash = new Account($wallet, 'cash', 'USD', AccountCategory::Asset);
         $clearing = new Account($wallet, 'clearing', 'USD', AccountCategory::Clearing);
@@ -136,7 +139,7 @@ final class FinancialOperationServiceTest extends TestCase
             $callback();
             throw new \RuntimeException('commit failed');
         });
-        $service = new FinancialOperationService($entityManager, new PostingService($entityManager));
+        $service = new FinancialOperationService($entityManager, $this->postingService($entityManager));
         $wallet = new Wallet('vendor', 'vendor-1');
         $available = new Account($wallet, 'available', 'USD', AccountCategory::Asset);
         $reserved = new Account($wallet, 'reserved', 'USD', AccountCategory::Reserve);
@@ -146,6 +149,18 @@ final class FinancialOperationServiceTest extends TestCase
             new PostingInstruction($available, -500),
             new PostingInstruction($reserved, 500),
         ]);
+    }
+
+    private function postingService(EntityManagerInterface $entityManager): PostingService
+    {
+        $connection = $this->createStub(Connection::class);
+        $outboxService = new OutboxService($entityManager, $connection);
+
+        return new PostingService(
+            $entityManager,
+            $outboxService,
+            new PostingDbalExecutor($connection, $outboxService),
+        );
     }
 
     private function entityManager(): EntityManagerInterface&MockObject

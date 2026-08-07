@@ -8,6 +8,7 @@ use App\Entity\Account;
 use App\Enum\TransactionStatus;
 use App\Ledger\PostingInstruction;
 use App\Service\OutboxService;
+use App\Service\PostingDbalExecutor;
 use App\Service\PostingService;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\ParameterType;
@@ -36,10 +37,11 @@ final class PostgreSqlPostingServiceTest extends KernelTestCase
         self::assertInstanceOf(Account::class, $asset);
         self::assertInstanceOf(Account::class, $clearing);
 
+        $outboxService = new OutboxService($this->entityManager, $this->connection);
         $service = new PostingService(
             $this->entityManager,
-            new OutboxService($this->entityManager, $this->connection),
-            $this->connection,
+            $outboxService,
+            new PostingDbalExecutor($this->connection, $outboxService),
         );
         $key = 'dbal-hot-path-'.Uuid::v7();
         $instructions = [

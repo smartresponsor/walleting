@@ -10,7 +10,10 @@ use App\Entity\Wallet;
 use App\Enum\AccountCategory;
 use App\Enum\TransactionType;
 use App\Ledger\PostingInstruction;
+use App\Service\OutboxService;
+use App\Service\PostingDbalExecutor;
 use App\Service\PostingService;
+use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\EntityRepository;
 use PHPUnit\Framework\TestCase;
@@ -32,7 +35,13 @@ final class PostingIdempotencyTest extends TestCase
         $repository->method('findOneBy')->willReturn($existing);
         $entityManager = $this->createStub(EntityManagerInterface::class);
         $entityManager->method('getRepository')->willReturn($repository);
-        $service = new PostingService($entityManager);
+        $connection = $this->createStub(Connection::class);
+        $outboxService = new OutboxService($entityManager, $connection);
+        $service = new PostingService(
+            $entityManager,
+            $outboxService,
+            new PostingDbalExecutor($connection, $outboxService),
+        );
 
         $this->expectException(\DomainException::class);
         $this->expectExceptionMessage('Idempotency key is already bound to a different financial request.');

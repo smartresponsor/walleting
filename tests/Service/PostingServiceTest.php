@@ -8,7 +8,10 @@ use App\Entity\Account;
 use App\Entity\Wallet;
 use App\Enum\AccountCategory;
 use App\Ledger\PostingInstruction;
+use App\Service\OutboxService;
+use App\Service\PostingDbalExecutor;
 use App\Service\PostingService;
+use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\TestCase;
 
@@ -16,7 +19,7 @@ final class PostingServiceTest extends TestCase
 {
     public function testUnbalancedInstructionsAreRejected(): void
     {
-        $service = new PostingService($this->createStub(EntityManagerInterface::class));
+        $service = $this->service();
         $wallet = new Wallet('vendor', 'vendor-1');
         $cash = new Account($wallet, 'cash', 'USD', AccountCategory::Asset);
         $clearing = new Account($wallet, 'clearing', 'USD', AccountCategory::Clearing);
@@ -30,7 +33,7 @@ final class PostingServiceTest extends TestCase
 
     public function testCrossCurrencyInstructionsAreRejected(): void
     {
-        $service = new PostingService($this->createStub(EntityManagerInterface::class));
+        $service = $this->service();
         $wallet = new Wallet('vendor', 'vendor-1');
         $usd = new Account($wallet, 'cash-usd', 'USD', AccountCategory::Asset);
         $eur = new Account($wallet, 'cash-eur', 'EUR', AccountCategory::Asset);
@@ -49,5 +52,18 @@ final class PostingServiceTest extends TestCase
 
         $this->expectException(\InvalidArgumentException::class);
         new PostingInstruction($account, 0);
+    }
+
+    private function service(): PostingService
+    {
+        $entityManager = $this->createStub(EntityManagerInterface::class);
+        $connection = $this->createStub(Connection::class);
+        $outboxService = new OutboxService($entityManager, $connection);
+
+        return new PostingService(
+            $entityManager,
+            $outboxService,
+            new PostingDbalExecutor($connection, $outboxService),
+        );
     }
 }
