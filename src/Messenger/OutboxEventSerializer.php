@@ -22,6 +22,11 @@ final class OutboxEventSerializer implements SerializerInterface
             throw new \InvalidArgumentException('Encoded outbox envelope body must decode to an object.');
         }
 
+        $schemaVersion = $this->requiredInt($data, 'schema_version');
+        if (OutboxEvent::SCHEMA_VERSION !== $schemaVersion) {
+            throw new \InvalidArgumentException(sprintf('Unsupported outbox event schema version %d; supported version is %d.', $schemaVersion, OutboxEvent::SCHEMA_VERSION));
+        }
+
         $event = new OutboxEvent(
             messageId: $this->requiredString($data, 'message_id'),
             type: $this->requiredString($data, 'type'),
@@ -29,7 +34,7 @@ final class OutboxEventSerializer implements SerializerInterface
             payload: $this->requiredArray($data, 'payload'),
             ledgerTransactionId: $this->nullableString($data, 'ledger_transaction_id'),
             providerEventExternalId: $this->nullableString($data, 'provider_event_external_id'),
-            schemaVersion: $this->requiredInt($data, 'schema_version'),
+            schemaVersion: $schemaVersion,
             source: $this->requiredString($data, 'source'),
             occurredAt: $this->nullableString($data, 'occurred_at'),
             correlationId: $this->nullableString($data, 'correlation_id'),

@@ -11,6 +11,20 @@ use Symfony\Component\Messenger\Envelope;
 
 final class OutboxEventSerializerTest extends TestCase
 {
+    public function testCanonicalV1FixtureDecodesAsCurrentContract(): void
+    {
+        $fixture = file_get_contents(__DIR__.'/../Fixtures/outbox-event-v1.json');
+        self::assertIsString($fixture);
+
+        $message = (new OutboxEventSerializer())->decode(['body' => $fixture, 'headers' => []])->getMessage();
+        self::assertInstanceOf(OutboxEvent::class, $message);
+        self::assertSame(OutboxEvent::SCHEMA_VERSION, $message->schemaVersion);
+        self::assertSame(OutboxEvent::SOURCE, $message->source);
+        self::assertSame('0198-contract-v1', $message->messageId);
+        self::assertSame('wallet.funding.succeeded', $message->type);
+        self::assertSame(['amount' => 1250, 'currency' => 'USD'], $message->payload);
+    }
+
     public function testEncodeUsesStableExternalJsonContract(): void
     {
         $serializer = new OutboxEventSerializer();
@@ -45,6 +59,31 @@ final class OutboxEventSerializerTest extends TestCase
             'provider_event_external_id' => null,
             'payload' => ['amount' => 1250, 'currency' => 'USD'],
         ], $body);
+    }
+
+    public function testDecodeRejectsUnsupportedFutureSchemaVersion(): void
+    {
+        $serializer = new OutboxEventSerializer();
+        $encoded = [
+            'body' => json_encode([
+                'schema_version' => 2,
+                'source' => 'walleting',
+                'message_id' => '0198-future',
+                'type' => 'wallet.future.event',
+                'deduplication_key' => 'future:1',
+                'occurred_at' => '2026-08-07T01:04:00-05:00',
+                'correlation_id' => null,
+                'causation_id' => null,
+                'ledger_transaction_id' => null,
+                'provider_event_external_id' => 'evt-future',
+                'payload' => [],
+            ], JSON_THROW_ON_ERROR),
+            'headers' => [],
+        ];
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Unsupported outbox event schema version 2; supported version is 1.');
+        $serializer->decode($encoded);
     }
 
     public function testDecodeReconstructsOutboxEvent(): void
