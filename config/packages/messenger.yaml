@@ -1,7 +1,9 @@
 framework:
     messenger:
         transports:
-            outbox_events: '%env(MESSENGER_TRANSPORT_DSN)%'
+            outbox_events:
+                dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
+                serializer: App\Messenger\OutboxEventSerializer
 
         routing:
             App\Message\OutboxEvent: outbox_events
@@ -9,3 +11,7 @@ framework:
 when@test:
     framework:
         messenger:
+            transports:
+                outbox_events:
+                    dsn: 'in-memory://'
+                    serializer: App\Messenger\OutboxEventSerializer
