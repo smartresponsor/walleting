@@ -48,6 +48,50 @@ final readonly class OutboxService
         return $message;
     }
 
+    public function enqueueLedgerTransactionPostedDbal(
+        string $transactionId,
+        string $transactionType,
+        string $idempotencyKey,
+        string $requestHash,
+        array $metadata,
+    ): void {
+        if (!$this->connection->isTransactionActive()) {
+            throw new \LogicException('DBAL outbox enqueue requires an active database transaction.');
+        }
+
+        $transactionId = trim($transactionId);
+        if ('' === $transactionId || '' === trim($transactionType) || '' === trim($idempotencyKey) || 1 !== preg_match('/^[a-f0-9]{64}$/', $requestHash)) {
+            throw new \InvalidArgumentException('Posted outbox transaction identity is invalid.');
+        }
+
+        $payload = [
+            'transaction_id' => $transactionId,
+            'transaction_type' => $transactionType,
+            'idempotency_key' => $idempotencyKey,
+            'request_hash' => $requestHash,
+            'metadata' => $metadata,
+        ];
+        $normalizedPayload = $this->normalizePayload($payload);
+        $now = new \DateTimeImmutable();
+
+        $this->connection->insert('outbox_message', [
+            'id' => Uuid::v7()->toRfc4122(),
+            'ledger_transaction_id' => $transactionId,
+            'provider_event_id' => null,
+            'message_type' => 'ledger.transaction.posted',
+            'deduplication_key' => 'ledger.transaction.posted:'.$transactionId,
+            'payload' => json_encode($payload, JSON_THROW_ON_ERROR),
+            'payload_hash' => hash('sha256', json_encode($normalizedPayload, JSON_THROW_ON_ERROR)),
+            'status' => 'pending',
+            'attempt_count' => 0,
+            'available_at' => $now->format('Y-m-d H:i:s'),
+            'claimed_at' => null,
+            'dispatched_at' => null,
+            'last_error' => null,
+            'created_at' => $now->format('Y-m-d H:i:s'),
+        ]);
+    }
+
     /** @return list<OutboxMessage> */
     public function claimBatch(int $limit): array
     {
@@ -145,5 +189,18 @@ final readonly class OutboxService
             $message->markDead($error);
             $this->entityManager->flush();
         });
+    }
+
+    private function normalizePayload(array $value): array
+    {
+        ksort($value);
+        foreach ($value as &$item) {
+            if (is_array($item)) {
+                $item = $this->normalizePayload($item);
+            }
+        }
+        unset($item);
+
+        return $value;
     }
 }
