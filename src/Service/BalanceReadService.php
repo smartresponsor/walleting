@@ -6,6 +6,7 @@ namespace App\Service;
 
 use App\Balance\AccountBalanceReconciliation;
 use App\Balance\AccountBalanceSnapshot;
+use App\Balance\WalletBalanceSnapshot;
 use App\Balance\WalletCurrencyBalanceSnapshot;
 use App\Entity\Account;
 use App\Entity\Wallet;
@@ -36,6 +37,11 @@ final readonly class BalanceReadService
             (int) $row['posting_count'],
             null === $row['updated_at'] ? null : new \DateTimeImmutable((string) $row['updated_at']),
         );
+    }
+
+    public function walletSnapshot(Wallet $wallet): WalletBalanceSnapshot
+    {
+        return new WalletBalanceSnapshot($wallet->id()->toRfc4122(), $this->wallet($wallet));
     }
 
     /** @return list<WalletCurrencyBalanceSnapshot> */
