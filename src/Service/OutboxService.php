@@ -170,6 +170,35 @@ final readonly class OutboxService
     }
 
     /** @return list<array<string, mixed>> */
+    /** @return array<string, mixed> */
+    public function inspect(string $messageId): array
+    {
+        $messageId = trim($messageId);
+        if ('' === $messageId) {
+            throw new \InvalidArgumentException('Outbox message id is required.');
+        }
+
+        $message = $this->connection->fetchAssociative(
+            'SELECT id, ledger_transaction_id, provider_event_id, message_type, deduplication_key, payload, payload_hash, status, attempt_count, available_at, claimed_at, dispatched_at, last_error, created_at FROM outbox_message WHERE id = ? LIMIT 1',
+            [$messageId],
+        );
+        if (false === $message) {
+            throw new \RuntimeException('Outbox message was not found.');
+        }
+
+        $payload = json_decode((string) $message['payload'], true, 512, JSON_THROW_ON_ERROR);
+        if (!is_array($payload)) {
+            throw new \RuntimeException('Outbox payload must decode to an object or array.');
+        }
+        $message['payload'] = $payload;
+        $message['requeue_history'] = $this->connection->fetchAllAssociative(
+            'SELECT id, attempt_count, operator, reason, previous_error, created_at FROM outbox_requeue_audit WHERE outbox_message_id = ? ORDER BY created_at, id',
+            [$messageId],
+        );
+
+        return $message;
+    }
+
     public function deadLetters(int $limit): array
     {
         if ($limit < 1 || $limit > 500) {
