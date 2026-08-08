@@ -48,6 +48,15 @@ class FinancialOperationLink implements ObjectRelationEntityInterface
         if (in_array($operationType, [TransactionType::Refund, TransactionType::Reverse], true) && null !== $reservation) {
             throw new \InvalidArgumentException('Refund and reverse links cannot reference a reservation.');
         }
+        if ($resultTransaction->type() !== $operationType) {
+            throw new \InvalidArgumentException('Linked result transaction type must match the operation type.');
+        }
+        if (in_array($operationType, [TransactionType::Capture, TransactionType::Release], true) && TransactionType::Reserve !== $sourceTransaction->type()) {
+            throw new \InvalidArgumentException('Capture and release links must originate from a reserve transaction.');
+        }
+        if (in_array($operationType, [TransactionType::Refund, TransactionType::Reverse], true) && in_array($sourceTransaction->type(), [TransactionType::Refund, TransactionType::Reverse], true)) {
+            throw new \InvalidArgumentException('Refund and reverse cannot originate from an inverse transaction.');
+        }
         if (null !== $reservation && $reservation->reserveTransaction() !== $sourceTransaction) {
             throw new \InvalidArgumentException('Reservation source transaction does not match.');
         }

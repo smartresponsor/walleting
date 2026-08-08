@@ -53,6 +53,7 @@ final readonly class FinancialOperationService
     /** @param non-empty-list<PostingInstruction> $instructions */
     public function refund(LedgerTransaction $original, string $idempotencyKey, array $instructions): LedgerTransaction
     {
+        $this->assertInverseSourceAllowed($original);
         $this->assertExactInverse($original, $instructions);
 
         return $this->linkedPosting(TransactionType::Refund, $original, $idempotencyKey, $instructions);
@@ -61,6 +62,7 @@ final readonly class FinancialOperationService
     /** @param non-empty-list<PostingInstruction> $instructions */
     public function reverse(LedgerTransaction $original, string $idempotencyKey, array $instructions): LedgerTransaction
     {
+        $this->assertInverseSourceAllowed($original);
         $this->assertExactInverse($original, $instructions);
 
         return $this->linkedPosting(TransactionType::Reverse, $original, $idempotencyKey, $instructions);
@@ -146,6 +148,13 @@ final readonly class FinancialOperationService
 
             return $transaction;
         });
+    }
+
+    private function assertInverseSourceAllowed(LedgerTransaction $original): void
+    {
+        if (in_array($original->type(), [TransactionType::Refund, TransactionType::Reverse], true)) {
+            throw new \DomainException('Refund and reverse cannot originate from an inverse transaction.');
+        }
     }
 
     /** @param non-empty-list<PostingInstruction> $instructions */

@@ -131,6 +131,17 @@ final class FinancialOperationServiceTest extends TestCase
         self::assertSame($withdrawalReversal, $withdrawal->reversalTransaction());
     }
 
+    public function testRefundRejectsInverseSourceBeforePosting(): void
+    {
+        $entityManager = $this->entityManager();
+        $service = new FinancialOperationService($entityManager, $this->postingService($entityManager));
+        $source = new \App\Entity\LedgerTransaction(TransactionType::Reverse, 'inverse-source-service');
+
+        $this->expectException(\DomainException::class);
+        $this->expectExceptionMessage('Refund and reverse cannot originate from an inverse transaction.');
+        $service->refund($source, 'inverse-source-refund', []);
+    }
+
     public function testTransactionFailurePropagatesWithoutReturningPartialResult(): void
     {
         $entityManager = $this->createMock(EntityManagerInterface::class);

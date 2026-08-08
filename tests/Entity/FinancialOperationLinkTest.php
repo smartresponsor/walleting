@@ -30,6 +30,26 @@ final class FinancialOperationLinkTest extends TestCase
         self::assertSame($reservation, $link->reservation());
     }
 
+    public function testResultTransactionTypeMustMatchLinkedOperation(): void
+    {
+        $source = new LedgerTransaction(TransactionType::Credit, 'source-result-mismatch');
+        $result = new LedgerTransaction(TransactionType::Reverse, 'result-result-mismatch');
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Linked result transaction type must match the operation type.');
+        new FinancialOperationLink(TransactionType::Refund, $source, $result);
+    }
+
+    public function testInverseOperationRejectsInverseSourceTransaction(): void
+    {
+        $source = new LedgerTransaction(TransactionType::Refund, 'source-inverse');
+        $result = new LedgerTransaction(TransactionType::Reverse, 'result-inverse');
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Refund and reverse cannot originate from an inverse transaction.');
+        new FinancialOperationLink(TransactionType::Reverse, $source, $result);
+    }
+
     public function testRefundRejectsReservationAssociation(): void
     {
         $wallet = new Wallet('vendor', 'vendor-1');
