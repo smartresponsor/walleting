@@ -236,7 +236,11 @@ final class PostgreSqlPostingServiceTest extends KernelTestCase
             'owner_type' => 'posting-service-concurrency',
             'owner_id' => Uuid::v7()->toRfc4122(),
             'status' => 'active',
-            'created_at' => $now,
+            'object_uuid' => Uuid::fromString($walletId)->toBinary(),
+            'object_slug' => 'wallet:'.$walletId,
+            'object_first_title' => 'posting-service-concurrency',
+            'object_created_at' => $now,
+            'object_status' => 'active',
         ]);
         foreach ([
             [$accountAId, 'asset-a', 'asset', false],
@@ -250,7 +254,11 @@ final class PostgreSqlPostingServiceTest extends KernelTestCase
                 'currency' => 'USD',
                 'category' => $category,
                 'allow_negative' => $allowNegative,
-                'created_at' => $now,
+                'object_uuid' => Uuid::fromString((string) $id)->toBinary(),
+                'object_slug' => 'account:'.$id,
+                'object_first_title' => $code,
+                'object_created_at' => $now,
+                'object_status' => 'active',
             ], ['allow_negative' => ParameterType::BOOLEAN]);
         }
 
@@ -303,7 +311,11 @@ final class PostgreSqlPostingServiceTest extends KernelTestCase
             'owner_type' => 'posting-service-integration',
             'owner_id' => Uuid::v7()->toRfc4122(),
             'status' => 'active',
-            'created_at' => $now,
+            'object_uuid' => Uuid::fromString($walletId)->toBinary(),
+            'object_slug' => 'wallet:'.$walletId,
+            'object_first_title' => 'posting-service-integration',
+            'object_created_at' => $now,
+            'object_status' => 'active',
         ]);
         $this->connection->insert('account', [
             'id' => $assetId,
@@ -312,8 +324,12 @@ final class PostgreSqlPostingServiceTest extends KernelTestCase
             'currency' => 'USD',
             'category' => 'asset',
             'allow_negative' => false,
-            'created_at' => $now,
-        ], ['allow_negative' => ParameterType::BOOLEAN]);
+            'object_uuid' => Uuid::fromString($assetId)->toBinary(),
+            'object_slug' => 'account:'.$assetId,
+            'object_first_title' => 'cash',
+            'object_created_at' => $now,
+            'object_status' => 'active',
+        ], ['allow_negative' => ParameterType::BOOLEAN, 'object_uuid' => ParameterType::BINARY]);
         $this->connection->insert('account', [
             'id' => $clearingId,
             'wallet_id' => $walletId,
@@ -321,8 +337,12 @@ final class PostgreSqlPostingServiceTest extends KernelTestCase
             'currency' => 'USD',
             'category' => 'clearing',
             'allow_negative' => true,
-            'created_at' => $now,
-        ], ['allow_negative' => ParameterType::BOOLEAN]);
+            'object_uuid' => Uuid::fromString($clearingId)->toBinary(),
+            'object_slug' => 'account:'.$clearingId,
+            'object_first_title' => 'clearing',
+            'object_created_at' => $now,
+            'object_status' => 'active',
+        ], ['allow_negative' => ParameterType::BOOLEAN, 'object_uuid' => ParameterType::BINARY]);
 
         return [$assetId, $clearingId];
     }

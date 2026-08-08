@@ -140,8 +140,12 @@ final class PostgreSqlConcurrencyTest extends KernelTestCase
             'owner_type' => 'concurrency',
             'owner_id' => Uuid::v7()->toRfc4122(),
             'status' => 'active',
-            'created_at' => $now,
-        ]);
+            'object_uuid' => Uuid::fromString($walletId)->toBinary(),
+            'object_slug' => 'wallet:'.$walletId,
+            'object_first_title' => 'concurrency',
+            'object_created_at' => $now,
+            'object_status' => 'active',
+        ], ['object_uuid' => ParameterType::BINARY]);
         $this->connection->insert('account', [
             'id' => $assetAccount,
             'wallet_id' => $walletId,
@@ -149,8 +153,12 @@ final class PostgreSqlConcurrencyTest extends KernelTestCase
             'currency' => 'USD',
             'category' => 'asset',
             'allow_negative' => false,
-            'created_at' => $now,
-        ], ['allow_negative' => ParameterType::BOOLEAN]);
+            'object_uuid' => Uuid::fromString($assetAccount)->toBinary(),
+            'object_slug' => 'account:'.$assetAccount,
+            'object_first_title' => 'asset-'.substr($assetAccount, 0, 8),
+            'object_created_at' => $now,
+            'object_status' => 'active',
+        ], ['allow_negative' => ParameterType::BOOLEAN, 'object_uuid' => ParameterType::BINARY]);
         $this->connection->insert('account', [
             'id' => $clearingAccount,
             'wallet_id' => $walletId,
@@ -158,8 +166,12 @@ final class PostgreSqlConcurrencyTest extends KernelTestCase
             'currency' => 'USD',
             'category' => 'clearing',
             'allow_negative' => true,
-            'created_at' => $now,
-        ], ['allow_negative' => ParameterType::BOOLEAN]);
+            'object_uuid' => Uuid::fromString($clearingAccount)->toBinary(),
+            'object_slug' => 'account:'.$clearingAccount,
+            'object_first_title' => 'clearing-'.substr($clearingAccount, 0, 8),
+            'object_created_at' => $now,
+            'object_status' => 'active',
+        ], ['allow_negative' => ParameterType::BOOLEAN, 'object_uuid' => ParameterType::BINARY]);
 
         return [$walletId, $assetAccount, $clearingAccount];
     }

@@ -89,8 +89,12 @@ final class PostgreSqlStatementQueryTest extends KernelTestCase
             'owner_type' => 'statement-integration',
             'owner_id' => Uuid::v7()->toRfc4122(),
             'status' => 'active',
-            'created_at' => $now,
-        ]);
+            'object_uuid' => Uuid::fromString($walletId)->toBinary(),
+            'object_slug' => 'wallet:'.$walletId,
+            'object_first_title' => 'statement-integration',
+            'object_created_at' => $now,
+            'object_status' => 'active',
+        ], ['object_uuid' => ParameterType::BINARY]);
         $this->connection->insert('account', [
             'id' => $accountId,
             'wallet_id' => $walletId,
@@ -98,8 +102,12 @@ final class PostgreSqlStatementQueryTest extends KernelTestCase
             'currency' => 'USD',
             'category' => 'asset',
             'allow_negative' => false,
-            'created_at' => $now,
-        ], ['allow_negative' => ParameterType::BOOLEAN]);
+            'object_uuid' => Uuid::fromString($accountId)->toBinary(),
+            'object_slug' => 'account:'.$accountId,
+            'object_first_title' => 'cash',
+            'object_created_at' => $now,
+            'object_status' => 'active',
+        ], ['allow_negative' => ParameterType::BOOLEAN, 'object_uuid' => ParameterType::BINARY]);
         $this->connection->insert('account', [
             'id' => $counterpartyId,
             'wallet_id' => $walletId,
@@ -107,8 +115,12 @@ final class PostgreSqlStatementQueryTest extends KernelTestCase
             'currency' => 'USD',
             'category' => 'clearing',
             'allow_negative' => true,
-            'created_at' => $now,
-        ], ['allow_negative' => ParameterType::BOOLEAN]);
+            'object_uuid' => Uuid::fromString($counterpartyId)->toBinary(),
+            'object_slug' => 'account:'.$counterpartyId,
+            'object_first_title' => 'clearing',
+            'object_created_at' => $now,
+            'object_status' => 'active',
+        ], ['allow_negative' => ParameterType::BOOLEAN, 'object_uuid' => ParameterType::BINARY]);
 
         return [$accountId, $counterpartyId];
     }
