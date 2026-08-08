@@ -31,6 +31,19 @@ final readonly class OutboxDispatcher
         $this->handlers = is_array($handlers) ? array_values($handlers) : iterator_to_array($handlers, false);
     }
 
+    public function dispatchOneById(string $messageId): OutboxDispatchReport
+    {
+        $message = $this->outboxService->claimById($messageId);
+        $this->dispatch($message);
+
+        return match ($message->status()) {
+            \App\Enum\OutboxMessageStatus::Dispatched => new OutboxDispatchReport(1, 1, 0, 0),
+            \App\Enum\OutboxMessageStatus::Failed => new OutboxDispatchReport(1, 0, 1, 0),
+            \App\Enum\OutboxMessageStatus::Dead => new OutboxDispatchReport(1, 0, 0, 1),
+            default => throw new \LogicException('Selected dispatch left an outbox message in an invalid terminal state.'),
+        };
+    }
+
     public function dispatchBatch(int $limit): int
     {
         return $this->dispatchBatchReport($limit)->dispatched;

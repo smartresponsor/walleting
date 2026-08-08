@@ -124,6 +124,33 @@ final readonly class OutboxService
         ]);
     }
 
+    public function claimById(string $messageId): OutboxMessage
+    {
+        $messageId = trim($messageId);
+        if ('' === $messageId) {
+            throw new \InvalidArgumentException('Outbox message id is required.');
+        }
+
+        return $this->entityManager->wrapInTransaction(function () use ($messageId): OutboxMessage {
+            $id = $this->connection->fetchOne(
+                "SELECT id FROM outbox_message WHERE id = ? AND status IN ('pending', 'failed') AND available_at <= CURRENT_TIMESTAMP FOR UPDATE",
+                [$messageId],
+            );
+            if (false === $id) {
+                throw new \RuntimeException('Outbox message is not dispatchable.');
+            }
+
+            $message = $this->entityManager->find(OutboxMessage::class, Uuid::fromString((string) $id));
+            if (!$message instanceof OutboxMessage) {
+                throw new \RuntimeException('Selected outbox message could not be loaded.');
+            }
+            $message->claim();
+            $this->entityManager->flush();
+
+            return $message;
+        });
+    }
+
     /** @return list<OutboxMessage> */
     public function claimBatch(int $limit): array
     {
@@ -169,7 +196,6 @@ final readonly class OutboxService
         );
     }
 
-    /** @return list<array<string, mixed>> */
     /** @return array<string, mixed> */
     public function inspect(string $messageId): array
     {
