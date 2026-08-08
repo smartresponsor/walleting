@@ -8,6 +8,7 @@ services:
 
     App\Service\PostingExecutorInterface: '@App\Service\PostingDbalExecutor'
     App\Service\PostingTelemetryInterface: '@App\Service\DatabasePostingTelemetry'
+    App\Service\PostingSloTransitionNotifierInterface: '@App\Service\LoggingPostingSloTransitionNotifier'
 
     App\:
         resource: '../src/'
