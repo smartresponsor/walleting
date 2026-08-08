@@ -153,7 +153,7 @@ final class PostgreSqlConcurrencyTest extends KernelTestCase
             'currency' => 'USD',
             'category' => 'asset',
             'allow_negative' => false,
-            'object_uuid' => Uuid::fromString($assetAccount)->toBinary(),
+            'object_uuid' => '\\x'.str_replace('-', '', $assetAccount),
             'object_slug' => 'account:'.$assetAccount,
             'object_first_title' => 'asset-'.substr($assetAccount, 0, 8),
             'object_created_at' => $now,
