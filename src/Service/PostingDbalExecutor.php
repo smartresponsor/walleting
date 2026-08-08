@@ -10,6 +10,7 @@ use App\Ledger\PostingInstruction;
 use App\Posting\PostingExecutionMetric;
 use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\DBAL\ParameterType;
 use Symfony\Component\Uid\Uuid;
 
@@ -53,6 +54,10 @@ final readonly class PostingDbalExecutor implements PostingExecutorInterface
                 $attemptDuration = $this->elapsedMilliseconds($attemptStartedAt);
                 $reason = $this->retryPolicy->retryReason($exception);
                 if (!$this->retryPolicy->shouldRetry($exception, $attempt)) {
+                    if ($exception instanceof UniqueConstraintViolationException) {
+                        throw $exception;
+                    }
+
                     $this->recordMetric(new PostingExecutionMetric(
                         'failed',
                         $request->type->value,

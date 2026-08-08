@@ -7,7 +7,7 @@ services:
             tags: ['app.outbox_message_handler']
 
     App\Service\PostingExecutorInterface: '@App\Service\PostingDbalExecutor'
-    App\Service\PostingTelemetryInterface: '@App\Service\LoggingPostingTelemetry'
+    App\Service\PostingTelemetryInterface: '@App\Service\DatabasePostingTelemetry'
 
     App\:
         resource: '../src/'

@@ -7,6 +7,7 @@ namespace App\Tests\Integration;
 use App\Entity\Account;
 use App\Enum\TransactionStatus;
 use App\Ledger\PostingInstruction;
+use App\Service\DatabasePostingTelemetry;
 use App\Service\OutboxService;
 use App\Service\PostingDbalExecutor;
 use App\Service\PostingRetryPolicy;
@@ -14,6 +15,7 @@ use App\Service\PostingService;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\ParameterType;
 use Doctrine\ORM\EntityManagerInterface;
+use Psr\Log\NullLogger;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Uid\Uuid;
 
@@ -32,6 +34,7 @@ final class PostgreSqlPostingServiceTest extends KernelTestCase
 
     public function testStandalonePostingUsesAtomicDbalLedgerAndOutboxPath(): void
     {
+        $this->connection->executeStatement('DELETE FROM posting_metric_sample');
         [$assetId, $clearingId] = $this->seedAccounts();
         $asset = $this->entityManager->find(Account::class, $assetId);
         $clearing = $this->entityManager->find(Account::class, $clearingId);
@@ -39,10 +42,11 @@ final class PostgreSqlPostingServiceTest extends KernelTestCase
         self::assertInstanceOf(Account::class, $clearing);
 
         $outboxService = new OutboxService($this->entityManager, $this->connection);
+        $telemetry = new DatabasePostingTelemetry($this->connection, new NullLogger());
         $service = new PostingService(
             $this->entityManager,
             $outboxService,
-            new PostingDbalExecutor($this->connection, $outboxService, new PostingRetryPolicy(), new \App\Service\NullPostingTelemetry()),
+            new PostingDbalExecutor($this->connection, $outboxService, new PostingRetryPolicy(), $telemetry),
         );
         $key = 'dbal-hot-path-'.Uuid::v7();
         $instructions = [
@@ -63,6 +67,8 @@ final class PostgreSqlPostingServiceTest extends KernelTestCase
         self::assertSame($transaction->id()->toRfc4122(), $replayed->id()->toRfc4122());
         self::assertSame(1, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM ledger_transaction WHERE idempotency_key = ?', [$key]));
         self::assertSame(1, (int) $this->connection->fetchOne("SELECT COUNT(*) FROM outbox_message WHERE ledger_transaction_id = ? AND message_type = 'ledger.transaction.posted'", [$transaction->id()->toRfc4122()]));
+        self::assertSame(1, (int) $this->connection->fetchOne("SELECT COUNT(*) FROM posting_metric_sample WHERE event = 'completed'"));
+        self::assertSame(0, (int) $this->connection->fetchOne("SELECT COUNT(*) FROM posting_metric_sample WHERE event = 'failed'"));
     }
 
     public function testOppositeDirectionTransfersDoNotDeadlockUnderConcurrentPostingServiceWorkers(): void
