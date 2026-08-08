@@ -6,7 +6,7 @@ services:
       POSTGRES_USER: walleting
       POSTGRES_PASSWORD: walleting
     ports:
-      - "127.0.0.1::5432"
+      - "127.0.0.1:${POSTGRES_TEST_HOST_PORT:-65432}:5432"
     healthcheck:
       test: ["CMD", "pg_isready", "-d", "walleting_test", "-U", "walleting"]
       interval: 1s
