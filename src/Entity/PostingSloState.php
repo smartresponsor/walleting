@@ -23,6 +23,9 @@ final class PostingSloState
     #[ORM\Column(name: 'pending_count')]
     private int $pendingCount;
 
+    #[ORM\Column]
+    private int $revision;
+
     #[ORM\Column(type: 'json')]
     private array $reasons;
 
@@ -39,6 +42,7 @@ final class PostingSloState
         $this->status = 'healthy';
         $this->pendingStatus = null;
         $this->pendingCount = 0;
+        $this->revision = 0;
         $this->reasons = [];
         $this->evaluatedAt = $now;
         $this->changedAt = $now;

@@ -11,8 +11,10 @@ use Doctrine\DBAL\Connection;
 
 final readonly class PostingSloStateService
 {
-    public function __construct(private Connection $connection)
-    {
+    public function __construct(
+        private Connection $connection,
+        private OutboxService $outboxService,
+    ) {
     }
 
     public function apply(
@@ -30,14 +32,14 @@ final readonly class PostingSloStateService
         }
 
         return $this->connection->transactional(function (Connection $connection) use ($scope, $assessment, $breachEvaluations, $recoveryEvaluations): PostingSloStateTransition {
-            $row = $connection->fetchAssociative('SELECT scope, status, pending_status, pending_count, reasons FROM posting_slo_state WHERE scope = ? FOR UPDATE', [$scope]);
+            $row = $connection->fetchAssociative('SELECT scope, status, pending_status, pending_count, revision, reasons FROM posting_slo_state WHERE scope = ? FOR UPDATE', [$scope]);
             if (false === $row) {
                 $now = (new \DateTimeImmutable())->format('Y-m-d H:i:s');
                 $connection->executeStatement(
                     "INSERT INTO posting_slo_state (scope, status, pending_status, pending_count, reasons, evaluated_at, changed_at) VALUES (?, 'healthy', NULL, 0, '[]', ?, ?) ON CONFLICT (scope) DO NOTHING",
                     [$scope, $now, $now],
                 );
-                $row = $connection->fetchAssociative('SELECT scope, status, pending_status, pending_count, reasons FROM posting_slo_state WHERE scope = ? FOR UPDATE', [$scope]);
+                $row = $connection->fetchAssociative('SELECT scope, status, pending_status, pending_count, revision, reasons FROM posting_slo_state WHERE scope = ? FOR UPDATE', [$scope]);
                 if (false === $row) {
                     throw new \RuntimeException('Posting SLO state could not be initialized.');
                 }
@@ -47,6 +49,7 @@ final readonly class PostingSloStateService
             $observed = $assessment->status;
             $pending = null === $row['pending_status'] ? null : PostingHealthStatus::from((string) $row['pending_status']);
             $pendingCount = (int) $row['pending_count'];
+            $revision = (int) $row['revision'];
             $requiredCount = $this->severity($observed) > $this->severity($previous) ? $breachEvaluations : $recoveryEvaluations;
             $changed = false;
             $current = $previous;
@@ -80,9 +83,26 @@ final readonly class PostingSloStateService
                 'evaluated_at' => $now,
             ];
             if ($changed) {
+                ++$revision;
+                $values['revision'] = $revision;
                 $values['changed_at'] = $now;
             }
             $connection->update('posting_slo_state', $values, ['scope' => $scope]);
+
+            if ($changed) {
+                $this->outboxService->enqueueOperationalDbal(
+                    'posting.slo.state.changed',
+                    sprintf('posting.slo.state.changed:%s:%d', $scope, $revision),
+                    [
+                        'scope' => $scope,
+                        'revision' => $revision,
+                        'previous_status' => $previous->value,
+                        'current_status' => $current->value,
+                        'reasons' => $assessment->reasons,
+                        'changed_at' => $now,
+                    ],
+                );
+            }
 
             return new PostingSloStateTransition(
                 $scope,

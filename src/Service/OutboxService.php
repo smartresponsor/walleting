@@ -92,6 +92,38 @@ final readonly class OutboxService
         ]);
     }
 
+    public function enqueueOperationalDbal(string $messageType, string $deduplicationKey, array $payload): void
+    {
+        if (!$this->connection->isTransactionActive()) {
+            throw new \LogicException('DBAL operational outbox enqueue requires an active database transaction.');
+        }
+
+        $messageType = trim($messageType);
+        $deduplicationKey = trim($deduplicationKey);
+        if ('' === $messageType || '' === $deduplicationKey) {
+            throw new \InvalidArgumentException('Operational outbox message type and deduplication key are required.');
+        }
+
+        $normalizedPayload = $this->normalizePayload($payload);
+        $now = new \DateTimeImmutable();
+        $this->connection->insert('outbox_message', [
+            'id' => Uuid::v7()->toRfc4122(),
+            'ledger_transaction_id' => null,
+            'provider_event_id' => null,
+            'message_type' => $messageType,
+            'deduplication_key' => $deduplicationKey,
+            'payload' => json_encode($payload, JSON_THROW_ON_ERROR),
+            'payload_hash' => hash('sha256', json_encode($normalizedPayload, JSON_THROW_ON_ERROR)),
+            'status' => 'pending',
+            'attempt_count' => 0,
+            'available_at' => $now->format('Y-m-d H:i:s'),
+            'claimed_at' => null,
+            'dispatched_at' => null,
+            'last_error' => null,
+            'created_at' => $now->format('Y-m-d H:i:s'),
+        ]);
+    }
+
     /** @return list<OutboxMessage> */
     public function claimBatch(int $limit): array
     {
