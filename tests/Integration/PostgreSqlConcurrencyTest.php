@@ -145,7 +145,7 @@ final class PostgreSqlConcurrencyTest extends KernelTestCase
             'object_first_title' => 'concurrency',
             'object_created_at' => $now,
             'object_status' => 'active',
-        ], ['object_uuid' => ParameterType::BINARY]);
+        ]);
         $this->connection->insert('account', [
             'id' => $assetAccount,
             'wallet_id' => $walletId,
@@ -166,7 +166,7 @@ final class PostgreSqlConcurrencyTest extends KernelTestCase
             'currency' => 'USD',
             'category' => 'clearing',
             'allow_negative' => true,
-            'object_uuid' => Uuid::fromString($clearingAccount)->toBinary(),
+            'object_uuid' => '\\x'.str_replace('-', '', $clearingAccount),
             'object_slug' => 'account:'.$clearingAccount,
             'object_first_title' => 'clearing-'.substr($clearingAccount, 0, 8),
             'object_created_at' => $now,
