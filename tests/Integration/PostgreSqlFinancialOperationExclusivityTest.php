@@ -11,7 +11,7 @@ use App\Entity\Reservation;
 use App\Entity\Wallet;
 use App\Enum\AccountCategory;
 use App\Enum\TransactionType;
-use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
+use Doctrine\DBAL\Exception\DriverException;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
@@ -26,40 +26,62 @@ final class PostgreSqlFinancialOperationExclusivityTest extends KernelTestCase
         self::assertInstanceOf(\Doctrine\DBAL\Platforms\PostgreSQLPlatform::class, $this->entityManager->getConnection()->getDatabasePlatform());
     }
 
-    public function testRefundAndReverseAreMutuallyExclusiveForOneSourceTransaction(): void
+    public function testReverseIsRejectedAfterPartialRefund(): void
     {
-        $source = new LedgerTransaction(TransactionType::Credit, 'inverse-exclusive-source');
-        $refund = new LedgerTransaction(TransactionType::Refund, 'inverse-exclusive-refund');
-        $reverse = new LedgerTransaction(TransactionType::Reverse, 'inverse-exclusive-reverse');
-        $this->entityManager->persist($source);
-        $this->entityManager->persist($refund);
-        $this->entityManager->persist($reverse);
-        $this->entityManager->persist(new FinancialOperationLink(TransactionType::Refund, $source, $refund));
+        $wallet = new Wallet('vendor', 'inverse-exclusive-wallet');
+        $asset = new Account($wallet, 'asset', 'USD', AccountCategory::Clearing);
+        $clearing = new Account($wallet, 'clearing', 'USD', AccountCategory::Clearing);
+        $source = $this->posted(TransactionType::Credit, 'inverse-exclusive-source', $asset, 500, $clearing, -500);
+        $refund = $this->posted(TransactionType::Refund, 'inverse-exclusive-refund', $asset, -200, $clearing, 200);
+        $reverse = $this->posted(TransactionType::Reverse, 'inverse-exclusive-reverse', $asset, -500, $clearing, 500);
+        foreach ([$wallet, $asset, $clearing, $source, $refund, $reverse] as $entity) {
+            $this->entityManager->persist($entity);
+        }
+        $this->entityManager->persist(new FinancialOperationLink(TransactionType::Refund, $source, $refund, 200));
         $this->entityManager->flush();
 
-        $this->entityManager->persist(new FinancialOperationLink(TransactionType::Reverse, $source, $reverse));
+        $this->entityManager->persist(new FinancialOperationLink(TransactionType::Reverse, $source, $reverse, 500));
 
-        $this->expectException(UniqueConstraintViolationException::class);
+        $this->expectException(DriverException::class);
+        $this->expectExceptionMessage('reverse requires the full untouched source transaction');
         $this->entityManager->flush();
     }
 
-    public function testCaptureAndReleaseAreMutuallyExclusiveForOneReservation(): void
+    public function testReservationSettlementCannotExceedReservedAmount(): void
     {
         $wallet = new Wallet('vendor', 'settlement-exclusive-wallet');
         $reserved = new Account($wallet, 'reserved', 'USD', AccountCategory::Reserve);
-        $reserveTransaction = new LedgerTransaction(TransactionType::Reserve, 'settlement-exclusive-reserve');
-        $capture = new LedgerTransaction(TransactionType::Capture, 'settlement-exclusive-capture');
-        $release = new LedgerTransaction(TransactionType::Release, 'settlement-exclusive-release');
-        $reservation = new Reservation($wallet, $reserved, $reserveTransaction, 500, 'USD', 'settlement-exclusive-reservation');
-        foreach ([$wallet, $reserved, $reserveTransaction, $capture, $release, $reservation] as $entity) {
+        $destination = new Account($wallet, 'destination', 'USD', AccountCategory::Clearing);
+        $other = new Account($wallet, 'other', 'USD', AccountCategory::Clearing);
+        $reserveTransaction = $this->posted(TransactionType::Reserve, 'settlement-exclusive-reserve', $destination, -500, $reserved, 500);
+        foreach ([$wallet, $reserved, $destination, $other, $reserveTransaction] as $entity) {
             $this->entityManager->persist($entity);
         }
-        $this->entityManager->persist(new FinancialOperationLink(TransactionType::Capture, $reserveTransaction, $capture, $reservation));
         $this->entityManager->flush();
 
-        $this->entityManager->persist(new FinancialOperationLink(TransactionType::Release, $reserveTransaction, $release, $reservation));
-
-        $this->expectException(UniqueConstraintViolationException::class);
+        $capture = $this->posted(TransactionType::Capture, 'settlement-exclusive-capture', $reserved, -300, $destination, 300);
+        $release = $this->posted(TransactionType::Release, 'settlement-exclusive-release', $destination, -250, $other, 250);
+        $reservation = new Reservation($wallet, $reserved, $reserveTransaction, 500, 'USD', 'settlement-exclusive-reservation');
+        foreach ([$capture, $release, $reservation] as $entity) {
+            $this->entityManager->persist($entity);
+        }
+        $this->entityManager->persist(new FinancialOperationLink(TransactionType::Capture, $reserveTransaction, $capture, 300, $reservation));
         $this->entityManager->flush();
+
+        $this->entityManager->persist(new FinancialOperationLink(TransactionType::Release, $reserveTransaction, $release, 250, $reservation));
+
+        $this->expectException(DriverException::class);
+        $this->expectExceptionMessage('reservation settlement exceeds reserved amount');
+        $this->entityManager->flush();
+    }
+
+    private function posted(TransactionType $type, string $key, Account $first, int $firstAmount, Account $second, int $secondAmount): LedgerTransaction
+    {
+        $transaction = new LedgerTransaction($type, $key);
+        $transaction->addPosting($first, $firstAmount);
+        $transaction->addPosting($second, $secondAmount);
+        $transaction->post();
+
+        return $transaction;
     }
 }

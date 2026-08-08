@@ -208,6 +208,6 @@ final class PostgreSqlLedgerInvariantTest extends KernelTestCase
 
     private function insertOperationLink(string $sourceId, string $resultId): void
     {
-        $this->connection->insert('financial_operation_link', ['id' => Uuid::v7()->toRfc4122(), 'operation_type' => 'refund', 'source_transaction_id' => $sourceId, 'result_transaction_id' => $resultId, 'reservation_id' => null, 'object_created_at' => (new \DateTimeImmutable())->format('Y-m-d H:i:s')]);
+        $this->connection->insert('financial_operation_link', ['id' => Uuid::v7()->toRfc4122(), 'operation_type' => 'refund', 'source_transaction_id' => $sourceId, 'result_transaction_id' => $resultId, 'reservation_id' => null, 'amount_minor' => 1000, 'object_created_at' => (new \DateTimeImmutable())->format('Y-m-d H:i:s')]);
     }
 }

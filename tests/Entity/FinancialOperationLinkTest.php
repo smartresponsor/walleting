@@ -23,7 +23,7 @@ final class FinancialOperationLinkTest extends TestCase
         $capture = new LedgerTransaction(TransactionType::Capture, 'capture-link-1');
         $reservation = new Reservation($wallet, $account, $reserve, 500, 'USD', 'reservation-link-1');
 
-        $link = new FinancialOperationLink(TransactionType::Capture, $reserve, $capture, $reservation);
+        $link = new FinancialOperationLink(TransactionType::Capture, $reserve, $capture, 500, $reservation);
 
         self::assertSame($reserve, $link->sourceTransaction());
         self::assertSame($capture, $link->resultTransaction());
@@ -37,7 +37,7 @@ final class FinancialOperationLinkTest extends TestCase
 
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Linked result transaction type must match the operation type.');
-        new FinancialOperationLink(TransactionType::Refund, $source, $result);
+        new FinancialOperationLink(TransactionType::Refund, $source, $result, 500);
     }
 
     public function testInverseOperationRejectsInverseSourceTransaction(): void
@@ -47,7 +47,7 @@ final class FinancialOperationLinkTest extends TestCase
 
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Refund and reverse cannot originate from an inverse transaction.');
-        new FinancialOperationLink(TransactionType::Reverse, $source, $result);
+        new FinancialOperationLink(TransactionType::Reverse, $source, $result, 500);
     }
 
     public function testRefundRejectsReservationAssociation(): void
@@ -59,6 +59,6 @@ final class FinancialOperationLinkTest extends TestCase
         $reservation = new Reservation($wallet, $account, $source, 500, 'USD', 'reservation-link-2');
 
         $this->expectException(\InvalidArgumentException::class);
-        new FinancialOperationLink(TransactionType::Refund, $source, $result, $reservation);
+        new FinancialOperationLink(TransactionType::Refund, $source, $result, 500, $reservation);
     }
 }

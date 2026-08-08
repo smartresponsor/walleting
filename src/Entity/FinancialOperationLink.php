@@ -12,8 +12,8 @@ use Symfony\Component\Uid\Uuid;
 
 #[ORM\Entity]
 #[ORM\Table(name: 'financial_operation_link')]
-#[ORM\UniqueConstraint(name: 'uniq_financial_operation_inverse_source', columns: ['source_transaction_id'], options: ['where' => "operation_type IN ('refund', 'reverse')"])]
-#[ORM\UniqueConstraint(name: 'uniq_financial_operation_reservation_settlement', columns: ['reservation_id'], options: ['where' => "reservation_id IS NOT NULL AND operation_type IN ('capture', 'release')"])]
+#[ORM\Index(name: 'idx_financial_operation_source_type', columns: ['source_transaction_id', 'operation_type'])]
+#[ORM\Index(name: 'idx_financial_operation_reservation_type', columns: ['reservation_id', 'operation_type'])]
 #[ORM\UniqueConstraint(name: 'uniq_financial_operation_result', columns: ['result_transaction_id'])]
 class FinancialOperationLink implements ObjectRelationEntityInterface
 {
@@ -37,10 +37,16 @@ class FinancialOperationLink implements ObjectRelationEntityInterface
     #[ORM\JoinColumn(name: 'reservation_id', nullable: true, onDelete: 'RESTRICT')]
     private ?Reservation $reservation;
 
-    public function __construct(TransactionType $operationType, LedgerTransaction $sourceTransaction, LedgerTransaction $resultTransaction, ?Reservation $reservation = null, ?Uuid $id = null)
+    #[ORM\Column(name: 'amount_minor', type: 'bigint')]
+    private int $amountMinor;
+
+    public function __construct(TransactionType $operationType, LedgerTransaction $sourceTransaction, LedgerTransaction $resultTransaction, int $amountMinor, ?Reservation $reservation = null, ?Uuid $id = null)
     {
         if (!in_array($operationType, [TransactionType::Capture, TransactionType::Release, TransactionType::Refund, TransactionType::Reverse], true)) {
             throw new \InvalidArgumentException('Unsupported linked financial operation type.');
+        }
+        if ($amountMinor <= 0) {
+            throw new \InvalidArgumentException('Linked financial operation amount must be positive.');
         }
         if (in_array($operationType, [TransactionType::Capture, TransactionType::Release], true) && null === $reservation) {
             throw new \InvalidArgumentException('Capture and release links require a reservation.');
@@ -66,6 +72,7 @@ class FinancialOperationLink implements ObjectRelationEntityInterface
         $this->sourceTransaction = $sourceTransaction;
         $this->resultTransaction = $resultTransaction;
         $this->reservation = $reservation;
+        $this->amountMinor = $amountMinor;
         $this->initializeObjectAudit();
     }
 
@@ -73,4 +80,5 @@ class FinancialOperationLink implements ObjectRelationEntityInterface
     public function sourceTransaction(): LedgerTransaction { return $this->sourceTransaction; }
     public function resultTransaction(): LedgerTransaction { return $this->resultTransaction; }
     public function reservation(): ?Reservation { return $this->reservation; }
+    public function amountMinor(): int { return $this->amountMinor; }
 }

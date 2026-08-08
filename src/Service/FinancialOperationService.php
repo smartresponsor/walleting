@@ -13,6 +13,7 @@ use App\Entity\Wallet;
 use App\Entity\Withdrawal;
 use App\Enum\TransactionType;
 use App\Ledger\PostingInstruction;
+use Doctrine\DBAL\LockMode;
 use Doctrine\ORM\EntityManagerInterface;
 
 final readonly class FinancialOperationService
@@ -41,13 +42,25 @@ final readonly class FinancialOperationService
     /** @param non-empty-list<PostingInstruction> $instructions */
     public function capture(Reservation $reservation, string $idempotencyKey, array $instructions): LedgerTransaction
     {
-        return $this->transitionReservation($reservation, $idempotencyKey, $instructions, TransactionType::Capture, 'capture');
+        return $this->capturePartial($reservation, $reservation->amountMinor(), $idempotencyKey, $instructions);
+    }
+
+    /** @param non-empty-list<PostingInstruction> $instructions */
+    public function capturePartial(Reservation $reservation, int $amountMinor, string $idempotencyKey, array $instructions): LedgerTransaction
+    {
+        return $this->transitionReservation($reservation, $amountMinor, $idempotencyKey, $instructions, TransactionType::Capture, 'capture');
     }
 
     /** @param non-empty-list<PostingInstruction> $instructions */
     public function release(Reservation $reservation, string $idempotencyKey, array $instructions): LedgerTransaction
     {
-        return $this->transitionReservation($reservation, $idempotencyKey, $instructions, TransactionType::Release, 'release');
+        return $this->releasePartial($reservation, $reservation->amountMinor(), $idempotencyKey, $instructions);
+    }
+
+    /** @param non-empty-list<PostingInstruction> $instructions */
+    public function releasePartial(Reservation $reservation, int $amountMinor, string $idempotencyKey, array $instructions): LedgerTransaction
+    {
+        return $this->transitionReservation($reservation, $amountMinor, $idempotencyKey, $instructions, TransactionType::Release, 'release');
     }
 
     /** @param non-empty-list<PostingInstruction> $instructions */
@@ -56,7 +69,16 @@ final readonly class FinancialOperationService
         $this->assertInverseSourceAllowed($original);
         $this->assertExactInverse($original, $instructions);
 
-        return $this->linkedPosting(TransactionType::Refund, $original, $idempotencyKey, $instructions);
+        return $this->linkedPosting(TransactionType::Refund, $original, $this->transactionAmount($original), $idempotencyKey, $instructions);
+    }
+
+    /** @param non-empty-list<PostingInstruction> $instructions */
+    public function refundPartial(LedgerTransaction $original, int $amountMinor, string $idempotencyKey, array $instructions): LedgerTransaction
+    {
+        $this->assertInverseSourceAllowed($original);
+        $this->assertPartialInverse($original, $amountMinor, $instructions);
+
+        return $this->linkedPosting(TransactionType::Refund, $original, $amountMinor, $idempotencyKey, $instructions);
     }
 
     /** @param non-empty-list<PostingInstruction> $instructions */
@@ -65,7 +87,7 @@ final readonly class FinancialOperationService
         $this->assertInverseSourceAllowed($original);
         $this->assertExactInverse($original, $instructions);
 
-        return $this->linkedPosting(TransactionType::Reverse, $original, $idempotencyKey, $instructions);
+        return $this->linkedPosting(TransactionType::Reverse, $original, $this->transactionAmount($original), $idempotencyKey, $instructions);
     }
 
     /** @param non-empty-list<PostingInstruction> $instructions */
@@ -106,7 +128,7 @@ final readonly class FinancialOperationService
 
         return $this->entityManager->wrapInTransaction(function () use ($funding, $original, $idempotencyKey, $instructions): LedgerTransaction {
             $transaction = $this->postingService->postManaged(TransactionType::Reverse, $idempotencyKey, $instructions, ['operation' => 'funding_reversal', 'funding_key' => $funding->idempotencyKey(), 'original_transaction_id' => $original->id()->toRfc4122()]);
-            $this->entityManager->persist(new FinancialOperationLink(TransactionType::Reverse, $original, $transaction));
+            $this->entityManager->persist(new FinancialOperationLink(TransactionType::Reverse, $original, $transaction, $this->transactionAmount($original)));
             $funding->reverse($transaction);
             $this->emitFunding('wallet.funding.reversed', $funding, $transaction);
             $this->entityManager->flush();
@@ -126,7 +148,7 @@ final readonly class FinancialOperationService
 
         return $this->entityManager->wrapInTransaction(function () use ($withdrawal, $original, $idempotencyKey, $instructions): LedgerTransaction {
             $transaction = $this->postingService->postManaged(TransactionType::Reverse, $idempotencyKey, $instructions, ['operation' => 'withdrawal_reversal', 'withdrawal_key' => $withdrawal->idempotencyKey(), 'original_transaction_id' => $original->id()->toRfc4122()]);
-            $this->entityManager->persist(new FinancialOperationLink(TransactionType::Reverse, $original, $transaction));
+            $this->entityManager->persist(new FinancialOperationLink(TransactionType::Reverse, $original, $transaction, $this->transactionAmount($original)));
             $withdrawal->reverse($transaction);
             $this->emitWithdrawal('wallet.withdrawal.reversed', $withdrawal, $transaction);
             $this->entityManager->flush();
@@ -135,14 +157,21 @@ final readonly class FinancialOperationService
         });
     }
 
-    private function transitionReservation(Reservation $reservation, string $idempotencyKey, array $instructions, TransactionType $type, string $operation): LedgerTransaction
+    private function transitionReservation(Reservation $reservation, int $amountMinor, string $idempotencyKey, array $instructions, TransactionType $type, string $operation): LedgerTransaction
     {
-        $this->assertReservationSettlement($reservation, $instructions);
+        $this->assertReservationSettlement($reservation, $amountMinor, $instructions);
 
-        return $this->entityManager->wrapInTransaction(function () use ($reservation, $idempotencyKey, $instructions, $type, $operation): LedgerTransaction {
-            $transaction = $this->postingService->postManaged($type, $idempotencyKey, $instructions, ['operation' => $operation, 'reservation_key' => $reservation->idempotencyKey()]);
-            $this->entityManager->persist(new FinancialOperationLink($type, $reservation->reserveTransaction(), $transaction, $reservation));
-            'capture' === $operation ? $reservation->capture() : $reservation->release();
+        return $this->entityManager->wrapInTransaction(function () use ($reservation, $amountMinor, $idempotencyKey, $instructions, $type, $operation): LedgerTransaction {
+            $this->entityManager->lock($reservation, LockMode::PESSIMISTIC_WRITE);
+            [$capturedMinor, $releasedMinor] = $this->reservationSettlementTotals($reservation);
+            if ($capturedMinor + $releasedMinor + $amountMinor > $reservation->amountMinor()) {
+                throw new \DomainException('Reservation settlement exceeds the remaining reserved amount.');
+            }
+
+            $transaction = $this->postingService->postManaged($type, $idempotencyKey, $instructions, ['operation' => $operation, 'reservation_key' => $reservation->idempotencyKey(), 'amount_minor' => $amountMinor]);
+            $this->entityManager->persist(new FinancialOperationLink($type, $reservation->reserveTransaction(), $transaction, $amountMinor, $reservation));
+            'capture' === $operation ? $capturedMinor += $amountMinor : $releasedMinor += $amountMinor;
+            $reservation->recordSettlementProgress($capturedMinor, $releasedMinor);
             $this->emitReservation('wallet.reservation.'.$operation.'d', $reservation, $transaction);
             $this->entityManager->flush();
 
@@ -155,6 +184,59 @@ final readonly class FinancialOperationService
         if (in_array($original->type(), [TransactionType::Refund, TransactionType::Reverse], true)) {
             throw new \DomainException('Refund and reverse cannot originate from an inverse transaction.');
         }
+    }
+
+    /** @param non-empty-list<PostingInstruction> $instructions */
+    private function assertPartialInverse(LedgerTransaction $original, int $amountMinor, array $instructions): void
+    {
+        if ($amountMinor <= 0) {
+            throw new \InvalidArgumentException('Partial refund amount must be positive.');
+        }
+
+        $legs = [];
+        foreach ($original->postings() as $posting) {
+            $accountId = $posting->account()->id()->toRfc4122();
+            $legs[$accountId] = ($legs[$accountId] ?? 0) + $posting->amountMinor();
+        }
+        $legs = array_filter($legs, static fn (int $amount): bool => 0 !== $amount);
+        if (2 !== count($legs)) {
+            throw new \DomainException('Partial refund currently requires a two-sided source transaction.');
+        }
+        $positive = array_filter($legs, static fn (int $amount): bool => $amount > 0);
+        $negative = array_filter($legs, static fn (int $amount): bool => $amount < 0);
+        if (1 !== count($positive) || 1 !== count($negative) || reset($positive) !== -reset($negative) || $amountMinor > (int) reset($positive)) {
+            throw new \DomainException('Partial refund source topology or amount is invalid.');
+        }
+
+        $expected = [];
+        foreach ($legs as $accountId => $amount) {
+            $expected[$accountId] = $amount > 0 ? -$amountMinor : $amountMinor;
+        }
+        $actual = [];
+        foreach ($instructions as $instruction) {
+            $accountId = $instruction->account->id()->toRfc4122();
+            $actual[$accountId] = ($actual[$accountId] ?? 0) + $instruction->amountMinor;
+        }
+        ksort($expected);
+        ksort($actual);
+        if ($expected !== $actual) {
+            throw new \DomainException('Partial refund postings must invert the requested amount on the original two accounts.');
+        }
+    }
+
+    private function transactionAmount(LedgerTransaction $transaction): int
+    {
+        $amountMinor = 0;
+        foreach ($transaction->postings() as $posting) {
+            if ($posting->amountMinor() > 0) {
+                $amountMinor += $posting->amountMinor();
+            }
+        }
+        if ($amountMinor <= 0) {
+            throw new \DomainException('Ledger transaction does not expose a positive financial amount.');
+        }
+
+        return $amountMinor;
     }
 
     /** @param non-empty-list<PostingInstruction> $instructions */
@@ -180,8 +262,12 @@ final readonly class FinancialOperationService
     }
 
     /** @param non-empty-list<PostingInstruction> $instructions */
-    private function assertReservationSettlement(Reservation $reservation, array $instructions): void
+    private function assertReservationSettlement(Reservation $reservation, int $amountMinor, array $instructions): void
     {
+        if ($amountMinor <= 0) {
+            throw new \InvalidArgumentException('Reservation settlement amount must be positive.');
+        }
+
         $positive = 0;
         $negative = 0;
         $reservedAccountDebit = 0;
@@ -200,16 +286,40 @@ final readonly class FinancialOperationService
             }
         }
 
-        if ($positive !== $reservation->amountMinor() || $negative !== $reservation->amountMinor() || $reservedAccountDebit !== $reservation->amountMinor()) {
-            throw new \DomainException('Reservation settlement must move exactly the reserved amount from the reserved account.');
+        if ($positive !== $amountMinor || $negative !== $amountMinor || $reservedAccountDebit !== $amountMinor) {
+            throw new \DomainException('Reservation settlement must move exactly the requested amount from the reserved account.');
         }
     }
 
-    private function linkedPosting(TransactionType $type, LedgerTransaction $original, string $idempotencyKey, array $instructions): LedgerTransaction
+    /** @return array{0:int,1:int} */
+    private function reservationSettlementTotals(Reservation $reservation): array
     {
-        return $this->entityManager->wrapInTransaction(function () use ($type, $original, $idempotencyKey, $instructions): LedgerTransaction {
-            $transaction = $this->postingService->postManaged($type, $idempotencyKey, $instructions, ['original_transaction_id' => $original->id()->toRfc4122()]);
-            $this->entityManager->persist(new FinancialOperationLink($type, $original, $transaction));
+        $row = $this->entityManager->getConnection()->fetchAssociative(
+            "SELECT COALESCE(SUM(amount_minor) FILTER (WHERE operation_type = 'capture'), 0) AS captured_minor, COALESCE(SUM(amount_minor) FILTER (WHERE operation_type = 'release'), 0) AS released_minor FROM financial_operation_link WHERE reservation_id = ?",
+            [$reservation->id()->toRfc4122()],
+        );
+
+        return false === $row ? [0, 0] : [(int) $row['captured_minor'], (int) $row['released_minor']];
+    }
+
+    private function linkedPosting(TransactionType $type, LedgerTransaction $original, int $amountMinor, string $idempotencyKey, array $instructions): LedgerTransaction
+    {
+        return $this->entityManager->wrapInTransaction(function () use ($type, $original, $amountMinor, $idempotencyKey, $instructions): LedgerTransaction {
+            $this->entityManager->lock($original, LockMode::PESSIMISTIC_WRITE);
+            $sourceAmount = $this->transactionAmount($original);
+            $connection = $this->entityManager->getConnection();
+            $refundedMinor = (int) $connection->fetchOne("SELECT COALESCE(SUM(amount_minor), 0) FROM financial_operation_link WHERE source_transaction_id = ? AND operation_type = 'refund'", [$original->id()->toRfc4122()]);
+            $hasReverse = (bool) $connection->fetchOne("SELECT EXISTS(SELECT 1 FROM financial_operation_link WHERE source_transaction_id = ? AND operation_type = 'reverse')", [$original->id()->toRfc4122()]);
+
+            if (TransactionType::Refund === $type && ($hasReverse || $refundedMinor + $amountMinor > $sourceAmount)) {
+                throw new \DomainException('Refund exceeds the remaining refundable amount or the transaction was reversed.');
+            }
+            if (TransactionType::Reverse === $type && ($amountMinor !== $sourceAmount || $hasReverse || $refundedMinor > 0)) {
+                throw new \DomainException('Reverse requires the full untouched source transaction.');
+            }
+
+            $transaction = $this->postingService->postManaged($type, $idempotencyKey, $instructions, ['original_transaction_id' => $original->id()->toRfc4122(), 'amount_minor' => $amountMinor]);
+            $this->entityManager->persist(new FinancialOperationLink($type, $original, $transaction, $amountMinor));
             $this->emitLinkedTransaction($type, $original, $transaction);
             $this->entityManager->flush();
 

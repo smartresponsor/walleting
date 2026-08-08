@@ -80,6 +80,7 @@ final class PostgreSqlFinancialOperationLinkSemanticsTest extends KernelTestCase
             'source_transaction_id' => $source->id()->toRfc4122(),
             'result_transaction_id' => $result->id()->toRfc4122(),
             'reservation_id' => $reservation?->id()->toRfc4122(),
+            'amount_minor' => 1,
             'object_created_at' => (new \DateTimeImmutable())->format('Y-m-d H:i:s'),
         ]);
     }

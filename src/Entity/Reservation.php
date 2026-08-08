@@ -74,6 +74,24 @@ class Reservation
     public function release(): void { $this->transition(ReservationStatus::Released); }
     public function expire(): void { $this->transition(ReservationStatus::Expired); }
 
+    public function recordSettlementProgress(int $capturedMinor, int $releasedMinor): void
+    {
+        if ($capturedMinor < 0 || $releasedMinor < 0 || $capturedMinor + $releasedMinor > $this->amountMinor) {
+            throw new \InvalidArgumentException('Reservation settlement totals are invalid.');
+        }
+        if (in_array($this->status, [ReservationStatus::Captured, ReservationStatus::Released, ReservationStatus::Settled, ReservationStatus::Expired], true)) {
+            throw new \LogicException('Terminal reservation cannot accept settlement progress.');
+        }
+
+        $consumedMinor = $capturedMinor + $releasedMinor;
+        $this->status = match (true) {
+            $consumedMinor < $this->amountMinor => ReservationStatus::PartiallySettled,
+            $capturedMinor === $this->amountMinor => ReservationStatus::Captured,
+            $releasedMinor === $this->amountMinor => ReservationStatus::Released,
+            default => ReservationStatus::Settled,
+        };
+    }
+
     private function transition(ReservationStatus $status): void
     {
         if (ReservationStatus::Active !== $this->status) {
