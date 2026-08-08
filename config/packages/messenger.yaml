@@ -23,8 +23,8 @@ when@test:
         messenger:
             transports:
                 outbox_events:
-                    dsn: 'in-memory://'
+                    dsn: 'in-memory://?serialize=true'
                     serializer: App\Messenger\OutboxEventSerializer
                 outbox_failed:
-                    dsn: 'in-memory://'
+                    dsn: 'in-memory://?serialize=true'
                     serializer: App\Messenger\OutboxEventSerializer

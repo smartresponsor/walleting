@@ -173,7 +173,7 @@ final class OutboxEventSerializer implements SerializerInterface
         }
 
         foreach ($this->stampList($data, 'error_details') as $item) {
-            if (!is_array($item) || !is_string($item['exception_class'] ?? null) || '' === trim($item['exception_class']) || !is_int($item['exception_code'] ?? null) && !is_string($item['exception_code'] ?? null) || !is_string($item['exception_message'] ?? null)) {
+            if (!is_array($item) || !is_string($item['exception_class'] ?? null) || '' === trim($item['exception_class']) || (!is_int($item['exception_code'] ?? null) && !is_string($item['exception_code'] ?? null)) || !is_string($item['exception_message'] ?? null)) {
                 throw new \InvalidArgumentException('Messenger error details stamp metadata is invalid.');
             }
             $stamps[] = new ErrorDetailsStamp(
