@@ -158,7 +158,7 @@ final class PostgreSqlConcurrencyTest extends KernelTestCase
             'object_first_title' => 'asset-'.substr($assetAccount, 0, 8),
             'object_created_at' => $now,
             'object_status' => 'active',
-        ], ['allow_negative' => ParameterType::BOOLEAN, 'object_uuid' => ParameterType::BINARY]);
+        ], ['allow_negative' => ParameterType::BOOLEAN]);
         $this->connection->insert('account', [
             'id' => $clearingAccount,
             'wallet_id' => $walletId,
@@ -171,7 +171,7 @@ final class PostgreSqlConcurrencyTest extends KernelTestCase
             'object_first_title' => 'clearing-'.substr($clearingAccount, 0, 8),
             'object_created_at' => $now,
             'object_status' => 'active',
-        ], ['allow_negative' => ParameterType::BOOLEAN, 'object_uuid' => ParameterType::BINARY]);
+        ], ['allow_negative' => ParameterType::BOOLEAN]);
 
         return [$walletId, $assetAccount, $clearingAccount];
     }

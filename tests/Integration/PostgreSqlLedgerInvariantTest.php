@@ -175,9 +175,9 @@ final class PostgreSqlLedgerInvariantTest extends KernelTestCase
         $accountB = Uuid::v7()->toRfc4122();
         $now = (new \DateTimeImmutable())->format('Y-m-d H:i:s');
 
-        $this->connection->insert('wallet', ['id' => $walletId, 'owner_type' => 'integration', 'owner_id' => Uuid::v7()->toRfc4122(), 'status' => 'active', 'object_uuid' => Uuid::fromString($walletId)->toBinary(), 'object_slug' => 'wallet:'.$walletId, 'object_first_title' => 'integration', 'object_created_at' => $now, 'object_status' => 'active'], ['object_uuid' => ParameterType::BINARY]);
+        $this->connection->insert('wallet', ['id' => $walletId, 'owner_type' => 'integration', 'owner_id' => Uuid::v7()->toRfc4122(), 'status' => 'active', 'object_uuid' => '\\x'.str_replace('-', '', $walletId), 'object_slug' => 'wallet:'.$walletId, 'object_first_title' => 'integration', 'object_created_at' => $now, 'object_status' => 'active'], []);
         foreach ([[$accountA, 'asset', false], [$accountB, 'clearing', true]] as [$id, $category, $allowNegative]) {
-            $this->connection->insert('account', ['id' => $id, 'wallet_id' => $walletId, 'code' => $category.'-'.substr($id, 0, 8), 'currency' => 'USD', 'category' => $category, 'allow_negative' => $allowNegative, 'object_uuid' => Uuid::fromString($id)->toBinary(), 'object_slug' => 'account:'.$id, 'object_first_title' => $category.'-'.substr($id, 0, 8), 'object_created_at' => $now, 'object_status' => 'active'], ['allow_negative' => ParameterType::BOOLEAN, 'object_uuid' => ParameterType::BINARY]);
+            $this->connection->insert('account', ['id' => $id, 'wallet_id' => $walletId, 'code' => $category.'-'.substr($id, 0, 8), 'currency' => 'USD', 'category' => $category, 'allow_negative' => $allowNegative, 'object_uuid' => '\\x'.str_replace('-', '', $id), 'object_slug' => 'account:'.$id, 'object_first_title' => $category.'-'.substr($id, 0, 8), 'object_created_at' => $now, 'object_status' => 'active'], ['allow_negative' => ParameterType::BOOLEAN]);
         }
 
         return [$walletId, $accountA, $accountB];
