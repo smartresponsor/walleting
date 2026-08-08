@@ -9,6 +9,7 @@
         "doctrine/doctrine-bundle": "^3.0",
         "doctrine/doctrine-migrations-bundle": "^3.4",
         "doctrine/orm": "^3.4",
+        "objecting/object": "dev-master",
         "symfony/console": "8.0.*",
         "symfony/doctrine-messenger": "8.0.*",
         "symfony/dotenv": "8.0.*",
@@ -34,9 +35,18 @@
         "test:integration": "@php bin/test-integration.php",
         "lint": ["@php bin/console lint:container", "@php bin/console doctrine:schema:validate --skip-sync"]
     },
+    "repositories": [
+        {
+            "type": "path",
+            "url": "../Objecting",
+            "options": {"symlink": true}
+        }
+    ],
     "config": {
         "allow-plugins": {"symfony/flex": true, "symfony/runtime": true},
         "sort-packages": true
     },
-    "extra": {"symfony": {"allow-contrib": false, "require": "8.0.*"}}
+    "extra": {"symfony": {"allow-contrib": false, "require": "8.0.*"}},
+    "minimum-stability": "dev",
+    "prefer-stable": true
 }

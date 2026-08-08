@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "9410a53e306e58d53db078ebef6b8cf7",
+    "content-hash": "ad7559a4c34144eff6036516e15420ce",
     "packages": [
         {
             "name": "doctrine/collections",
@@ -881,16 +881,16 @@
         },
         {
             "name": "doctrine/orm",
-            "version": "3.6.7",
+            "version": "3.6.8",
             "source": {
                 "type": "git",
                 "url": "https://github.com/doctrine/orm.git",
-                "reference": "bc217c0e19c3a9eadfa67697143b87c9ba01272c"
+                "reference": "a4d13ed5b11e7f7b4d654b1adf95432031ae3ffc"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/doctrine/orm/zipball/bc217c0e19c3a9eadfa67697143b87c9ba01272c",
-                "reference": "bc217c0e19c3a9eadfa67697143b87c9ba01272c",
+                "url": "https://api.github.com/repos/doctrine/orm/zipball/a4d13ed5b11e7f7b4d654b1adf95432031ae3ffc",
+                "reference": "a4d13ed5b11e7f7b4d654b1adf95432031ae3ffc",
                 "shasum": ""
             },
             "require": {
@@ -920,6 +920,7 @@
                 "symfony/cache": "^5.4 || ^6.2 || ^7.0 || ^8.0"
             },
             "suggest": {
+                "ext-deepclone": "Improves performance when not using native lazy objects (Symfony 8.1+)",
                 "ext-dom": "Provides support for XSD validation for XML mapping files",
                 "symfony/cache": "Provides cache support for Setup Tool with doctrine/cache 2.0"
             },
@@ -963,9 +964,9 @@
             ],
             "support": {
                 "issues": "https://github.com/doctrine/orm/issues",
-                "source": "https://github.com/doctrine/orm/tree/3.6.7"
+                "source": "https://github.com/doctrine/orm/tree/3.6.8"
             },
-            "time": "2026-05-25T16:45:47+00:00"
+            "time": "2026-08-05T19:05:32+00:00"
         },
         {
             "name": "doctrine/persistence",
@@ -1115,6 +1116,195 @@
                 "source": "https://github.com/doctrine/sql-formatter/tree/1.5.4"
             },
             "time": "2026-02-08T16:21:46+00:00"
+        },
+        {
+            "name": "objecting/object",
+            "version": "dev-master",
+            "dist": {
+                "type": "path",
+                "url": "../Objecting",
+                "reference": "a5ae3713fff95ac0c4779c568dba9dd1c429b7dc"
+            },
+            "require": {
+                "doctrine/orm": "^3.3",
+                "php": "^8.4",
+                "symfony/config": "^8.0",
+                "symfony/dependency-injection": "^8.0",
+                "symfony/http-kernel": "^8.0",
+                "symfony/uid": "^8.0",
+                "symfony/yaml": "^8.0"
+            },
+            "require-dev": {
+                "friendsofphp/php-cs-fixer": ">=3.95 <4.0",
+                "phpstan/phpstan": "^2.0",
+                "phpunit/phpunit": "^11.0 || ^12.0"
+            },
+            "type": "library",
+            "extra": {
+                "symfony": {
+                    "require": "^8.0"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "App\\Objecting\\": "src/"
+                }
+            },
+            "autoload-dev": {
+                "psr-4": {
+                    "App\\Objecting\\Tests\\": "tests/"
+                }
+            },
+            "scripts": {
+                "test:canon": [
+                    "@php tools/test/objecting_canon_check.php"
+                ],
+                "test:responsibility-boundary": [
+                    "@php tools/test/objecting_responsibility_boundary_check.php"
+                ],
+                "test:semantic-manifest": [
+                    "@php tools/test/objecting_semantic_manifest_check.php"
+                ],
+                "test:lifecycle-identity-canon": [
+                    "@php tools/test/objecting_lifecycle_identity_canon_check.php"
+                ],
+                "test:production-diagnostics": [
+                    "@php tools/test/objecting_production_diagnostic_check.php"
+                ],
+                "test:package-surface": [
+                    "@php tools/test/objecting_package_surface_check.php"
+                ],
+                "test:migration-readiness": [
+                    "@php tools/test/objecting_backend_migration_readiness_check.php"
+                ],
+                "test:quality": [
+                    "@test:canon",
+                    "@test:responsibility-boundary",
+                    "@test:semantic-manifest",
+                    "@test:lifecycle-identity-canon",
+                    "@test:production-diagnostics",
+                    "@test:internal-types",
+                    "@test:layer-suffix",
+                    "@test:package-surface",
+                    "@test:platform-constraints",
+                    "@test:systemic-field-packs",
+                    "@test:entity-kind-policy",
+                    "@test:title-alias-hardening",
+                    "@test:embeddable-initialization",
+                    "@test:doctrine-mapping",
+                    "@test:schema-mirror",
+                    "@test:exposing-bridge",
+                    "@test:backend-import",
+                    "@test:backend-clone-cleanup",
+                    "@test:backend-migration-command",
+                    "@test:release-readiness",
+                    "@test:rc-stabilization",
+                    "@test:rc",
+                    "@test:sibling-pilot-migration-handoff",
+                    "@test:migration-transition-freeze",
+                    "@test:release-closure",
+                    "@test:migration-readiness",
+                    "@test:backend-adoption",
+                    "@test:backend-handoff",
+                    "@test:backend-adoption-packet"
+                ],
+                "phpstan": [
+                    "phpstan analyse src tests tools --memory-limit=1G"
+                ],
+                "test": [
+                    "phpunit --testdox"
+                ],
+                "test:backend-adoption": [
+                    "@php tools/test/objecting_backend_adoption_manifest_check.php"
+                ],
+                "test:backend-handoff": [
+                    "@php tools/test/objecting_backend_handoff_contract_check.php"
+                ],
+                "test:release-readiness": [
+                    "@php tools/test/objecting_release_readiness_check.php"
+                ],
+                "test:release-closure": [
+                    "@php tools/test/objecting_release_closure_check.php"
+                ],
+                "test:backend-adoption-packet": [
+                    "@php tools/test/objecting_backend_adoption_packet_check.php"
+                ],
+                "test:embeddable-initialization": [
+                    "@php tools/test/objecting_embeddable_initialization_check.php"
+                ],
+                "test:doctrine-mapping": [
+                    "@php tools/test/objecting_doctrine_mapping_contract_check.php"
+                ],
+                "test:schema-mirror": [
+                    "@php tools/test/objecting_schema_mirror_contract_check.php"
+                ],
+                "test:exposing-bridge": [
+                    "@php tools/test/objecting_exposing_bridge_contract_check.php"
+                ],
+                "test:backend-import": [
+                    "@php tools/test/objecting_backend_import_contract_check.php"
+                ],
+                "test:rc-stabilization": [
+                    "@php tools/test/objecting_rc_stabilization_check.php"
+                ],
+                "test:rc": [
+                    "@php tools/test/objecting_rc2_check.php"
+                ],
+                "test:rc1": [
+                    "@php tools/test/objecting_rc1_check.php"
+                ],
+                "test:platform-constraints": [
+                    "@php tools/test/objecting_platform_constraint_check.php"
+                ],
+                "test:systemic-field-packs": [
+                    "@php tools/test/objecting_systemic_field_pack_check.php"
+                ],
+                "test:entity-kind-policy": [
+                    "@php tools/test/objecting_entity_kind_policy_check.php"
+                ],
+                "audit:entity-kinds": [
+                    "@php tools/audit/objecting_workspace_entity_kind_audit.php"
+                ],
+                "test:title-alias-hardening": [
+                    "@php tools/test/objecting_title_alias_hardening_check.php"
+                ],
+                "test:backend-clone-cleanup": [
+                    "@php tools/test/objecting_backend_clone_cleanup_contract_check.php"
+                ],
+                "test:backend-migration-command": [
+                    "@php tools/test/objecting_backend_migration_command_packet_check.php"
+                ],
+                "test:rc2": [
+                    "@php tools/test/objecting_rc2_check.php"
+                ],
+                "test:sibling-pilot-migration-handoff": [
+                    "@php tools/test/objecting_sibling_pilot_migration_handoff_check.php"
+                ],
+                "test:migration-transition-freeze": [
+                    "@php tools/test/objecting_migration_transition_freeze_check.php"
+                ],
+                "test:layer-suffix": [
+                    "@php tools/test/objecting_layer_suffix_check.php"
+                ],
+                "test:internal-types": [
+                    "@php tools/test/objecting_internal_type_resolution_check.php"
+                ]
+            },
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Oleksandr Tishchenko",
+                    "homepage": "https://smartresponsor.com",
+                    "role": "Maintainer"
+                }
+            ],
+            "description": "Objecting process app",
+            "transport-options": {
+                "symlink": true,
+                "relative": true
+            }
         },
         {
             "name": "psr/cache",
@@ -6141,9 +6331,11 @@
         }
     ],
     "aliases": [],
-    "minimum-stability": "stable",
-    "stability-flags": {},
-    "prefer-stable": false,
+    "minimum-stability": "dev",
+    "stability-flags": {
+        "objecting/object": 20
+    },
+    "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {
         "php": ">=8.4"

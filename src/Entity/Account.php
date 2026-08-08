@@ -5,14 +5,23 @@ declare(strict_types=1);
 namespace App\Entity;
 
 use App\Enum\AccountCategory;
+use App\Objecting\EntityInterface\ObjectEntityInterface;
+use App\Objecting\EntityTrait\Embeddable\ObjectAuditEmbeddableTrait;
+use App\Objecting\EntityTrait\Embeddable\ObjectIdentityEmbeddableTrait;
+use App\Objecting\EntityTrait\Embeddable\ObjectStateEmbeddableTrait;
+use App\Objecting\EntityTrait\Embeddable\ObjectTitleEmbeddableTrait;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Uid\Uuid;
 
 #[ORM\Entity]
 #[ORM\Table(name: 'account')]
 #[ORM\UniqueConstraint(name: 'uniq_account_wallet_code_currency', columns: ['wallet_id', 'code', 'currency'])]
-class Account
+class Account implements ObjectEntityInterface
 {
+    use ObjectIdentityEmbeddableTrait;
+    use ObjectTitleEmbeddableTrait;
+    use ObjectAuditEmbeddableTrait;
+    use ObjectStateEmbeddableTrait;
     #[ORM\Id]
     #[ORM\Column(type: 'uuid', unique: true)]
     private Uuid $id;
@@ -33,9 +42,6 @@ class Account
     #[ORM\Column(name: 'allow_negative')]
     private bool $allowNegative;
 
-    #[ORM\Column(name: 'created_at', type: 'datetime_immutable')]
-    private \DateTimeImmutable $createdAt;
-
     public function __construct(Wallet $wallet, string $code, string $currency, AccountCategory $category, ?Uuid $id = null, ?bool $allowNegative = null)
     {
         $code = trim($code);
@@ -54,7 +60,11 @@ class Account
         $this->currency = $currency;
         $this->category = $category;
         $this->allowNegative = $allowNegative ?? !in_array($category, [AccountCategory::Asset, AccountCategory::Reserve], true);
-        $this->createdAt = new \DateTimeImmutable();
+        $now = new \DateTimeImmutable();
+        $this->initializeObjectIdentity($this->id->toRfc4122(), 'account:'.$this->id->toRfc4122());
+        $this->initializeObjectTitle($code);
+        $this->initializeObjectAudit($now);
+        $this->initializeObjectState(objectStatus: 'active');
     }
 
     public function id(): Uuid { return $this->id; }
@@ -63,5 +73,5 @@ class Account
     public function currency(): string { return $this->currency; }
     public function category(): AccountCategory { return $this->category; }
     public function allowsNegativeBalance(): bool { return $this->allowNegative; }
-    public function createdAt(): \DateTimeImmutable { return $this->createdAt; }
+    public function createdAt(): \DateTimeImmutable { return $this->getCreatedAt(); }
 }

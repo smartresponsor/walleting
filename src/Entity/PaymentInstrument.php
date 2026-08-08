@@ -6,14 +6,23 @@ namespace App\Entity;
 
 use App\Enum\PaymentInstrumentStatus;
 use App\Enum\PaymentInstrumentType;
+use App\Objecting\EntityInterface\ObjectEntityInterface;
+use App\Objecting\EntityTrait\Embeddable\ObjectAuditEmbeddableTrait;
+use App\Objecting\EntityTrait\Embeddable\ObjectIdentityEmbeddableTrait;
+use App\Objecting\EntityTrait\Embeddable\ObjectStateEmbeddableTrait;
+use App\Objecting\EntityTrait\Embeddable\ObjectTitleEmbeddableTrait;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Uid\Uuid;
 
 #[ORM\Entity]
 #[ORM\Table(name: 'payment_instrument')]
 #[ORM\UniqueConstraint(name: 'uniq_payment_instrument_provider_reference', columns: ['provider', 'provider_reference'])]
-class PaymentInstrument
+class PaymentInstrument implements ObjectEntityInterface
 {
+    use ObjectIdentityEmbeddableTrait;
+    use ObjectTitleEmbeddableTrait;
+    use ObjectAuditEmbeddableTrait;
+    use ObjectStateEmbeddableTrait;
     #[ORM\Id]
     #[ORM\Column(type: 'uuid', unique: true)]
     private Uuid $id;
@@ -37,9 +46,6 @@ class PaymentInstrument
     #[ORM\Column(enumType: PaymentInstrumentStatus::class)]
     private PaymentInstrumentStatus $status;
 
-    #[ORM\Column(name: 'created_at', type: 'datetime_immutable')]
-    private \DateTimeImmutable $createdAt;
-
     public function __construct(Wallet $wallet, PaymentInstrumentType $type, string $provider, string $providerReference, string $displayLabel, ?Uuid $id = null)
     {
         $provider = trim($provider);
@@ -57,11 +63,15 @@ class PaymentInstrument
         $this->providerReference = $providerReference;
         $this->displayLabel = $displayLabel;
         $this->status = PaymentInstrumentStatus::Active;
-        $this->createdAt = new \DateTimeImmutable();
+        $now = new \DateTimeImmutable();
+        $this->initializeObjectIdentity($this->id->toRfc4122(), 'payment-instrument:'.$this->id->toRfc4122());
+        $this->initializeObjectTitle($displayLabel);
+        $this->initializeObjectAudit($now);
+        $this->initializeObjectState(objectStatus: PaymentInstrumentStatus::Active->value);
     }
 
-    public function disable(): void { $this->status = PaymentInstrumentStatus::Disabled; }
-    public function expire(): void { $this->status = PaymentInstrumentStatus::Expired; }
+    public function disable(): void { $this->status = PaymentInstrumentStatus::Disabled; $this->setObjectStatus(PaymentInstrumentStatus::Disabled->value); $this->setObjectActive(false); $this->touchModified(); }
+    public function expire(): void { $this->status = PaymentInstrumentStatus::Expired; $this->setObjectStatus(PaymentInstrumentStatus::Expired->value); $this->setObjectActive(false); $this->touchModified(); }
     public function id(): Uuid { return $this->id; }
     public function wallet(): Wallet { return $this->wallet; }
     public function type(): PaymentInstrumentType { return $this->type; }
@@ -69,5 +79,5 @@ class PaymentInstrument
     public function providerReference(): string { return $this->providerReference; }
     public function displayLabel(): string { return $this->displayLabel; }
     public function status(): PaymentInstrumentStatus { return $this->status; }
-    public function createdAt(): \DateTimeImmutable { return $this->createdAt; }
+    public function createdAt(): \DateTimeImmutable { return $this->getCreatedAt(); }
 }

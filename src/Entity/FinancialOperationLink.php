@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Entity;
 
 use App\Enum\TransactionType;
+use App\Objecting\EntityInterface\ObjectRelationEntityInterface;
+use App\Objecting\EntityTrait\Embeddable\ObjectAuditEmbeddableTrait;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Uid\Uuid;
 
@@ -13,8 +15,9 @@ use Symfony\Component\Uid\Uuid;
 #[ORM\UniqueConstraint(name: 'uniq_financial_operation_source_type', columns: ['source_transaction_id', 'operation_type'])]
 #[ORM\UniqueConstraint(name: 'uniq_financial_operation_reservation_type', columns: ['reservation_id', 'operation_type'])]
 #[ORM\UniqueConstraint(name: 'uniq_financial_operation_result', columns: ['result_transaction_id'])]
-class FinancialOperationLink
+class FinancialOperationLink implements ObjectRelationEntityInterface
 {
+    use ObjectAuditEmbeddableTrait;
     #[ORM\Id]
     #[ORM\Column(type: 'uuid', unique: true)]
     private Uuid $id;
@@ -33,9 +36,6 @@ class FinancialOperationLink
     #[ORM\ManyToOne(targetEntity: Reservation::class)]
     #[ORM\JoinColumn(name: 'reservation_id', nullable: true, onDelete: 'RESTRICT')]
     private ?Reservation $reservation;
-
-    #[ORM\Column(name: 'created_at', type: 'datetime_immutable')]
-    private \DateTimeImmutable $createdAt;
 
     public function __construct(TransactionType $operationType, LedgerTransaction $sourceTransaction, LedgerTransaction $resultTransaction, ?Reservation $reservation = null, ?Uuid $id = null)
     {
@@ -57,7 +57,7 @@ class FinancialOperationLink
         $this->sourceTransaction = $sourceTransaction;
         $this->resultTransaction = $resultTransaction;
         $this->reservation = $reservation;
-        $this->createdAt = new \DateTimeImmutable();
+        $this->initializeObjectAudit();
     }
 
     public function operationType(): TransactionType { return $this->operationType; }

@@ -11,6 +11,11 @@ doctrine:
                 dir: '%kernel.project_dir%/src/Entity'
                 prefix: 'App\Entity'
                 alias: App
+            ObjectingEmbeddable:
+                type: attribute
+                dir: '%kernel.project_dir%/vendor/objecting/object/src/Embeddable'
+                prefix: 'App\Objecting\Embeddable'
+                is_bundle: false
 when@test:
     doctrine:
         dbal:
