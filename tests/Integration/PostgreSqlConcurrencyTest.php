@@ -140,7 +140,7 @@ final class PostgreSqlConcurrencyTest extends KernelTestCase
             'owner_type' => 'concurrency',
             'owner_id' => Uuid::v7()->toRfc4122(),
             'status' => 'active',
-            'object_uuid' => Uuid::fromString($walletId)->toBinary(),
+            'object_uuid' => '\\x'.str_replace('-', '', $walletId),
             'object_slug' => 'wallet:'.$walletId,
             'object_first_title' => 'concurrency',
             'object_created_at' => $now,
