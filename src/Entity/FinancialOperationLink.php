@@ -12,8 +12,8 @@ use Symfony\Component\Uid\Uuid;
 
 #[ORM\Entity]
 #[ORM\Table(name: 'financial_operation_link')]
-#[ORM\UniqueConstraint(name: 'uniq_financial_operation_source_type', columns: ['source_transaction_id', 'operation_type'])]
-#[ORM\UniqueConstraint(name: 'uniq_financial_operation_reservation_type', columns: ['reservation_id', 'operation_type'])]
+#[ORM\UniqueConstraint(name: 'uniq_financial_operation_inverse_source', columns: ['source_transaction_id'], options: ['where' => "operation_type IN ('refund', 'reverse')"])]
+#[ORM\UniqueConstraint(name: 'uniq_financial_operation_reservation_settlement', columns: ['reservation_id'], options: ['where' => "reservation_id IS NOT NULL AND operation_type IN ('capture', 'release')"])]
 #[ORM\UniqueConstraint(name: 'uniq_financial_operation_result', columns: ['result_transaction_id'])]
 class FinancialOperationLink implements ObjectRelationEntityInterface
 {
