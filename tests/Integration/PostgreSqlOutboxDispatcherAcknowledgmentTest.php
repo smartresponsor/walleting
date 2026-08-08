@@ -24,7 +24,8 @@ final class PostgreSqlOutboxDispatcherAcknowledgmentTest extends KernelTestCase
         $this->connection = self::getContainer()->get('doctrine.dbal.default_connection');
         $this->entityManager = self::getContainer()->get('doctrine.orm.entity_manager');
         self::assertInstanceOf(\Doctrine\DBAL\Platforms\PostgreSQLPlatform::class, $this->connection->getDatabasePlatform());
-        $this->connection->executeStatement("DELETE FROM outbox_message WHERE message_type = 'posting.dispatch.ack.test'");
+        $this->connection->executeStatement('DELETE FROM outbox_requeue_audit');
+        $this->connection->executeStatement('DELETE FROM outbox_message');
     }
 
     public function testSuccessfulHandlerAcknowledgesOnlyAfterHandleReturns(): void
@@ -100,7 +101,7 @@ final class PostgreSqlOutboxDispatcherAcknowledgmentTest extends KernelTestCase
             self::assertGreaterThanOrEqual($before->modify(sprintf('+%d seconds', $expectedDelay - 1))->getTimestamp(), $availableAt->getTimestamp());
             self::assertLessThanOrEqual($before->modify(sprintf('+%d seconds', $expectedDelay + 2))->getTimestamp(), $availableAt->getTimestamp());
 
-            $this->connection->executeStatement("UPDATE outbox_message SET available_at = CURRENT_TIMESTAMP WHERE deduplication_key = 'posting.dispatch.ack.test:exhaustion'");
+            $this->connection->executeStatement("UPDATE outbox_message SET available_at = CURRENT_TIMESTAMP - INTERVAL '1 second' WHERE deduplication_key = 'posting.dispatch.ack.test:exhaustion'");
             $this->entityManager->clear();
         }
 
@@ -137,7 +138,7 @@ final class PostgreSqlOutboxDispatcherAcknowledgmentTest extends KernelTestCase
             $availableAt = new \DateTimeImmutable((string) $this->connection->fetchOne("SELECT available_at FROM outbox_message WHERE deduplication_key = 'posting.dispatch.ack.test:backoff-cap'"));
             self::assertGreaterThanOrEqual($before->modify(sprintf('+%d seconds', $expectedDelay - 1))->getTimestamp(), $availableAt->getTimestamp(), sprintf('Attempt %d must respect bounded backoff.', $index + 1));
             self::assertLessThanOrEqual($before->modify(sprintf('+%d seconds', $expectedDelay + 2))->getTimestamp(), $availableAt->getTimestamp());
-            $this->connection->executeStatement("UPDATE outbox_message SET available_at = CURRENT_TIMESTAMP WHERE deduplication_key = 'posting.dispatch.ack.test:backoff-cap'");
+            $this->connection->executeStatement("UPDATE outbox_message SET available_at = CURRENT_TIMESTAMP - INTERVAL '1 second' WHERE deduplication_key = 'posting.dispatch.ack.test:backoff-cap'");
             $this->entityManager->clear();
         }
     }

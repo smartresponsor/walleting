@@ -128,6 +128,17 @@ class OutboxMessage
         $this->lastError = trim($error);
     }
 
+    public function requeueDead(?\DateTimeImmutable $availableAt = null): void
+    {
+        if (OutboxMessageStatus::Dead !== $this->status) {
+            throw new \LogicException('Only dead outbox messages can be requeued.');
+        }
+
+        $this->status = OutboxMessageStatus::Failed;
+        $this->availableAt = $availableAt ?? new \DateTimeImmutable();
+        $this->dispatchedAt = null;
+    }
+
     private function assertClaimedFailure(string $error): void
     {
         if (OutboxMessageStatus::Claimed !== $this->status) {

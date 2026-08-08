@@ -31,7 +31,7 @@ final readonly class InboxService
     public function processOnce(OutboxEvent $event, callable $handler): bool
     {
         try {
-            return $this->entityManager->wrapInTransaction(function () use ($event, $handler): bool {
+            return $this->connection->transactional(function () use ($event, $handler): bool {
                 $existing = $this->findReceipt($event);
                 if ($existing instanceof InboxReceipt) {
                     $existing->assertSameEvent($event);
@@ -51,6 +51,7 @@ final readonly class InboxService
                 return true;
             });
         } catch (UniqueConstraintViolationException) {
+            $this->entityManager->clear();
             $existing = $this->findReceipt($event);
             if (!$existing instanceof InboxReceipt) {
                 throw new \RuntimeException('Duplicate inbox receipt conflict could not be resolved.');
@@ -58,6 +59,9 @@ final readonly class InboxService
             $existing->assertSameEvent($event);
 
             return false;
+        } catch (\Throwable $exception) {
+            $this->entityManager->clear();
+            throw $exception;
         }
     }
 

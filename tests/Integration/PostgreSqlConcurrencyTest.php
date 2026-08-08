@@ -21,6 +21,8 @@ final class PostgreSqlConcurrencyTest extends KernelTestCase
         self::bootKernel();
         $this->connection = self::getContainer()->get('doctrine.dbal.default_connection');
         self::assertInstanceOf(\Doctrine\DBAL\Platforms\PostgreSQLPlatform::class, $this->connection->getDatabasePlatform());
+        $this->connection->executeStatement('DELETE FROM outbox_requeue_audit');
+        $this->connection->executeStatement('DELETE FROM outbox_message');
     }
 
     public function testConcurrentSpendSerializesOnAccountBalanceAndRejectsRetryAfterWinnerCommits(): void
