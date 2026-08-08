@@ -74,6 +74,74 @@ final class PostgreSqlOutboxDispatcherAcknowledgmentTest extends KernelTestCase
         self::assertGreaterThanOrEqual($before->modify('+29 seconds')->getTimestamp(), (new \DateTimeImmutable((string) $row['available_at']))->getTimestamp());
     }
 
+    public function testRetryExhaustionTransitionsToDeadAndDeadMessageIsNeverClaimedAgain(): void
+    {
+        $service = $this->outboxService();
+        $this->enqueue('exhaustion');
+        $handler = new class implements OutboxMessageHandlerInterface {
+            public function supports(string $messageType): bool { return 'posting.dispatch.ack.test' === $messageType; }
+            public function handle(OutboxMessage $message): void { throw new \RuntimeException('persistent transport failure'); }
+        };
+        $dispatcher = new OutboxDispatcher($service, [$handler], maxAttempts: 8, baseDelaySeconds: 30, maxDelaySeconds: 3600);
+        $expectedDelays = [30, 60, 120, 240, 480, 960, 1920];
+
+        foreach ($expectedDelays as $index => $expectedDelay) {
+            $before = new \DateTimeImmutable();
+            $report = $dispatcher->dispatchBatchReport(1);
+            self::assertSame(1, $report->retryScheduled, sprintf('Attempt %d must schedule a retry.', $index + 1));
+            self::assertSame(0, $report->dead);
+
+            $row = $this->connection->fetchAssociative("SELECT status, attempt_count, available_at, dispatched_at FROM outbox_message WHERE deduplication_key = 'posting.dispatch.ack.test:exhaustion'");
+            self::assertIsArray($row);
+            self::assertSame('failed', $row['status']);
+            self::assertSame($index + 1, (int) $row['attempt_count']);
+            self::assertNull($row['dispatched_at']);
+            $availableAt = new \DateTimeImmutable((string) $row['available_at']);
+            self::assertGreaterThanOrEqual($before->modify(sprintf('+%d seconds', $expectedDelay - 1))->getTimestamp(), $availableAt->getTimestamp());
+            self::assertLessThanOrEqual($before->modify(sprintf('+%d seconds', $expectedDelay + 2))->getTimestamp(), $availableAt->getTimestamp());
+
+            $this->connection->executeStatement("UPDATE outbox_message SET available_at = CURRENT_TIMESTAMP WHERE deduplication_key = 'posting.dispatch.ack.test:exhaustion'");
+            $this->entityManager->clear();
+        }
+
+        $terminal = $dispatcher->dispatchBatchReport(1);
+        self::assertSame(0, $terminal->retryScheduled);
+        self::assertSame(1, $terminal->dead);
+        $row = $this->connection->fetchAssociative("SELECT status, attempt_count, last_error, dispatched_at FROM outbox_message WHERE deduplication_key = 'posting.dispatch.ack.test:exhaustion'");
+        self::assertIsArray($row);
+        self::assertSame('dead', $row['status']);
+        self::assertSame(8, (int) $row['attempt_count']);
+        self::assertSame('persistent transport failure', $row['last_error']);
+        self::assertNull($row['dispatched_at']);
+
+        $this->entityManager->clear();
+        self::assertSame([], $service->claimBatch(1));
+        self::assertSame(0, $dispatcher->dispatchBatchReport(1)->claimed);
+    }
+
+    public function testRetryBackoffIsCappedAtConfiguredMaximum(): void
+    {
+        $service = $this->outboxService();
+        $this->enqueue('backoff-cap');
+        $handler = new class implements OutboxMessageHandlerInterface {
+            public function supports(string $messageType): bool { return 'posting.dispatch.ack.test' === $messageType; }
+            public function handle(OutboxMessage $message): void { throw new \RuntimeException('temporary failure'); }
+        };
+        $dispatcher = new OutboxDispatcher($service, [$handler], maxAttempts: 8, baseDelaySeconds: 30, maxDelaySeconds: 100);
+        $expectedDelays = [30, 60, 100, 100];
+
+        foreach ($expectedDelays as $index => $expectedDelay) {
+            $before = new \DateTimeImmutable();
+            $report = $dispatcher->dispatchBatchReport(1);
+            self::assertSame(1, $report->retryScheduled);
+            $availableAt = new \DateTimeImmutable((string) $this->connection->fetchOne("SELECT available_at FROM outbox_message WHERE deduplication_key = 'posting.dispatch.ack.test:backoff-cap'"));
+            self::assertGreaterThanOrEqual($before->modify(sprintf('+%d seconds', $expectedDelay - 1))->getTimestamp(), $availableAt->getTimestamp(), sprintf('Attempt %d must respect bounded backoff.', $index + 1));
+            self::assertLessThanOrEqual($before->modify(sprintf('+%d seconds', $expectedDelay + 2))->getTimestamp(), $availableAt->getTimestamp());
+            $this->connection->executeStatement("UPDATE outbox_message SET available_at = CURRENT_TIMESTAMP WHERE deduplication_key = 'posting.dispatch.ack.test:backoff-cap'");
+            $this->entityManager->clear();
+        }
+    }
+
     private function enqueue(string $suffix): void
     {
         $this->connection->transactional(function () use ($suffix): void {
