@@ -6,6 +6,10 @@ namespace App\Messenger;
 
 use App\Message\OutboxEvent;
 use Symfony\Component\Messenger\Envelope;
+use Symfony\Component\Messenger\Stamp\DelayStamp;
+use Symfony\Component\Messenger\Stamp\ErrorDetailsStamp;
+use Symfony\Component\Messenger\Stamp\RedeliveryStamp;
+use Symfony\Component\Messenger\Stamp\SentToFailureTransportStamp;
 use Symfony\Component\Messenger\Transport\Serialization\SerializerInterface;
 
 final class OutboxEventSerializer implements SerializerInterface
@@ -41,7 +45,7 @@ final class OutboxEventSerializer implements SerializerInterface
             causationId: $this->nullableString($data, 'causation_id'),
         );
 
-        return new Envelope($event);
+        return new Envelope($event, $this->decodeMessengerStamps($encodedEnvelope['headers'] ?? []));
     }
 
     public function encode(Envelope $envelope): array
@@ -69,8 +73,128 @@ final class OutboxEventSerializer implements SerializerInterface
                 'Content-Type' => 'application/json',
                 'X-Walleting-Event-Schema' => (string) $message->schemaVersion,
                 'X-Walleting-Event-Type' => $message->type,
+                ...$this->encodeMessengerStamps($envelope),
             ],
         ];
+    }
+
+    /** @return array<string, string> */
+    private function encodeMessengerStamps(Envelope $envelope): array
+    {
+        $data = [];
+
+        $redeliveries = array_map(
+            static fn (RedeliveryStamp $stamp): array => [
+                'retry_count' => $stamp->getRetryCount(),
+                'redelivered_at' => $stamp->getRedeliveredAt()->format(DATE_ATOM),
+            ],
+            $envelope->all(RedeliveryStamp::class),
+        );
+        if ([] !== $redeliveries) {
+            $data['redelivery'] = $redeliveries;
+        }
+
+        $delays = array_map(
+            static fn (DelayStamp $stamp): int => $stamp->getDelay(),
+            $envelope->all(DelayStamp::class),
+        );
+        if ([] !== $delays) {
+            $data['delay'] = $delays;
+        }
+
+        $failureTransports = array_map(
+            static fn (SentToFailureTransportStamp $stamp): string => $stamp->getOriginalReceiverName(),
+            $envelope->all(SentToFailureTransportStamp::class),
+        );
+        if ([] !== $failureTransports) {
+            $data['failure_transport'] = $failureTransports;
+        }
+
+        $errors = array_map(
+            static fn (ErrorDetailsStamp $stamp): array => [
+                'exception_class' => $stamp->getExceptionClass(),
+                'exception_code' => $stamp->getExceptionCode(),
+                'exception_message' => $stamp->getExceptionMessage(),
+            ],
+            $envelope->all(ErrorDetailsStamp::class),
+        );
+        if ([] !== $errors) {
+            $data['error_details'] = $errors;
+        }
+
+        if ([] === $data) {
+            return [];
+        }
+
+        return ['X-Walleting-Messenger-Stamps' => json_encode($data, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES)];
+    }
+
+    /** @param array<string, mixed> $headers @return list<object> */
+    private function decodeMessengerStamps(array $headers): array
+    {
+        $encoded = $headers['X-Walleting-Messenger-Stamps'] ?? null;
+        if (null === $encoded) {
+            return [];
+        }
+        if (!is_string($encoded) || '' === trim($encoded)) {
+            throw new \InvalidArgumentException('Messenger stamp transport header must be a non-empty JSON string.');
+        }
+
+        $data = json_decode($encoded, true, 64, JSON_THROW_ON_ERROR);
+        if (!is_array($data)) {
+            throw new \InvalidArgumentException('Messenger stamp transport header must decode to an object.');
+        }
+
+        $stamps = [];
+        foreach ($this->stampList($data, 'redelivery') as $item) {
+            if (!is_array($item) || !is_int($item['retry_count'] ?? null) || ($item['retry_count'] ?? -1) < 0 || !is_string($item['redelivered_at'] ?? null)) {
+                throw new \InvalidArgumentException('Messenger redelivery stamp metadata is invalid.');
+            }
+            try {
+                $redeliveredAt = new \DateTimeImmutable($item['redelivered_at']);
+            } catch (\Throwable $exception) {
+                throw new \InvalidArgumentException('Messenger redelivery timestamp is invalid.', 0, $exception);
+            }
+            $stamps[] = new RedeliveryStamp($item['retry_count'], $redeliveredAt);
+        }
+
+        foreach ($this->stampList($data, 'delay') as $delay) {
+            if (!is_int($delay) || $delay < 0) {
+                throw new \InvalidArgumentException('Messenger delay stamp metadata is invalid.');
+            }
+            $stamps[] = new DelayStamp($delay);
+        }
+
+        foreach ($this->stampList($data, 'failure_transport') as $receiverName) {
+            if (!is_string($receiverName) || '' === trim($receiverName)) {
+                throw new \InvalidArgumentException('Messenger failure transport stamp metadata is invalid.');
+            }
+            $stamps[] = new SentToFailureTransportStamp($receiverName);
+        }
+
+        foreach ($this->stampList($data, 'error_details') as $item) {
+            if (!is_array($item) || !is_string($item['exception_class'] ?? null) || '' === trim($item['exception_class']) || !is_int($item['exception_code'] ?? null) && !is_string($item['exception_code'] ?? null) || !is_string($item['exception_message'] ?? null)) {
+                throw new \InvalidArgumentException('Messenger error details stamp metadata is invalid.');
+            }
+            $stamps[] = new ErrorDetailsStamp(
+                $item['exception_class'],
+                $item['exception_code'],
+                $item['exception_message'],
+            );
+        }
+
+        return $stamps;
+    }
+
+    /** @param array<string, mixed> $data @return list<mixed> */
+    private function stampList(array $data, string $key): array
+    {
+        $value = $data[$key] ?? [];
+        if (!is_array($value) || !array_is_list($value)) {
+            throw new \InvalidArgumentException(sprintf('Messenger stamp field "%s" must be a list.', $key));
+        }
+
+        return $value;
     }
 
     /** @param array<string, mixed> $data */

@@ -8,6 +8,11 @@ use App\Message\OutboxEvent;
 use App\Messenger\OutboxEventSerializer;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Messenger\Envelope;
+use Symfony\Component\Messenger\Retry\MultiplierRetryStrategy;
+use Symfony\Component\Messenger\Stamp\DelayStamp;
+use Symfony\Component\Messenger\Stamp\ErrorDetailsStamp;
+use Symfony\Component\Messenger\Stamp\RedeliveryStamp;
+use Symfony\Component\Messenger\Stamp\SentToFailureTransportStamp;
 
 final class OutboxEventSerializerTest extends TestCase
 {
@@ -83,6 +88,76 @@ final class OutboxEventSerializerTest extends TestCase
 
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Unsupported outbox event schema version 2; supported version is 1.');
+        $serializer->decode($encoded);
+    }
+
+    public function testRetryAndFailureStampsSurviveRoundTrip(): void
+    {
+        $serializer = new OutboxEventSerializer();
+        $event = new OutboxEvent(
+            messageId: '0198-stamped',
+            type: 'posting.slo.state.changed',
+            deduplicationKey: 'posting.slo.state.changed:default:7',
+            payload: ['scope' => 'default'],
+            ledgerTransactionId: null,
+            providerEventExternalId: null,
+        );
+        $redeliveredAt = new \DateTimeImmutable('2026-08-08T03:20:00-05:00');
+        $envelope = new Envelope($event, [
+            new RedeliveryStamp(3, $redeliveredAt),
+            new DelayStamp(30000),
+            new SentToFailureTransportStamp('outbox_events'),
+            new ErrorDetailsStamp(\RuntimeException::class, 17, 'notification failed'),
+        ]);
+
+        $decoded = $serializer->decode($serializer->encode($envelope));
+
+        $redelivery = $decoded->last(RedeliveryStamp::class);
+        self::assertInstanceOf(RedeliveryStamp::class, $redelivery);
+        self::assertSame(3, $redelivery->getRetryCount());
+        self::assertSame($redeliveredAt->format(DATE_ATOM), $redelivery->getRedeliveredAt()->format(DATE_ATOM));
+        self::assertSame(30000, $decoded->last(DelayStamp::class)?->getDelay());
+        self::assertSame('outbox_events', $decoded->last(SentToFailureTransportStamp::class)?->getOriginalReceiverName());
+        $error = $decoded->last(ErrorDetailsStamp::class);
+        self::assertInstanceOf(ErrorDetailsStamp::class, $error);
+        self::assertSame(\RuntimeException::class, $error->getExceptionClass());
+        self::assertSame(17, $error->getExceptionCode());
+        self::assertSame('notification failed', $error->getExceptionMessage());
+    }
+
+    public function testDecodedRetryCountStopsRetryStrategyAtConfiguredMaximum(): void
+    {
+        $serializer = new OutboxEventSerializer();
+        $event = new OutboxEvent(
+            messageId: '0198-retry-limit',
+            type: 'posting.slo.state.changed',
+            deduplicationKey: 'posting.slo.state.changed:default:8',
+            payload: ['scope' => 'default'],
+            ledgerTransactionId: null,
+            providerEventExternalId: null,
+        );
+        $decoded = $serializer->decode($serializer->encode(
+            new Envelope($event, [new RedeliveryStamp(3)]),
+        ));
+
+        self::assertFalse((new MultiplierRetryStrategy(maxRetries: 3))->isRetryable($decoded));
+    }
+
+    public function testMalformedMessengerStampHeaderIsRejectedInsteadOfResettingRetryState(): void
+    {
+        $serializer = new OutboxEventSerializer();
+        $encoded = $serializer->encode(new Envelope(new OutboxEvent(
+            messageId: '0198-invalid-stamp',
+            type: 'posting.slo.state.changed',
+            deduplicationKey: 'posting.slo.state.changed:default:9',
+            payload: ['scope' => 'default'],
+            ledgerTransactionId: null,
+            providerEventExternalId: null,
+        )));
+        $encoded['headers']['X-Walleting-Messenger-Stamps'] = '{"redelivery":[{"retry_count":"3","redelivered_at":"2026-08-08T03:20:00-05:00"}]}';
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Messenger redelivery stamp metadata is invalid.');
         $serializer->decode($encoded);
     }
 
