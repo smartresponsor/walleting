@@ -57,6 +57,26 @@ final class MessengerOutboxMessageHandlerTest extends TestCase
         $handler->handle($message);
     }
 
+    public function testTransportFailurePropagatesWithoutLocalAcknowledgment(): void
+    {
+        $message = new OutboxMessage(
+            'wallet.funding.succeeded',
+            'funding:transport-failure',
+            ['amount' => 1250, 'currency' => 'USD'],
+            $this->transaction(),
+        );
+        $bus = $this->createMock(MessageBusInterface::class);
+        $bus->expects(self::once())
+            ->method('dispatch')
+            ->willThrowException(new \RuntimeException('transport unavailable'));
+
+        $handler = new MessengerOutboxMessageHandler($bus);
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('transport unavailable');
+        $handler->handle($message);
+    }
+
     private function transaction(): LedgerTransaction
     {
         $wallet = new Wallet('vendor', 'messenger-vendor');
