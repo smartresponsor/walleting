@@ -232,7 +232,7 @@ final readonly class OutboxService
         }
 
         return $this->connection->fetchAllAssociative(
-            "SELECT id, message_type, deduplication_key, attempt_count, last_error, claimed_at, created_at FROM outbox_message WHERE status = 'dead' ORDER BY claimed_at DESC, id DESC LIMIT ?",
+            "SELECT m.id, m.message_type, m.deduplication_key, m.attempt_count, m.last_error, m.claimed_at, m.created_at, EXTRACT(EPOCH FROM (CURRENT_TIMESTAMP - m.created_at))::INT AS age_seconds, COUNT(a.id)::INT AS requeue_count, MAX(a.created_at) AS last_requeued_at FROM outbox_message m LEFT JOIN outbox_requeue_audit a ON a.outbox_message_id = m.id WHERE m.status = 'dead' GROUP BY m.id, m.message_type, m.deduplication_key, m.attempt_count, m.last_error, m.claimed_at, m.created_at ORDER BY m.claimed_at DESC, m.id DESC LIMIT ?",
             [$limit],
             [ParameterType::INTEGER],
         );

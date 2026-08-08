@@ -69,6 +69,10 @@ final class OutboxHealthCommand extends Command
             $healthy ? $io->success('Outbox is healthy.') : $io->error('Outbox health thresholds are exceeded.');
             if ([] !== $deadLetters) {
                 $io->table(array_keys($deadLetters[0]), array_map('array_values', $deadLetters));
+                $io->section('Operator next actions');
+                foreach ($deadLetters as $deadLetter) {
+                    $io->writeln(sprintf('Inspect %s: walleting:outbox:inspect --id=%s', $deadLetter['id'], $deadLetter['id']));
+                }
             }
         }
 
