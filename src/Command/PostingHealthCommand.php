@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Command;
 
+use App\Posting\PostingHealthStatus;
+use App\Posting\PostingSloPolicy;
 use App\Service\PostingHealthService;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -15,6 +17,8 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 #[AsCommand(name: 'walleting:posting:health', description: 'Inspect posting execution health over a bounded time window.')]
 final class PostingHealthCommand extends Command
 {
+    private const int EXIT_DEGRADED = 2;
+
     public function __construct(private readonly PostingHealthService $healthService)
     {
         parent::__construct();
@@ -24,28 +28,52 @@ final class PostingHealthCommand extends Command
     {
         $this
             ->addOption('window', null, InputOption::VALUE_REQUIRED, 'Observation window in seconds (60-604800).', '3600')
-            ->addOption('max-retry-rate', null, InputOption::VALUE_REQUIRED, 'Maximum healthy retried execution rate (0-1).', '0.10')
-            ->addOption('max-failure-rate', null, InputOption::VALUE_REQUIRED, 'Maximum healthy terminal failure rate (0-1).', '0.01')
-            ->addOption('max-p95-ms', null, InputOption::VALUE_REQUIRED, 'Maximum healthy p95 total execution latency in milliseconds.', '1000')
+            ->addOption('min-samples', null, InputOption::VALUE_REQUIRED, 'Minimum terminal executions required for confident SLO evaluation.', '20')
+            ->addOption('degraded-retry-rate', null, InputOption::VALUE_REQUIRED, 'Retry rate above this is degraded.', '0.10')
+            ->addOption('critical-retry-rate', null, InputOption::VALUE_REQUIRED, 'Retry rate above this is critical.', '0.25')
+            ->addOption('degraded-failure-rate', null, InputOption::VALUE_REQUIRED, 'Failure rate above this is degraded.', '0.01')
+            ->addOption('critical-failure-rate', null, InputOption::VALUE_REQUIRED, 'Failure rate above this is critical.', '0.05')
+            ->addOption('degraded-p95-ms', null, InputOption::VALUE_REQUIRED, 'p95 latency above this is degraded.', '1000')
+            ->addOption('critical-p95-ms', null, InputOption::VALUE_REQUIRED, 'p95 latency above this is critical.', '3000')
+            ->addOption('degraded-contention', null, InputOption::VALUE_REQUIRED, 'Lock timeout + deadlock count above this is degraded.', '3')
+            ->addOption('critical-contention', null, InputOption::VALUE_REQUIRED, 'Lock timeout + deadlock count above this is critical.', '10')
             ->addOption('json', null, InputOption::VALUE_NONE, 'Write machine-readable JSON.');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $window = filter_var($input->getOption('window'), FILTER_VALIDATE_INT);
-        $maxP95 = filter_var($input->getOption('max-p95-ms'), FILTER_VALIDATE_INT);
-        $maxRetryRate = is_numeric($input->getOption('max-retry-rate')) ? (float) $input->getOption('max-retry-rate') : -1.0;
-        $maxFailureRate = is_numeric($input->getOption('max-failure-rate')) ? (float) $input->getOption('max-failure-rate') : -1.0;
+        $minimumSamples = filter_var($input->getOption('min-samples'), FILTER_VALIDATE_INT);
+        $degradedP95 = filter_var($input->getOption('degraded-p95-ms'), FILTER_VALIDATE_INT);
+        $criticalP95 = filter_var($input->getOption('critical-p95-ms'), FILTER_VALIDATE_INT);
+        $degradedContention = filter_var($input->getOption('degraded-contention'), FILTER_VALIDATE_INT);
+        $criticalContention = filter_var($input->getOption('critical-contention'), FILTER_VALIDATE_INT);
+        $degradedRetryRate = $this->rateOption($input, 'degraded-retry-rate');
+        $criticalRetryRate = $this->rateOption($input, 'critical-retry-rate');
+        $degradedFailureRate = $this->rateOption($input, 'degraded-failure-rate');
+        $criticalFailureRate = $this->rateOption($input, 'critical-failure-rate');
         $json = (bool) $input->getOption('json');
 
-        if (!is_int($window) || $window < 60 || $window > 604800 || !is_int($maxP95) || $maxP95 < 1 || $maxP95 > 600000 || $maxRetryRate < 0 || $maxRetryRate > 1 || $maxFailureRate < 0 || $maxFailureRate > 1) {
-            $output->writeln($json ? '{"ok":false,"error":"Invalid posting health thresholds."}' : '<error>Invalid posting health thresholds.</error>');
+        if (!is_int($window) || $window < 60 || $window > 604800 || !is_int($minimumSamples) || !is_int($degradedP95) || !is_int($criticalP95) || !is_int($degradedContention) || !is_int($criticalContention)) {
+            $output->writeln($json ? '{"ok":false,"error":"Invalid posting SLO options."}' : '<error>Invalid posting SLO options.</error>');
 
             return Command::INVALID;
         }
 
         try {
+            $policy = new PostingSloPolicy(
+                $minimumSamples,
+                $degradedRetryRate,
+                $criticalRetryRate,
+                $degradedFailureRate,
+                $criticalFailureRate,
+                $degradedP95,
+                $criticalP95,
+                $degradedContention,
+                $criticalContention,
+            );
             $snapshot = $this->healthService->snapshot($window);
+            $assessment = $policy->assess($snapshot);
         } catch (\Throwable $exception) {
             $error = trim($exception->getMessage()) ?: $exception::class;
             $output->writeln($json ? json_encode(['ok' => false, 'error' => $error], JSON_THROW_ON_ERROR) : '<error>'.$error.'</error>');
@@ -53,9 +81,10 @@ final class PostingHealthCommand extends Command
             return Command::INVALID;
         }
 
-        $healthy = $snapshot->isHealthy($maxRetryRate, $maxFailureRate, $maxP95);
         $data = [
-            'ok' => $healthy,
+            'ok' => PostingHealthStatus::Healthy === $assessment->status,
+            'status' => $assessment->status->value,
+            'reasons' => $assessment->reasons,
             'window_seconds' => $snapshot->windowSeconds,
             'execution_count' => $snapshot->executionCount,
             'completed_count' => $snapshot->completedCount,
@@ -67,10 +96,17 @@ final class PostingHealthCommand extends Command
             'p95_latency_ms' => $snapshot->p95LatencyMilliseconds,
             'lock_timeout_count' => $snapshot->lockTimeoutCount,
             'deadlock_count' => $snapshot->deadlockCount,
-            'thresholds' => [
-                'max_retry_rate' => $maxRetryRate,
-                'max_failure_rate' => $maxFailureRate,
-                'max_p95_ms' => $maxP95,
+            'contention_count' => $snapshot->lockTimeoutCount + $snapshot->deadlockCount,
+            'policy' => [
+                'minimum_samples' => $policy->minimumSamples,
+                'degraded_retry_rate' => $policy->degradedRetryRate,
+                'critical_retry_rate' => $policy->criticalRetryRate,
+                'degraded_failure_rate' => $policy->degradedFailureRate,
+                'critical_failure_rate' => $policy->criticalFailureRate,
+                'degraded_p95_ms' => $policy->degradedP95Milliseconds,
+                'critical_p95_ms' => $policy->criticalP95Milliseconds,
+                'degraded_contention' => $policy->degradedContentionCount,
+                'critical_contention' => $policy->criticalContentionCount,
             ],
         ];
 
@@ -79,17 +115,34 @@ final class PostingHealthCommand extends Command
         } else {
             $io = new SymfonyStyle($input, $output);
             $io->definitionList(
+                ['Status' => $assessment->status->value],
+                ['Reasons' => [] === $assessment->reasons ? 'none' : implode(', ', $assessment->reasons)],
                 ['Window' => $snapshot->windowSeconds.' seconds'],
-                ['Executions' => (string) $snapshot->executionCount],
+                ['Executions' => $snapshot->executionCount.' / minimum '.$policy->minimumSamples],
                 ['Completed / failed' => $snapshot->completedCount.' / '.$snapshot->failedCount],
                 ['Retry rate' => sprintf('%.2f%%', $snapshot->retryRate * 100)],
                 ['Failure rate' => sprintf('%.2f%%', $snapshot->failureRate * 100)],
                 ['p95 latency' => null === $snapshot->p95LatencyMilliseconds ? 'none' : $snapshot->p95LatencyMilliseconds.' ms'],
                 ['Lock timeouts / deadlocks' => $snapshot->lockTimeoutCount.' / '.$snapshot->deadlockCount],
             );
-            $healthy ? $io->success('Posting execution health is within thresholds.') : $io->error('Posting execution health thresholds are exceeded.');
+            match ($assessment->status) {
+                PostingHealthStatus::Healthy => $io->success('Posting SLO is healthy.'),
+                PostingHealthStatus::Degraded => $io->warning('Posting SLO is degraded.'),
+                PostingHealthStatus::Critical => $io->error('Posting SLO is critical.'),
+            };
         }
 
-        return $healthy ? Command::SUCCESS : Command::FAILURE;
+        return match ($assessment->status) {
+            PostingHealthStatus::Healthy => Command::SUCCESS,
+            PostingHealthStatus::Degraded => self::EXIT_DEGRADED,
+            PostingHealthStatus::Critical => Command::FAILURE,
+        };
+    }
+
+    private function rateOption(InputInterface $input, string $name): float
+    {
+        $value = $input->getOption($name);
+
+        return is_numeric($value) ? (float) $value : -1.0;
     }
 }
