@@ -44,6 +44,7 @@ final class PostgreSqlOutboxInspectionTest extends KernelTestCase
 
         $this->entityManager->clear();
         (new OutboxDeadLetterService($this->entityManager))->requeue($id, 'operator-a', 'First repair');
+        $this->connection->executeStatement('UPDATE outbox_message SET available_at = CURRENT_TIMESTAMP - INTERVAL \'1 second\' WHERE id = ?', [$id]);
         $this->entityManager->clear();
         $dispatcher->dispatchBatchReport(1);
         $this->entityManager->clear();
