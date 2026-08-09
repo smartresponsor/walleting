@@ -106,6 +106,15 @@ final readonly class FinancialOperationService
     }
 
     /** @param non-empty-list<PostingInstruction> $instructions */
+    public function refundPartialAllocated(LedgerTransaction $original, int $amountMinor, string $idempotencyKey, array $instructions): LedgerTransaction
+    {
+        $this->assertInverseSourceAllowed($original);
+        $this->assertAllocatedPartialInverse($original, $amountMinor, $instructions);
+
+        return $this->linkedPosting(TransactionType::Refund, $original, $amountMinor, $idempotencyKey, $instructions);
+    }
+
+    /** @param non-empty-list<PostingInstruction> $instructions */
     public function reverse(LedgerTransaction $original, string $idempotencyKey, array $instructions): LedgerTransaction
     {
         $this->assertInverseSourceAllowed($original);
@@ -211,6 +220,41 @@ final readonly class FinancialOperationService
     }
 
     /** @param non-empty-list<PostingInstruction> $instructions */
+    private function assertAllocatedPartialInverse(LedgerTransaction $original, int $amountMinor, array $instructions): void
+    {
+        if ($amountMinor <= 0) {
+            throw new \InvalidArgumentException('Partial refund amount must be positive.');
+        }
+
+        $source = [];
+        foreach ($original->postings() as $posting) {
+            $accountId = $posting->account()->id()->toRfc4122();
+            $source[$accountId] = ($source[$accountId] ?? 0) + $posting->amountMinor();
+        }
+        $actual = [];
+        $positive = 0;
+        foreach ($instructions as $instruction) {
+            $accountId = $instruction->account->id()->toRfc4122();
+            if (!array_key_exists($accountId, $source)) {
+                throw new \DomainException('Allocated refund may only use accounts from the original transaction.');
+            }
+            $actual[$accountId] = ($actual[$accountId] ?? 0) + $instruction->amountMinor;
+            if ($instruction->amountMinor > 0) {
+                $positive += $instruction->amountMinor;
+            }
+        }
+        if ($positive !== $amountMinor || 0 !== array_sum($actual)) {
+            throw new \DomainException('Allocated refund postings must balance to the requested refund amount.');
+        }
+        foreach ($actual as $accountId => $amount) {
+            $sourceAmount = $source[$accountId];
+            if (0 === $amount || 0 === $sourceAmount || ($sourceAmount > 0 && ($amount > 0 || -$amount > $sourceAmount)) || ($sourceAmount < 0 && ($amount < 0 || $amount > -$sourceAmount))) {
+                throw new \DomainException('Allocated refund must invert original account legs without exceeding them.');
+            }
+        }
+    }
+
+    /** @param non-empty-list<PostingInstruction> $instructions */
     private function assertPartialInverse(LedgerTransaction $original, int $amountMinor, array $instructions): void
     {
         if ($amountMinor <= 0) {
@@ -245,6 +289,37 @@ final readonly class FinancialOperationService
         ksort($actual);
         if ($expected !== $actual) {
             throw new \DomainException('Partial refund postings must invert the requested amount on the original two accounts.');
+        }
+    }
+
+    /** @param non-empty-list<PostingInstruction> $instructions */
+    private function assertRefundLegCapacity(LedgerTransaction $original, array $instructions): void
+    {
+        $source = [];
+        foreach ($original->postings() as $posting) {
+            $accountId = $posting->account()->id()->toRfc4122();
+            $source[$accountId] = ($source[$accountId] ?? 0) + $posting->amountMinor();
+        }
+
+        $existing = [];
+        $rows = $this->entityManager->getConnection()->fetchAllAssociative(
+            "SELECT p.account_id, COALESCE(SUM(p.amount_minor), 0) AS refunded_minor FROM financial_operation_link l JOIN posting p ON p.transaction_id = l.result_transaction_id WHERE l.source_transaction_id = ? AND l.operation_type = 'refund' GROUP BY p.account_id",
+            [$original->id()->toRfc4122()],
+        );
+        foreach ($rows as $row) {
+            $existing[(string) $row['account_id']] = (int) $row['refunded_minor'];
+        }
+
+        $next = $existing;
+        foreach ($instructions as $instruction) {
+            $accountId = $instruction->account->id()->toRfc4122();
+            $next[$accountId] = ($next[$accountId] ?? 0) + $instruction->amountMinor;
+        }
+        foreach ($next as $accountId => $amount) {
+            $sourceAmount = $source[$accountId] ?? null;
+            if (null === $sourceAmount || 0 === $sourceAmount || ($sourceAmount > 0 && ($amount > 0 || -$amount > $sourceAmount)) || ($sourceAmount < 0 && ($amount < 0 || $amount > -$sourceAmount))) {
+                throw new \DomainException('Cumulative refund exceeds an original transaction account leg.');
+            }
         }
     }
 
@@ -337,6 +412,9 @@ final readonly class FinancialOperationService
 
             if (TransactionType::Refund === $type && ($hasReverse || $refundedMinor + $amountMinor > $sourceAmount)) {
                 throw new \DomainException('Refund exceeds the remaining refundable amount or the transaction was reversed.');
+            }
+            if (TransactionType::Refund === $type) {
+                $this->assertRefundLegCapacity($original, $instructions);
             }
             if (TransactionType::Reverse === $type && ($amountMinor !== $sourceAmount || $hasReverse || $refundedMinor > 0)) {
                 throw new \DomainException('Reverse requires the full untouched source transaction.');
