@@ -140,7 +140,6 @@ final readonly class FinancialOperationService
     public function succeedWithdrawal(Withdrawal $withdrawal, string $idempotencyKey, array $instructions): LedgerTransaction
     {
         return $this->entityManager->wrapInTransaction(function () use ($withdrawal, $idempotencyKey, $instructions): LedgerTransaction {
-            $withdrawal->start();
             $transaction = $this->postingService->postManaged(TransactionType::Debit, $idempotencyKey, $instructions, ['operation' => 'withdrawal', 'withdrawal_key' => $withdrawal->idempotencyKey()]);
             $withdrawal->succeed($transaction);
             $this->emitWithdrawal('wallet.withdrawal.succeeded', $withdrawal, $transaction);

@@ -41,15 +41,28 @@ final class FinancialLifecycleTest extends TestCase
         $reservation->release();
     }
 
-    public function testFundingSuccessRequiresPendingState(): void
+    public function testFundingMustProcessBeforeSuccess(): void
     {
         $wallet = new Wallet('vendor', '1');
         $instrument = new PaymentInstrument($wallet, PaymentInstrumentType::Card, 'stripe', 'pm_2', 'Visa 4242');
         $funding = new Funding($wallet, $instrument, 1000, 'USD', 'funding-1');
+        self::assertSame(FundingStatus::Pending, $funding->status());
+
+        $funding->start();
         $transaction = new LedgerTransaction(TransactionType::Credit, 'credit-funding-1');
         $funding->succeed($transaction);
         self::assertSame(FundingStatus::Succeeded, $funding->status());
         self::assertSame($transaction, $funding->transaction());
+    }
+
+    public function testFundingCannotSucceedBeforeProviderProcessing(): void
+    {
+        $wallet = new Wallet('vendor', 'funding-direct-success');
+        $instrument = new PaymentInstrument($wallet, PaymentInstrumentType::Card, 'stripe', 'pm_direct', 'Visa');
+        $funding = new Funding($wallet, $instrument, 1000, 'USD', 'funding-direct-success');
+
+        $this->expectException(\LogicException::class);
+        $funding->succeed(new LedgerTransaction(TransactionType::Credit, 'credit-direct-success'));
     }
 
     public function testWithdrawalMustProcessBeforeSuccess(): void

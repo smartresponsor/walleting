@@ -78,10 +78,11 @@ final class PostgreSqlLedgerInvariantTest extends KernelTestCase
     {
         [, $accountA, $accountB] = $this->seedWalletAndAccounts();
         $sourceId = $this->seedBalancedTransaction('credit', $accountA, $accountB);
-        $resultA = $this->seedBalancedTransaction('refund', $accountA, $accountB);
-        $resultB = $this->seedBalancedTransaction('refund', $accountA, $accountB);
-
+        $resultA = $this->seedInverseTransaction('refund', $accountA, $accountB);
         $this->insertOperationLink($sourceId, $resultA);
+
+        $this->seedBalancedTransaction('credit', $accountA, $accountB);
+        $resultB = $this->seedInverseTransaction('refund', $accountA, $accountB);
         try {
             $this->insertOperationLink($sourceId, $resultB);
             self::fail('Duplicate refund link must be rejected.');
@@ -190,6 +191,18 @@ final class PostgreSqlLedgerInvariantTest extends KernelTestCase
         $this->insertTransaction($id, $type, $idempotencyKey ?? $type.'-'.Uuid::v7(), 'posted');
         $this->insertPosting($id, $accountA, 1000, 1);
         $this->insertPosting($id, $accountB, -1000, 2);
+        $this->connection->commit();
+
+        return $id;
+    }
+
+    private function seedInverseTransaction(string $type, string $accountA, string $accountB): string
+    {
+        $id = Uuid::v7()->toRfc4122();
+        $this->connection->beginTransaction();
+        $this->insertTransaction($id, $type, $type.'-'.Uuid::v7(), 'posted');
+        $this->insertPosting($id, $accountA, -1000, 1);
+        $this->insertPosting($id, $accountB, 1000, 2);
         $this->connection->commit();
 
         return $id;

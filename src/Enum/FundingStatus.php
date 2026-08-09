@@ -7,6 +7,7 @@ namespace App\Enum;
 enum FundingStatus: string
 {
     case Pending = 'pending';
+    case Processing = 'processing';
     case Succeeded = 'succeeded';
     case Failed = 'failed';
     case Reversed = 'reversed';

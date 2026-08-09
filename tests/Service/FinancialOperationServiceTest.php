@@ -81,6 +81,7 @@ final class FinancialOperationServiceTest extends TestCase
         $other = new Account($wallet, 'other', 'USD', AccountCategory::Liability);
         $instrument = new PaymentInstrument($wallet, PaymentInstrumentType::Card, 'provider', 'instrument-mismatch', 'Card');
         $funding = new Funding($wallet, $instrument, 700, 'USD', 'funding-mismatch-1');
+        $funding->start();
         $service->succeedFunding($funding, 'funding-mismatch-post-1', [
             new PostingInstruction($cash, 700),
             new PostingInstruction($clearing, -700),
@@ -103,6 +104,7 @@ final class FinancialOperationServiceTest extends TestCase
         $instrument = new PaymentInstrument($wallet, PaymentInstrumentType::Card, 'provider', 'instrument-1', 'Card');
 
         $funding = new Funding($wallet, $instrument, 700, 'USD', 'funding-1');
+        $funding->start();
         $fundingTransaction = $service->succeedFunding($funding, 'funding-post-1', [
             new PostingInstruction($cash, 700),
             new PostingInstruction($clearing, -700),
@@ -117,6 +119,7 @@ final class FinancialOperationServiceTest extends TestCase
         self::assertSame($fundingReversal, $funding->reversalTransaction());
 
         $withdrawal = new Withdrawal($wallet, $instrument, 400, 'USD', 'withdrawal-1');
+        $withdrawal->start();
         $withdrawalTransaction = $service->succeedWithdrawal($withdrawal, 'withdrawal-post-1', [
             new PostingInstruction($cash, -400),
             new PostingInstruction($clearing, 400),

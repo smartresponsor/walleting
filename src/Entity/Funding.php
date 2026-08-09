@@ -69,16 +69,22 @@ class Funding
         $this->createdAt = new \DateTimeImmutable();
     }
 
+    public function start(): void
+    {
+        if (FundingStatus::Pending !== $this->status) { throw new \LogicException('Only pending funding can start.'); }
+        $this->status = FundingStatus::Processing;
+    }
+
     public function succeed(LedgerTransaction $transaction): void
     {
-        if (FundingStatus::Pending !== $this->status) { throw new \LogicException('Only pending funding can succeed.'); }
+        if (FundingStatus::Processing !== $this->status) { throw new \LogicException('Only processing funding can succeed.'); }
         $this->transaction = $transaction;
         $this->status = FundingStatus::Succeeded;
     }
 
     public function fail(): void
     {
-        if (FundingStatus::Pending !== $this->status) { throw new \LogicException('Only pending funding can fail.'); }
+        if (!in_array($this->status, [FundingStatus::Pending, FundingStatus::Processing], true)) { throw new \LogicException('Funding cannot fail from its current status.'); }
         $this->status = FundingStatus::Failed;
     }
 
@@ -89,6 +95,9 @@ class Funding
         $this->status = FundingStatus::Reversed;
     }
 
+    public function id(): Uuid { return $this->id; }
+    public function wallet(): Wallet { return $this->wallet; }
+    public function paymentInstrument(): PaymentInstrument { return $this->paymentInstrument; }
     public function status(): FundingStatus { return $this->status; }
     public function transaction(): ?LedgerTransaction { return $this->transaction; }
     public function reversalTransaction(): ?LedgerTransaction { return $this->reversalTransaction; }

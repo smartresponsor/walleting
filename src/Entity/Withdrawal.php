@@ -95,6 +95,9 @@ class Withdrawal
         $this->status = WithdrawalStatus::Reversed;
     }
 
+    public function id(): Uuid { return $this->id; }
+    public function wallet(): Wallet { return $this->wallet; }
+    public function paymentInstrument(): PaymentInstrument { return $this->paymentInstrument; }
     public function status(): WithdrawalStatus { return $this->status; }
     public function transaction(): ?LedgerTransaction { return $this->transaction; }
     public function reversalTransaction(): ?LedgerTransaction { return $this->reversalTransaction; }
