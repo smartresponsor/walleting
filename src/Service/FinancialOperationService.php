@@ -12,6 +12,7 @@ use App\Entity\Reservation;
 use App\Entity\Wallet;
 use App\Entity\Withdrawal;
 use App\Enum\TransactionType;
+use App\Ledger\FeeAllocation;
 use App\Ledger\PostingInstruction;
 use Doctrine\DBAL\LockMode;
 use Doctrine\ORM\EntityManagerInterface;
@@ -22,6 +23,7 @@ final readonly class FinancialOperationService
         private EntityManagerInterface $entityManager,
         private PostingService $postingService,
         private ?OutboxService $outboxService = null,
+        private ?FeePostingComposer $feePostingComposer = null,
     ) {
     }
 
@@ -49,6 +51,28 @@ final readonly class FinancialOperationService
     public function capturePartial(Reservation $reservation, int $amountMinor, string $idempotencyKey, array $instructions): LedgerTransaction
     {
         return $this->transitionReservation($reservation, $amountMinor, $idempotencyKey, $instructions, TransactionType::Capture, 'capture');
+    }
+
+    /** @param list<FeeAllocation> $fees */
+    public function captureWithFees(Reservation $reservation, Account $netDestination, array $fees, string $idempotencyKey): LedgerTransaction
+    {
+        return $this->capturePartialWithFees($reservation, $reservation->amountMinor(), $netDestination, $fees, $idempotencyKey);
+    }
+
+    /** @param list<FeeAllocation> $fees */
+    public function capturePartialWithFees(Reservation $reservation, int $amountMinor, Account $netDestination, array $fees, string $idempotencyKey): LedgerTransaction
+    {
+        $plan = ($this->feePostingComposer ?? new FeePostingComposer())->compose($reservation->account(), $netDestination, $amountMinor, $fees);
+
+        return $this->transitionReservation(
+            $reservation,
+            $amountMinor,
+            $idempotencyKey,
+            $plan->instructions,
+            TransactionType::Capture,
+            'capture',
+            ['settlement' => $plan->metadata],
+        );
     }
 
     /** @param non-empty-list<PostingInstruction> $instructions */
@@ -157,18 +181,18 @@ final readonly class FinancialOperationService
         });
     }
 
-    private function transitionReservation(Reservation $reservation, int $amountMinor, string $idempotencyKey, array $instructions, TransactionType $type, string $operation): LedgerTransaction
+    private function transitionReservation(Reservation $reservation, int $amountMinor, string $idempotencyKey, array $instructions, TransactionType $type, string $operation, array $metadata = []): LedgerTransaction
     {
         $this->assertReservationSettlement($reservation, $amountMinor, $instructions);
 
-        return $this->entityManager->wrapInTransaction(function () use ($reservation, $amountMinor, $idempotencyKey, $instructions, $type, $operation): LedgerTransaction {
+        return $this->entityManager->wrapInTransaction(function () use ($reservation, $amountMinor, $idempotencyKey, $instructions, $type, $operation, $metadata): LedgerTransaction {
             $this->entityManager->lock($reservation, LockMode::PESSIMISTIC_WRITE);
             [$capturedMinor, $releasedMinor] = $this->reservationSettlementTotals($reservation);
             if ($capturedMinor + $releasedMinor + $amountMinor > $reservation->amountMinor()) {
                 throw new \DomainException('Reservation settlement exceeds the remaining reserved amount.');
             }
 
-            $transaction = $this->postingService->postManaged($type, $idempotencyKey, $instructions, ['operation' => $operation, 'reservation_key' => $reservation->idempotencyKey(), 'amount_minor' => $amountMinor]);
+            $transaction = $this->postingService->postManaged($type, $idempotencyKey, $instructions, array_replace_recursive(['operation' => $operation, 'reservation_key' => $reservation->idempotencyKey(), 'amount_minor' => $amountMinor], $metadata));
             $this->entityManager->persist(new FinancialOperationLink($type, $reservation->reserveTransaction(), $transaction, $amountMinor, $reservation));
             'capture' === $operation ? $capturedMinor += $amountMinor : $releasedMinor += $amountMinor;
             $reservation->recordSettlementProgress($capturedMinor, $releasedMinor);
