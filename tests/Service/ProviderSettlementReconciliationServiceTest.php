@@ -25,7 +25,7 @@ final class ProviderSettlementReconciliationServiceTest extends TestCase
         $persisted = [];
         $repository = $this->createStub(EntityRepository::class);
         $repository->method('findOneBy')->willReturn(null);
-        $entityManager = $this->createMock(EntityManagerInterface::class);
+        $entityManager = $this->createStub(EntityManagerInterface::class);
         $entityManager->method('getRepository')->willReturn($repository);
         $entityManager->method('wrapInTransaction')->willReturnCallback(static fn (callable $callback): mixed => $callback());
         $entityManager->method('persist')->willReturnCallback(static function (object $entity) use (&$persisted): void { $persisted[] = $entity; });
@@ -50,7 +50,7 @@ final class ProviderSettlementReconciliationServiceTest extends TestCase
     public function testLocalOperationProviderMustMatchRunProvider(): void
     {
         $repository = $this->createStub(EntityRepository::class);
-        $entityManager = $this->createMock(EntityManagerInterface::class);
+        $entityManager = $this->createStub(EntityManagerInterface::class);
         $entityManager->method('getRepository')->willReturn($repository);
         $entityManager->method('wrapInTransaction')->willReturnCallback(static fn (callable $callback): mixed => $callback());
 

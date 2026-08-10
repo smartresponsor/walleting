@@ -4,6 +4,7 @@
          colors="true"
          failOnDeprecation="true"
          failOnNotice="true"
+         failOnPhpunitNotice="true"
          failOnWarning="true"
          bootstrap="tests/bootstrap.php"
          cacheDirectory=".phpunit.cache">

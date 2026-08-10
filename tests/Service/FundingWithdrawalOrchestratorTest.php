@@ -23,7 +23,6 @@ use App\Service\ProviderEventService;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\EntityRepository;
-use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
 final class FundingWithdrawalOrchestratorTest extends TestCase
@@ -93,11 +92,11 @@ final class FundingWithdrawalOrchestratorTest extends TestCase
         return new FundingWithdrawalOrchestrator($entityManager, $financial, new ProviderEventService($entityManager, $outbox));
     }
 
-    private function entityManager(): EntityManagerInterface&MockObject
+    private function entityManager(): EntityManagerInterface
     {
         $repository = $this->createStub(EntityRepository::class);
         $repository->method('findOneBy')->willReturn(null);
-        $entityManager = $this->createMock(EntityManagerInterface::class);
+        $entityManager = $this->createStub(EntityManagerInterface::class);
         $entityManager->method('getRepository')->willReturn($repository);
         $entityManager->method('wrapInTransaction')->willReturnCallback(static fn (callable $callback): mixed => $callback());
 
