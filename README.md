@@ -47,7 +47,7 @@ php bin/console walleting:balance:reconcile
 php bin/console walleting:posting:health
 ```
 
-See `docs/outbox-events.md` and `docs/messenger-failures.md` for the external event envelope and failure handling contract.
+See `docs/outbox-events.md` and `docs/messenger-failures.md` for the external event envelope and failure handling contract. See `docs/production.md` for the supported production topology, fresh-install procedure, workers, maintenance schedule, upgrade path, smoke checks, and rollback policy.
 
 ## Release gates
 

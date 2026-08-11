@@ -103,8 +103,29 @@ try {
     $_ENV['APP_ENV'] = $_SERVER['APP_ENV'] = 'test';
     $_ENV['APP_DEBUG'] = $_SERVER['APP_DEBUG'] = '0';
     $run($php.' bin/console cache:clear --env=test --no-debug');
-    $run($php.' bin/console doctrine:migrations:migrate --no-interaction --env=test');
-    $run($php.' bin/console doctrine:migrations:status --env=test');
+    $runWithRetry($php.' bin/console doctrine:migrations:migrate --no-interaction --env=test');
+    $runWithRetry($php.' bin/console doctrine:migrations:status --env=test');
+
+    $productionSmokeDatabaseUrl = sprintf('postgresql://walleting:walleting@127.0.0.1:%d/walleting_test?serverVersion=16&charset=utf8', $port);
+    putenv('DATABASE_URL='.$productionSmokeDatabaseUrl);
+    putenv('APP_ENV=prod');
+    putenv('APP_DEBUG=0');
+    putenv('APP_SECRET=walleting-integration-production-smoke');
+    putenv('MESSENGER_TRANSPORT_DSN=doctrine://default?queue_name=walleting_outbox_events');
+    $_ENV['DATABASE_URL'] = $_SERVER['DATABASE_URL'] = $productionSmokeDatabaseUrl;
+    $_ENV['APP_ENV'] = $_SERVER['APP_ENV'] = 'prod';
+    $_ENV['APP_DEBUG'] = $_SERVER['APP_DEBUG'] = '0';
+    $_ENV['APP_SECRET'] = $_SERVER['APP_SECRET'] = 'walleting-integration-production-smoke';
+    $_ENV['MESSENGER_TRANSPORT_DSN'] = $_SERVER['MESSENGER_TRANSPORT_DSN'] = 'doctrine://default?queue_name=walleting_outbox_events';
+    $run($php.' bin/console cache:clear --env=prod --no-debug');
+    $run($php.' bin/console walleting:production:check --json --env=prod --no-debug');
+
+    putenv('DATABASE_URL='.$databaseUrl);
+    putenv('APP_ENV=test');
+    putenv('APP_DEBUG=0');
+    $_ENV['DATABASE_URL'] = $_SERVER['DATABASE_URL'] = $databaseUrl;
+    $_ENV['APP_ENV'] = $_SERVER['APP_ENV'] = 'test';
+    $_ENV['APP_DEBUG'] = $_SERVER['APP_DEBUG'] = '0';
     $run($php.' vendor/bin/phpunit -c phpunit.integration.xml');
 } finally {
     passthru('docker compose -f compose.test.yaml down -v --remove-orphans');
