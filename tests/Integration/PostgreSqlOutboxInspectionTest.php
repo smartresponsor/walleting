@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace App\Tests\Integration;
+namespace App\Walleting\Tests\Integration;
 
-use App\Entity\OutboxMessage;
-use App\Outbox\OutboxMessageHandlerInterface;
-use App\Service\OutboxDeadLetterService;
-use App\Service\OutboxDispatcher;
-use App\Service\OutboxService;
+use App\Walleting\Entity\OutboxMessage;
+use App\Walleting\Outbox\OutboxMessageHandlerInterface;
+use App\Walleting\Service\OutboxDeadLetterService;
+use App\Walleting\Service\OutboxDispatcher;
+use App\Walleting\Service\OutboxService;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;

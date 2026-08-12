@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace App\Tests\Messenger;
+namespace App\Walleting\Tests\Messenger;
 
-use App\Entity\LedgerTransaction;
-use App\Entity\OutboxMessage;
-use App\Enum\TransactionType;
-use App\Message\OutboxEvent;
-use App\Outbox\MessengerOutboxMessageHandler;
+use App\Walleting\Entity\LedgerTransaction;
+use App\Walleting\Entity\OutboxMessage;
+use App\Walleting\Enum\TransactionType;
+use App\Walleting\Message\OutboxEvent;
+use App\Walleting\Outbox\MessengerOutboxMessageHandler;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Messenger\Transport\InMemory\InMemoryTransport;

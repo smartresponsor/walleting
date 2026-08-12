@@ -2,15 +2,15 @@
 
 declare(strict_types=1);
 
-namespace App\Tests\Entity;
+namespace App\Walleting\Tests\Entity;
 
-use App\Entity\Account;
-use App\Entity\FinancialOperationLink;
-use App\Entity\LedgerTransaction;
-use App\Entity\Reservation;
-use App\Entity\Wallet;
-use App\Enum\AccountCategory;
-use App\Enum\TransactionType;
+use App\Walleting\Entity\Account;
+use App\Walleting\Entity\FinancialOperationLink;
+use App\Walleting\Entity\LedgerTransaction;
+use App\Walleting\Entity\Reservation;
+use App\Walleting\Entity\Wallet;
+use App\Walleting\Enum\AccountCategory;
+use App\Walleting\Enum\TransactionType;
 use PHPUnit\Framework\TestCase;
 
 final class FinancialOperationLinkTest extends TestCase

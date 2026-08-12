@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace App\Tests\Integration;
+namespace App\Walleting\Tests\Integration;
 
-use App\Entity\Account;
-use App\Service\StatementQueryService;
+use App\Walleting\Entity\Account;
+use App\Walleting\Service\StatementQueryService;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\ParameterType;
 use Doctrine\ORM\EntityManagerInterface;

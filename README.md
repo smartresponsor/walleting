@@ -6,7 +6,7 @@ Symfony 8 / PHP 8.4 walleting component built around an immutable double-entry P
 
 Walleting owns wallet and account balances, immutable ledger transactions and postings, reservations, funding, withdrawals, payment instruments, provider events, reconciliation, transactional outbox delivery, inbox idempotency, posting health/SLO state, and provider settlement reconciliation.
 
-The host application should use `App\Service\WalletingFacade` for read-facing access instead of querying Walleting tables directly. The facade exposes wallet balances, account history, statements, reservation progress, and funding/withdrawal status views.
+The host application should use `App\Walleting\Service\WalletingFacade` for read-facing access instead of querying Walleting tables directly. The facade exposes wallet balances, account history, statements, reservation progress, and funding/withdrawal status views.
 
 Financial writes are expressed in integer minor units only. Posted ledger history is immutable. Composite business workflows use `FinancialOperationService`; provider-neutral funding/withdrawal orchestration uses `FundingWithdrawalOrchestrator`.
 

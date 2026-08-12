@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Posting;
+namespace App\Walleting\Posting;
 
 final readonly class PostingHealthSnapshot
 {

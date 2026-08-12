@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace App\Tests\Service;
+namespace App\Walleting\Tests\Service;
 
-use App\Posting\PostingExecutionMetric;
-use App\Service\LoggingPostingTelemetry;
+use App\Walleting\Posting\PostingExecutionMetric;
+use App\Walleting\Service\LoggingPostingTelemetry;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 

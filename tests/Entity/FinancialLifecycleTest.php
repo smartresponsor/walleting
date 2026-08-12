@@ -2,22 +2,22 @@
 
 declare(strict_types=1);
 
-namespace App\Tests\Entity;
+namespace App\Walleting\Tests\Entity;
 
-use App\Entity\Account;
-use App\Entity\Funding;
-use App\Entity\LedgerTransaction;
-use App\Entity\PaymentInstrument;
-use App\Entity\Reservation;
-use App\Entity\Wallet;
-use App\Entity\Withdrawal;
-use App\Enum\AccountCategory;
-use App\Enum\FundingStatus;
-use App\Enum\PaymentInstrumentStatus;
-use App\Enum\PaymentInstrumentType;
-use App\Enum\ReservationStatus;
-use App\Enum\TransactionType;
-use App\Enum\WithdrawalStatus;
+use App\Walleting\Entity\Account;
+use App\Walleting\Entity\Funding;
+use App\Walleting\Entity\LedgerTransaction;
+use App\Walleting\Entity\PaymentInstrument;
+use App\Walleting\Entity\Reservation;
+use App\Walleting\Entity\Wallet;
+use App\Walleting\Entity\Withdrawal;
+use App\Walleting\Enum\AccountCategory;
+use App\Walleting\Enum\FundingStatus;
+use App\Walleting\Enum\PaymentInstrumentStatus;
+use App\Walleting\Enum\PaymentInstrumentType;
+use App\Walleting\Enum\ReservationStatus;
+use App\Walleting\Enum\TransactionType;
+use App\Walleting\Enum\WithdrawalStatus;
 use PHPUnit\Framework\TestCase;
 
 final class FinancialLifecycleTest extends TestCase

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Ledger;
+namespace App\Walleting\Ledger;
 
 final readonly class StatementActivity
 {

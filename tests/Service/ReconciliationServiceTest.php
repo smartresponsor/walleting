@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace App\Tests\Service;
+namespace App\Walleting\Tests\Service;
 
-use App\Entity\ReconciliationMismatch;
-use App\Entity\ReconciliationRun;
-use App\Enum\ReconciliationRunStatus;
-use App\Service\ReconciliationService;
+use App\Walleting\Entity\ReconciliationMismatch;
+use App\Walleting\Entity\ReconciliationRun;
+use App\Walleting\Enum\ReconciliationRunStatus;
+use App\Walleting\Service\ReconciliationService;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\EntityRepository;
 use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;

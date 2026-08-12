@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\Ledger;
+namespace App\Walleting\Ledger;
 
-use App\Entity\Account;
+use App\Walleting\Entity\Account;
 
 final readonly class FeeAllocation
 {

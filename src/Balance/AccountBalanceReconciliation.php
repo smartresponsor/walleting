@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Balance;
+namespace App\Walleting\Balance;
 
 final readonly class AccountBalanceReconciliation
 {

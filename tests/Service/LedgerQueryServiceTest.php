@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace App\Tests\Service;
+namespace App\Walleting\Tests\Service;
 
-use App\Entity\Account;
-use App\Entity\Wallet;
-use App\Enum\AccountCategory;
-use App\Service\LedgerQueryService;
+use App\Walleting\Entity\Account;
+use App\Walleting\Entity\Wallet;
+use App\Walleting\Enum\AccountCategory;
+use App\Walleting\Service\LedgerQueryService;
 use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\TestCase;

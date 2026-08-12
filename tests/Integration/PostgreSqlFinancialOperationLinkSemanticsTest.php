@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace App\Tests\Integration;
+namespace App\Walleting\Tests\Integration;
 
-use App\Entity\Account;
-use App\Entity\LedgerTransaction;
-use App\Entity\Reservation;
-use App\Entity\Wallet;
-use App\Enum\AccountCategory;
-use App\Enum\TransactionType;
+use App\Walleting\Entity\Account;
+use App\Walleting\Entity\LedgerTransaction;
+use App\Walleting\Entity\Reservation;
+use App\Walleting\Entity\Wallet;
+use App\Walleting\Enum\AccountCategory;
+use App\Walleting\Enum\TransactionType;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception\DriverException;
 use Doctrine\ORM\EntityManagerInterface;

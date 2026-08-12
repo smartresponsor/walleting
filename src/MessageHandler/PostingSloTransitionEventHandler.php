@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace App\MessageHandler;
+namespace App\Walleting\MessageHandler;
 
-use App\Message\OutboxEvent;
-use App\Posting\PostingSloTransitionNotification;
-use App\Service\InboxService;
-use App\Service\PostingSloTransitionNotifierInterface;
+use App\Walleting\Message\OutboxEvent;
+use App\Walleting\Posting\PostingSloTransitionNotification;
+use App\Walleting\Service\InboxService;
+use App\Walleting\Service\PostingSloTransitionNotifierInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 
 #[AsMessageHandler]

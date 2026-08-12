@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace App\Service;
+namespace App\Walleting\Service;
 
-use App\Entity\Funding;
-use App\Entity\ReconciliationRun;
-use App\Entity\Withdrawal;
+use App\Walleting\Entity\Funding;
+use App\Walleting\Entity\ReconciliationRun;
+use App\Walleting\Entity\Withdrawal;
 
 final readonly class ProviderSettlementReconciliationService
 {

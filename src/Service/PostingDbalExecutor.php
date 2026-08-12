@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace App\Service;
+namespace App\Walleting\Service;
 
-use App\Enum\TransactionStatus;
-use App\Ledger\FinancialPostingRequest;
-use App\Ledger\PostingInstruction;
-use App\Posting\PostingExecutionMetric;
+use App\Walleting\Enum\TransactionStatus;
+use App\Walleting\Ledger\FinancialPostingRequest;
+use App\Walleting\Ledger\PostingInstruction;
+use App\Walleting\Posting\PostingExecutionMetric;
 use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;

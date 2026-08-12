@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\Ledger;
+namespace App\Walleting\Ledger;
 
-use App\Enum\TransactionType;
+use App\Walleting\Enum\TransactionType;
 
 final readonly class FinancialPostingRequest
 {

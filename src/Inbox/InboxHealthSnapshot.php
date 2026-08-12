@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Inbox;
+namespace App\Walleting\Inbox;
 
 final readonly class InboxHealthSnapshot
 {

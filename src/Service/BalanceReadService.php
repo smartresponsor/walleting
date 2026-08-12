@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace App\Service;
+namespace App\Walleting\Service;
 
-use App\Balance\AccountBalanceReconciliation;
-use App\Balance\AccountBalanceSnapshot;
-use App\Balance\WalletBalanceSnapshot;
-use App\Balance\WalletCurrencyBalanceSnapshot;
-use App\Entity\Account;
-use App\Entity\Wallet;
+use App\Walleting\Balance\AccountBalanceReconciliation;
+use App\Walleting\Balance\AccountBalanceSnapshot;
+use App\Walleting\Balance\WalletBalanceSnapshot;
+use App\Walleting\Balance\WalletCurrencyBalanceSnapshot;
+use App\Walleting\Entity\Account;
+use App\Walleting\Entity\Wallet;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\ParameterType;
 

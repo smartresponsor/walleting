@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\Service;
+namespace App\Walleting\Service;
 
-use App\Ledger\FinancialPostingRequest;
+use App\Walleting\Ledger\FinancialPostingRequest;
 
 interface PostingExecutorInterface
 {

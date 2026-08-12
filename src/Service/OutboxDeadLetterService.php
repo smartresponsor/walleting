@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace App\Service;
+namespace App\Walleting\Service;
 
-use App\Entity\OutboxMessage;
-use App\Entity\OutboxRequeueAudit;
-use App\Enum\OutboxMessageStatus;
+use App\Walleting\Entity\OutboxMessage;
+use App\Walleting\Entity\OutboxRequeueAudit;
+use App\Walleting\Enum\OutboxMessageStatus;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Uid\Uuid;
 

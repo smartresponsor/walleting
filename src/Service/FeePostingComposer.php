@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace App\Service;
+namespace App\Walleting\Service;
 
-use App\Entity\Account;
-use App\Ledger\FeeAllocation;
-use App\Ledger\FeePostingPlan;
-use App\Ledger\PostingInstruction;
+use App\Walleting\Entity\Account;
+use App\Walleting\Ledger\FeeAllocation;
+use App\Walleting\Ledger\FeePostingPlan;
+use App\Walleting\Ledger\PostingInstruction;
 
 final readonly class FeePostingComposer
 {

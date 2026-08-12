@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\Service;
+namespace App\Walleting\Service;
 
-use App\Posting\PostingSloTransitionNotification;
+use App\Walleting\Posting\PostingSloTransitionNotification;
 
 interface PostingSloTransitionNotifierInterface
 {

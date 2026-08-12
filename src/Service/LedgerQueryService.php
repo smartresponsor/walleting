@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace App\Service;
+namespace App\Walleting\Service;
 
-use App\Entity\Account;
-use App\Ledger\LedgerHistoryItem;
-use App\Ledger\LedgerHistoryPage;
+use App\Walleting\Entity\Account;
+use App\Walleting\Ledger\LedgerHistoryItem;
+use App\Walleting\Ledger\LedgerHistoryPage;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\ParameterType;
 

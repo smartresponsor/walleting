@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace App\Entity;
+namespace App\Walleting\Entity;
 
-use App\Enum\TransactionStatus;
-use App\Enum\TransactionType;
+use App\Walleting\Enum\TransactionStatus;
+use App\Walleting\Enum\TransactionType;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;

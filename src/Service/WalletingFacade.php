@@ -2,16 +2,16 @@
 
 declare(strict_types=1);
 
-namespace App\Service;
+namespace App\Walleting\Service;
 
-use App\Balance\WalletBalanceSnapshot;
-use App\Entity\Account;
-use App\Entity\Funding;
-use App\Entity\Reservation;
-use App\Entity\Wallet;
-use App\Entity\Withdrawal;
-use App\Ledger\LedgerHistoryPage;
-use App\Ledger\StatementPage;
+use App\Walleting\Balance\WalletBalanceSnapshot;
+use App\Walleting\Entity\Account;
+use App\Walleting\Entity\Funding;
+use App\Walleting\Entity\Reservation;
+use App\Walleting\Entity\Wallet;
+use App\Walleting\Entity\Withdrawal;
+use App\Walleting\Ledger\LedgerHistoryPage;
+use App\Walleting\Ledger\StatementPage;
 use Doctrine\DBAL\Connection;
 
 final readonly class WalletingFacade

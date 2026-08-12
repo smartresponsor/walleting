@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\Tests\Posting;
+namespace App\Walleting\Tests\Posting;
 
-use App\Posting\PostingHealthSnapshot;
+use App\Walleting\Posting\PostingHealthSnapshot;
 use PHPUnit\Framework\TestCase;
 
 final class PostingHealthSnapshotTest extends TestCase

@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace App\Tests\Messenger;
+namespace App\Walleting\Tests\Messenger;
 
-use App\Message\OutboxEvent;
-use App\Messenger\OutboxEventSerializer;
+use App\Walleting\Message\OutboxEvent;
+use App\Walleting\Messenger\OutboxEventSerializer;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\Retry\MultiplierRetryStrategy;

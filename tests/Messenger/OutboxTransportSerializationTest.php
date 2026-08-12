@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\Tests\Messenger;
+namespace App\Walleting\Tests\Messenger;
 
-use App\Message\OutboxEvent;
+use App\Walleting\Message\OutboxEvent;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\Stamp\ErrorDetailsStamp;

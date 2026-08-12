@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-use App\Entity\Account;
+use App\Walleting\Entity\Account;
 use App\Kernel;
 use App\Ledger\PostingInstruction;
-use App\Service\NullPostingTelemetry;
-use App\Service\OutboxService;
-use App\Service\PostingDbalExecutor;
-use App\Service\PostingRetryPolicy;
-use App\Service\PostingService;
+use App\Walleting\Service\NullPostingTelemetry;
+use App\Walleting\Service\OutboxService;
+use App\Walleting\Service\PostingDbalExecutor;
+use App\Walleting\Service\PostingRetryPolicy;
+use App\Walleting\Service\PostingService;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
 

@@ -5,7 +5,7 @@ framework:
         transports:
             outbox_events:
                 dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
-                serializer: App\Messenger\OutboxEventSerializer
+                serializer: App\Walleting\Messenger\OutboxEventSerializer
                 retry_strategy:
                     max_retries: 3
                     delay: 1000
@@ -13,10 +13,10 @@ framework:
                     max_delay: 30000
             outbox_failed:
                 dsn: 'doctrine://default?queue_name=walleting_outbox_failed'
-                serializer: App\Messenger\OutboxEventSerializer
+                serializer: App\Walleting\Messenger\OutboxEventSerializer
 
         routing:
-            App\Message\OutboxEvent: outbox_events
+            App\Walleting\Message\OutboxEvent: outbox_events
 
 when@test:
     framework:
@@ -24,7 +24,7 @@ when@test:
             transports:
                 outbox_events:
                     dsn: 'in-memory://?serialize=true'
-                    serializer: App\Messenger\OutboxEventSerializer
+                    serializer: App\Walleting\Messenger\OutboxEventSerializer
                 outbox_failed:
                     dsn: 'in-memory://?serialize=true'
-                    serializer: App\Messenger\OutboxEventSerializer
+                    serializer: App\Walleting\Messenger\OutboxEventSerializer

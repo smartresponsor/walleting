@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\Entity;
+namespace App\Walleting\Entity;
 
-use App\Enum\WalletStatus;
+use App\Walleting\Enum\WalletStatus;
 use App\Objecting\EntityInterface\ObjectEntityInterface;
 use App\Objecting\EntityTrait\Embeddable\ObjectAuditEmbeddableTrait;
 use App\Objecting\EntityTrait\Embeddable\ObjectIdentityEmbeddableTrait;

@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\Tests\Command;
+namespace App\Walleting\Tests\Command;
 
-use App\Command\ProductionCheckCommand;
+use App\Walleting\Command\ProductionCheckCommand;
 use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Console\Command\Command;

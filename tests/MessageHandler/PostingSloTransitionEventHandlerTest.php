@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace App\Tests\MessageHandler;
+namespace App\Walleting\Tests\MessageHandler;
 
-use App\Message\OutboxEvent;
-use App\Posting\PostingHealthStatus;
-use App\Posting\PostingSloTransitionNotification;
-use App\Service\LoggingPostingSloTransitionNotifier;
+use App\Walleting\Message\OutboxEvent;
+use App\Walleting\Posting\PostingHealthStatus;
+use App\Walleting\Posting\PostingSloTransitionNotification;
+use App\Walleting\Service\LoggingPostingSloTransitionNotifier;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 

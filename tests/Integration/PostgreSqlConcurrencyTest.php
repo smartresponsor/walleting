@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\Tests\Integration;
+namespace App\Walleting\Tests\Integration;
 
-use App\Service\OutboxService;
+use App\Walleting\Service\OutboxService;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\DriverManager;
 use Doctrine\DBAL\Exception;

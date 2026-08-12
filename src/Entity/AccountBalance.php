@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Entity;
+namespace App\Walleting\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
 
@@ -12,7 +12,7 @@ class AccountBalance
 {
     #[ORM\Id]
     #[ORM\OneToOne(targetEntity: Account::class)]
-    #[ORM\JoinColumn(name: 'account_id', nullable: false, onDelete: 'RESTRICT')]
+    #[ORM\JoinColumn(name: 'account_id', onDelete: 'RESTRICT')]
     private Account $account;
 
     #[ORM\Column(name: 'balance_minor', type: 'bigint')]

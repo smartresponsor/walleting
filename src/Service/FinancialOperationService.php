@@ -2,18 +2,18 @@
 
 declare(strict_types=1);
 
-namespace App\Service;
+namespace App\Walleting\Service;
 
-use App\Entity\Account;
-use App\Entity\FinancialOperationLink;
-use App\Entity\Funding;
-use App\Entity\LedgerTransaction;
-use App\Entity\Reservation;
-use App\Entity\Wallet;
-use App\Entity\Withdrawal;
-use App\Enum\TransactionType;
-use App\Ledger\FeeAllocation;
-use App\Ledger\PostingInstruction;
+use App\Walleting\Entity\Account;
+use App\Walleting\Entity\FinancialOperationLink;
+use App\Walleting\Entity\Funding;
+use App\Walleting\Entity\LedgerTransaction;
+use App\Walleting\Entity\Reservation;
+use App\Walleting\Entity\Wallet;
+use App\Walleting\Entity\Withdrawal;
+use App\Walleting\Enum\TransactionType;
+use App\Walleting\Ledger\FeeAllocation;
+use App\Walleting\Ledger\PostingInstruction;
 use Doctrine\DBAL\LockMode;
 use Doctrine\ORM\EntityManagerInterface;
 

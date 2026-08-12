@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace App\Tests\Service;
+namespace App\Walleting\Tests\Service;
 
-use App\Entity\Account;
-use App\Entity\Wallet;
-use App\Enum\AccountCategory;
-use App\Ledger\FeeAllocation;
-use App\Service\FeePostingComposer;
+use App\Walleting\Entity\Account;
+use App\Walleting\Entity\Wallet;
+use App\Walleting\Enum\AccountCategory;
+use App\Walleting\Ledger\FeeAllocation;
+use App\Walleting\Service\FeePostingComposer;
 use PHPUnit\Framework\TestCase;
 
 final class FeePostingComposerTest extends TestCase

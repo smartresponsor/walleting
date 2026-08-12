@@ -1,31 +1,33 @@
 {
     "name": "smartresponsor/walleting",
     "description": "Symfony-native immutable double-entry walleting component",
-    "type": "project",
+    "type": "library",
     "license": "proprietary",
     "require": {
         "php": ">=8.4",
         "doctrine/dbal": "^4.3",
         "doctrine/doctrine-bundle": "^3.0",
-        "doctrine/doctrine-migrations-bundle": "^3.4",
+        "doctrine/doctrine-migrations-bundle": "^4.0",
         "doctrine/orm": "^3.4",
         "objecting/object": "dev-master",
-        "symfony/console": "8.0.*",
-        "symfony/doctrine-messenger": "8.0.*",
-        "symfony/dotenv": "8.0.*",
+        "symfony/config": "^8.1",
+        "symfony/console": "^8.1",
+        "symfony/dependency-injection": "^8.1",
+        "symfony/doctrine-messenger": "^8.1",
+        "symfony/dotenv": "^8.1",
         "symfony/flex": "^2.6",
-        "symfony/framework-bundle": "8.0.*",
-        "symfony/messenger": "8.0.*",
-        "symfony/runtime": "8.0.*",
-        "symfony/uid": "8.0.*",
-        "symfony/yaml": "8.0.*"
+        "symfony/framework-bundle": "^8.1",
+        "symfony/messenger": "^8.1",
+        "symfony/runtime": "^8.1",
+        "symfony/uid": "^8.1",
+        "symfony/yaml": "^8.1"
     },
     "require-dev": {
         "phpunit/phpunit": "^12.3",
-        "symfony/phpunit-bridge": "8.0.*"
+        "symfony/phpunit-bridge": "^8.1"
     },
-    "autoload": {"psr-4": {"App\\": "src/"}},
-    "autoload-dev": {"psr-4": {"App\\Tests\\": "tests/"}},
+    "autoload": {"psr-4": {"App\\Walleting\\": "src/"}},
+    "autoload-dev": {"psr-4": {"App\\Walleting\\Tests\\": "tests/"}},
     "scripts": {
         "auto-scripts": {
             "cache:clear": "symfony-cmd",
@@ -46,7 +48,7 @@
         "allow-plugins": {"symfony/flex": true, "symfony/runtime": true},
         "sort-packages": true
     },
-    "extra": {"symfony": {"allow-contrib": false, "require": "8.0.*"}},
+    "extra": {"symfony": {"allow-contrib": false, "require": "^8.1"}},
     "minimum-stability": "dev",
     "prefer-stable": true
 }

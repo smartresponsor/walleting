@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace App\Service;
+namespace App\Walleting\Service;
 
-use App\Entity\ReconciliationMismatch;
-use App\Entity\ReconciliationRun;
-use App\Enum\ReconciliationMismatchType;
+use App\Walleting\Entity\ReconciliationMismatch;
+use App\Walleting\Entity\ReconciliationRun;
+use App\Walleting\Enum\ReconciliationMismatchType;
 use Doctrine\ORM\EntityManagerInterface;
 
 final readonly class ReconciliationService

@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace App\Tests\Integration;
+namespace App\Walleting\Tests\Integration;
 
-use App\Message\OutboxEvent;
-use App\MessageHandler\PostingSloTransitionEventHandler;
-use App\Posting\PostingSloTransitionNotification;
-use App\Service\InboxService;
-use App\Service\PostingSloTransitionNotifierInterface;
+use App\Walleting\Message\OutboxEvent;
+use App\Walleting\MessageHandler\PostingSloTransitionEventHandler;
+use App\Walleting\Posting\PostingSloTransitionNotification;
+use App\Walleting\Service\InboxService;
+use App\Walleting\Service\PostingSloTransitionNotifierInterface;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;

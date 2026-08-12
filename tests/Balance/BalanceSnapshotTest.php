@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace App\Tests\Balance;
+namespace App\Walleting\Tests\Balance;
 
-use App\Balance\AccountBalanceReconciliation;
-use App\Balance\WalletCurrencyBalanceSnapshot;
+use App\Walleting\Balance\AccountBalanceReconciliation;
+use App\Walleting\Balance\WalletCurrencyBalanceSnapshot;
 use PHPUnit\Framework\TestCase;
 
 final class BalanceSnapshotTest extends TestCase

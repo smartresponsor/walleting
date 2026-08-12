@@ -2,21 +2,21 @@
 
 declare(strict_types=1);
 
-namespace App\Tests\Integration;
+namespace App\Walleting\Tests\Integration;
 
-use App\Entity\Account;
-use App\Entity\Wallet;
-use App\Enum\AccountCategory;
-use App\Enum\ReservationStatus;
-use App\Ledger\FeeAllocation;
-use App\Ledger\PostingInstruction;
-use App\Service\FeePostingComposer;
-use App\Service\FinancialOperationService;
-use App\Service\NullPostingTelemetry;
-use App\Service\OutboxService;
-use App\Service\PostingDbalExecutor;
-use App\Service\PostingRetryPolicy;
-use App\Service\PostingService;
+use App\Walleting\Entity\Account;
+use App\Walleting\Entity\Wallet;
+use App\Walleting\Enum\AccountCategory;
+use App\Walleting\Enum\ReservationStatus;
+use App\Walleting\Ledger\FeeAllocation;
+use App\Walleting\Ledger\PostingInstruction;
+use App\Walleting\Service\FeePostingComposer;
+use App\Walleting\Service\FinancialOperationService;
+use App\Walleting\Service\NullPostingTelemetry;
+use App\Walleting\Service\OutboxService;
+use App\Walleting\Service\PostingDbalExecutor;
+use App\Walleting\Service\PostingRetryPolicy;
+use App\Walleting\Service\PostingService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 

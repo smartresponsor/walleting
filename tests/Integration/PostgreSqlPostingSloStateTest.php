@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace App\Tests\Integration;
+namespace App\Walleting\Tests\Integration;
 
-use App\Posting\PostingHealthAssessment;
-use App\Posting\PostingHealthStatus;
-use App\Posting\PostingSloTrendAssessment;
-use App\Service\OutboxService;
-use App\Service\PostingSloStateService;
+use App\Walleting\Posting\PostingHealthAssessment;
+use App\Walleting\Posting\PostingHealthStatus;
+use App\Walleting\Posting\PostingSloTrendAssessment;
+use App\Walleting\Service\OutboxService;
+use App\Walleting\Service\PostingSloStateService;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;

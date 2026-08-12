@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace App\Outbox;
+namespace App\Walleting\Outbox;
 
-use App\Entity\OutboxMessage;
-use App\Message\OutboxEvent;
+use App\Walleting\Entity\OutboxMessage;
+use App\Walleting\Message\OutboxEvent;
 use Symfony\Component\Messenger\MessageBusInterface;
 
 final readonly class MessengerOutboxMessageHandler implements OutboxMessageHandlerInterface

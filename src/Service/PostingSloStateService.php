@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace App\Service;
+namespace App\Walleting\Service;
 
-use App\Posting\PostingHealthStatus;
-use App\Posting\PostingSloStateTransition;
-use App\Posting\PostingSloTrendAssessment;
+use App\Walleting\Posting\PostingHealthStatus;
+use App\Walleting\Posting\PostingSloStateTransition;
+use App\Walleting\Posting\PostingSloTrendAssessment;
 use Doctrine\DBAL\Connection;
 
 final readonly class PostingSloStateService

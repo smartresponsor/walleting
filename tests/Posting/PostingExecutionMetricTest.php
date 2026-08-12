@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\Tests\Posting;
+namespace App\Walleting\Tests\Posting;
 
-use App\Posting\PostingExecutionMetric;
+use App\Walleting\Posting\PostingExecutionMetric;
 use PHPUnit\Framework\TestCase;
 
 final class PostingExecutionMetricTest extends TestCase

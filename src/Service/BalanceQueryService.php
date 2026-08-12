@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace App\Service;
+namespace App\Walleting\Service;
 
-use App\Entity\Account;
-use App\Entity\Wallet;
-use App\ReadModel\BalanceSnapshot;
+use App\Walleting\Entity\Account;
+use App\Walleting\Entity\Wallet;
+use App\Walleting\ReadModel\BalanceSnapshot;
 use Doctrine\DBAL\Connection;
 
 final readonly class BalanceQueryService

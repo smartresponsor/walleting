@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace App\Service;
+namespace App\Walleting\Service;
 
-use App\Entity\InboxReceipt;
-use App\Inbox\InboxHealthSnapshot;
-use App\Message\OutboxEvent;
+use App\Walleting\Entity\InboxReceipt;
+use App\Walleting\Inbox\InboxHealthSnapshot;
+use App\Walleting\Message\OutboxEvent;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\DBAL\ParameterType;

@@ -2,16 +2,16 @@
 
 declare(strict_types=1);
 
-namespace App\Tests\Integration;
+namespace App\Walleting\Tests\Integration;
 
-use App\Entity\Account;
-use App\Enum\TransactionStatus;
-use App\Ledger\PostingInstruction;
-use App\Service\DatabasePostingTelemetry;
-use App\Service\OutboxService;
-use App\Service\PostingDbalExecutor;
-use App\Service\PostingRetryPolicy;
-use App\Service\PostingService;
+use App\Walleting\Entity\Account;
+use App\Walleting\Enum\TransactionStatus;
+use App\Walleting\Ledger\PostingInstruction;
+use App\Walleting\Service\DatabasePostingTelemetry;
+use App\Walleting\Service\OutboxService;
+use App\Walleting\Service\PostingDbalExecutor;
+use App\Walleting\Service\PostingRetryPolicy;
+use App\Walleting\Service\PostingService;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\ParameterType;
 use Doctrine\ORM\EntityManagerInterface;

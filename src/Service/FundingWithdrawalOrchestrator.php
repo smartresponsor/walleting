@@ -2,17 +2,17 @@
 
 declare(strict_types=1);
 
-namespace App\Service;
+namespace App\Walleting\Service;
 
-use App\Entity\Funding;
-use App\Entity\PaymentInstrument;
-use App\Entity\ProviderEvent;
-use App\Entity\Wallet;
-use App\Entity\Withdrawal;
-use App\Enum\FundingStatus;
-use App\Enum\ProviderEventStatus;
-use App\Enum\WithdrawalStatus;
-use App\Ledger\PostingInstruction;
+use App\Walleting\Entity\Funding;
+use App\Walleting\Entity\PaymentInstrument;
+use App\Walleting\Entity\ProviderEvent;
+use App\Walleting\Entity\Wallet;
+use App\Walleting\Entity\Withdrawal;
+use App\Walleting\Enum\FundingStatus;
+use App\Walleting\Enum\ProviderEventStatus;
+use App\Walleting\Enum\WithdrawalStatus;
+use App\Walleting\Ledger\PostingInstruction;
 use Doctrine\DBAL\LockMode;
 use Doctrine\ORM\EntityManagerInterface;
 

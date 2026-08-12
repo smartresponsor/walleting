@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\Outbox;
+namespace App\Walleting\Outbox;
 
-use App\Entity\OutboxMessage;
+use App\Walleting\Entity\OutboxMessage;
 
 interface OutboxMessageHandlerInterface
 {

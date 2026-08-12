@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace App\Service;
+namespace App\Walleting\Service;
 
-use App\Entity\LedgerTransaction;
-use App\Entity\OutboxMessage;
-use App\Entity\ProviderEvent;
-use App\Outbox\OutboxHealthSnapshot;
+use App\Walleting\Entity\LedgerTransaction;
+use App\Walleting\Entity\OutboxMessage;
+use App\Walleting\Entity\ProviderEvent;
+use App\Walleting\Outbox\OutboxHealthSnapshot;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\ParameterType;
 use Doctrine\ORM\EntityManagerInterface;

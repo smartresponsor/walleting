@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\Entity;
+namespace App\Walleting\Entity;
 
-use App\Enum\TransactionType;
+use App\Walleting\Enum\TransactionType;
 use App\Objecting\EntityInterface\ObjectRelationEntityInterface;
 use App\Objecting\EntityTrait\Embeddable\ObjectAuditEmbeddableTrait;
 use Doctrine\ORM\Mapping as ORM;

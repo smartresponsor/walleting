@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace App\Tests\Ledger;
+namespace App\Walleting\Tests\Ledger;
 
-use App\Entity\Account;
-use App\Entity\Wallet;
-use App\Enum\AccountCategory;
-use App\Enum\TransactionType;
-use App\Ledger\FinancialPostingRequest;
-use App\Ledger\PostingInstruction;
+use App\Walleting\Entity\Account;
+use App\Walleting\Entity\Wallet;
+use App\Walleting\Enum\AccountCategory;
+use App\Walleting\Enum\TransactionType;
+use App\Walleting\Ledger\FinancialPostingRequest;
+use App\Walleting\Ledger\PostingInstruction;
 use PHPUnit\Framework\TestCase;
 
 final class FinancialPostingRequestTest extends TestCase

@@ -2,20 +2,20 @@
 
 declare(strict_types=1);
 
-namespace App\Tests\Integration;
+namespace App\Walleting\Tests\Integration;
 
-use App\Entity\Funding;
-use App\Entity\PaymentInstrument;
-use App\Entity\ReconciliationMismatch;
-use App\Entity\ReconciliationRun;
-use App\Entity\Wallet;
-use App\Entity\Withdrawal;
-use App\Enum\PaymentInstrumentType;
-use App\Enum\ReconciliationMismatchType;
-use App\Enum\ReconciliationRunStatus;
-use App\Service\ProviderSettlementRecord;
-use App\Service\ProviderSettlementReconciliationService;
-use App\Service\ReconciliationService;
+use App\Walleting\Entity\Funding;
+use App\Walleting\Entity\PaymentInstrument;
+use App\Walleting\Entity\ReconciliationMismatch;
+use App\Walleting\Entity\ReconciliationRun;
+use App\Walleting\Entity\Wallet;
+use App\Walleting\Entity\Withdrawal;
+use App\Walleting\Enum\PaymentInstrumentType;
+use App\Walleting\Enum\ReconciliationMismatchType;
+use App\Walleting\Enum\ReconciliationRunStatus;
+use App\Walleting\Service\ProviderSettlementRecord;
+use App\Walleting\Service\ProviderSettlementReconciliationService;
+use App\Walleting\Service\ReconciliationService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 

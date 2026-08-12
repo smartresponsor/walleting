@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\Posting;
+namespace App\Walleting\Posting;
 
-use App\Message\OutboxEvent;
+use App\Walleting\Message\OutboxEvent;
 
 final readonly class PostingSloTransitionNotification
 {

@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace App\Command;
+namespace App\Walleting\Command;
 
-use App\Posting\PostingHealthStatus;
-use App\Posting\PostingSloPolicy;
-use App\Service\PostingHealthService;
+use App\Walleting\Posting\PostingHealthStatus;
+use App\Walleting\Posting\PostingSloPolicy;
+use App\Walleting\Service\PostingHealthService;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;

@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace App\Service;
+namespace App\Walleting\Service;
 
-use App\Entity\OutboxMessage;
-use App\Outbox\OutboxDispatchReport;
-use App\Outbox\OutboxMessageHandlerInterface;
-use App\Outbox\PermanentOutboxFailure;
+use App\Walleting\Entity\OutboxMessage;
+use App\Walleting\Outbox\OutboxDispatchReport;
+use App\Walleting\Outbox\OutboxMessageHandlerInterface;
+use App\Walleting\Outbox\PermanentOutboxFailure;
 use Symfony\Component\DependencyInjection\Attribute\AutowireIterator;
 
 final readonly class OutboxDispatcher
@@ -37,9 +37,9 @@ final readonly class OutboxDispatcher
         $this->dispatch($message);
 
         return match ($message->status()) {
-            \App\Enum\OutboxMessageStatus::Dispatched => new OutboxDispatchReport(1, 1, 0, 0),
-            \App\Enum\OutboxMessageStatus::Failed => new OutboxDispatchReport(1, 0, 1, 0),
-            \App\Enum\OutboxMessageStatus::Dead => new OutboxDispatchReport(1, 0, 0, 1),
+            \App\Walleting\Enum\OutboxMessageStatus::Dispatched => new OutboxDispatchReport(1, 1, 0, 0),
+            \App\Walleting\Enum\OutboxMessageStatus::Failed => new OutboxDispatchReport(1, 0, 1, 0),
+            \App\Walleting\Enum\OutboxMessageStatus::Dead => new OutboxDispatchReport(1, 0, 0, 1),
             default => throw new \LogicException('Selected dispatch left an outbox message in an invalid terminal state.'),
         };
     }
@@ -59,9 +59,9 @@ final readonly class OutboxDispatcher
         foreach ($messages as $message) {
             $this->dispatch($message);
             match ($message->status()) {
-                \App\Enum\OutboxMessageStatus::Dispatched => ++$dispatched,
-                \App\Enum\OutboxMessageStatus::Failed => ++$retryScheduled,
-                \App\Enum\OutboxMessageStatus::Dead => ++$dead,
+                \App\Walleting\Enum\OutboxMessageStatus::Dispatched => ++$dispatched,
+                \App\Walleting\Enum\OutboxMessageStatus::Failed => ++$retryScheduled,
+                \App\Walleting\Enum\OutboxMessageStatus::Dead => ++$dead,
                 default => throw new \LogicException('Dispatch left an outbox message in an invalid terminal state.'),
             };
         }

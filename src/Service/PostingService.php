@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace App\Service;
+namespace App\Walleting\Service;
 
-use App\Entity\LedgerTransaction;
-use App\Enum\TransactionStatus;
-use App\Enum\TransactionType;
-use App\Ledger\FinancialPostingRequest;
-use App\Ledger\PostingInstruction;
+use App\Walleting\Entity\LedgerTransaction;
+use App\Walleting\Enum\TransactionStatus;
+use App\Walleting\Enum\TransactionType;
+use App\Walleting\Ledger\FinancialPostingRequest;
+use App\Walleting\Ledger\PostingInstruction;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Uid\Uuid;

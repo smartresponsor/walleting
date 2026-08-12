@@ -2,24 +2,24 @@
 
 declare(strict_types=1);
 
-namespace App\Tests\Service;
+namespace App\Walleting\Tests\Service;
 
-use App\Entity\Funding;
-use App\Entity\PaymentInstrument;
-use App\Entity\ProviderEvent;
-use App\Entity\Wallet;
-use App\Entity\Withdrawal;
-use App\Enum\FundingStatus;
-use App\Enum\PaymentInstrumentType;
-use App\Enum\WithdrawalStatus;
-use App\Service\FinancialOperationService;
-use App\Service\FundingWithdrawalOrchestrator;
-use App\Service\NullPostingTelemetry;
-use App\Service\OutboxService;
-use App\Service\PostingDbalExecutor;
-use App\Service\PostingRetryPolicy;
-use App\Service\PostingService;
-use App\Service\ProviderEventService;
+use App\Walleting\Entity\Funding;
+use App\Walleting\Entity\PaymentInstrument;
+use App\Walleting\Entity\ProviderEvent;
+use App\Walleting\Entity\Wallet;
+use App\Walleting\Entity\Withdrawal;
+use App\Walleting\Enum\FundingStatus;
+use App\Walleting\Enum\PaymentInstrumentType;
+use App\Walleting\Enum\WithdrawalStatus;
+use App\Walleting\Service\FinancialOperationService;
+use App\Walleting\Service\FundingWithdrawalOrchestrator;
+use App\Walleting\Service\NullPostingTelemetry;
+use App\Walleting\Service\OutboxService;
+use App\Walleting\Service\PostingDbalExecutor;
+use App\Walleting\Service\PostingRetryPolicy;
+use App\Walleting\Service\PostingService;
+use App\Walleting\Service\ProviderEventService;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\EntityRepository;

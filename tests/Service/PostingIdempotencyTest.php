@@ -2,17 +2,17 @@
 
 declare(strict_types=1);
 
-namespace App\Tests\Service;
+namespace App\Walleting\Tests\Service;
 
-use App\Entity\Account;
-use App\Entity\LedgerTransaction;
-use App\Entity\Wallet;
-use App\Enum\AccountCategory;
-use App\Enum\TransactionType;
-use App\Ledger\PostingInstruction;
-use App\Service\OutboxService;
-use App\Service\PostingDbalExecutor;
-use App\Service\PostingService;
+use App\Walleting\Entity\Account;
+use App\Walleting\Entity\LedgerTransaction;
+use App\Walleting\Entity\Wallet;
+use App\Walleting\Enum\AccountCategory;
+use App\Walleting\Enum\TransactionType;
+use App\Walleting\Ledger\PostingInstruction;
+use App\Walleting\Service\OutboxService;
+use App\Walleting\Service\PostingDbalExecutor;
+use App\Walleting\Service\PostingService;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\EntityRepository;
@@ -40,7 +40,7 @@ final class PostingIdempotencyTest extends TestCase
         $service = new PostingService(
             $entityManager,
             $outboxService,
-            new PostingDbalExecutor($connection, $outboxService, new \App\Service\PostingRetryPolicy(), new \App\Service\NullPostingTelemetry()),
+            new PostingDbalExecutor($connection, $outboxService, new \App\Walleting\Service\PostingRetryPolicy(), new \App\Walleting\Service\NullPostingTelemetry()),
         );
 
         $this->expectException(\DomainException::class);

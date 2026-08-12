@@ -2,19 +2,19 @@
 
 declare(strict_types=1);
 
-namespace App\Tests\Entity;
+namespace App\Walleting\Tests\Entity;
 
-use App\Entity\Funding;
-use App\Entity\PaymentInstrument;
-use App\Entity\ProviderEvent;
-use App\Entity\Wallet;
-use App\Entity\ReconciliationMismatch;
-use App\Entity\ReconciliationRun;
-use App\Enum\PaymentInstrumentType;
-use App\Enum\ProviderEventStatus;
-use App\Enum\ReconciliationMismatchStatus;
-use App\Enum\ReconciliationMismatchType;
-use App\Enum\ReconciliationRunStatus;
+use App\Walleting\Entity\Funding;
+use App\Walleting\Entity\PaymentInstrument;
+use App\Walleting\Entity\ProviderEvent;
+use App\Walleting\Entity\Wallet;
+use App\Walleting\Entity\ReconciliationMismatch;
+use App\Walleting\Entity\ReconciliationRun;
+use App\Walleting\Enum\PaymentInstrumentType;
+use App\Walleting\Enum\ProviderEventStatus;
+use App\Walleting\Enum\ReconciliationMismatchStatus;
+use App\Walleting\Enum\ReconciliationMismatchType;
+use App\Walleting\Enum\ReconciliationRunStatus;
 use PHPUnit\Framework\TestCase;
 
 final class ReconciliationTest extends TestCase

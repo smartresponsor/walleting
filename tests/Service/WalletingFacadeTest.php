@@ -2,19 +2,19 @@
 
 declare(strict_types=1);
 
-namespace App\Tests\Service;
+namespace App\Walleting\Tests\Service;
 
-use App\Entity\Funding;
-use App\Entity\PaymentInstrument;
-use App\Entity\Wallet;
-use App\Entity\Withdrawal;
-use App\Enum\PaymentInstrumentType;
-use App\Enum\FundingStatus;
-use App\Enum\WithdrawalStatus;
-use App\Service\BalanceReadService;
-use App\Service\LedgerQueryService;
-use App\Service\StatementQueryService;
-use App\Service\WalletingFacade;
+use App\Walleting\Entity\Funding;
+use App\Walleting\Entity\PaymentInstrument;
+use App\Walleting\Entity\Wallet;
+use App\Walleting\Entity\Withdrawal;
+use App\Walleting\Enum\PaymentInstrumentType;
+use App\Walleting\Enum\FundingStatus;
+use App\Walleting\Enum\WithdrawalStatus;
+use App\Walleting\Service\BalanceReadService;
+use App\Walleting\Service\LedgerQueryService;
+use App\Walleting\Service\StatementQueryService;
+use App\Walleting\Service\WalletingFacade;
 use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\TestCase;
 

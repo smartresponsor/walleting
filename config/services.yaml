@@ -3,13 +3,13 @@ services:
         autowire: true
         autoconfigure: true
     _instanceof:
-        App\Outbox\OutboxMessageHandlerInterface:
+        App\Walleting\Outbox\OutboxMessageHandlerInterface:
             tags: ['app.outbox_message_handler']
 
-    App\Service\PostingExecutorInterface: '@App\Service\PostingDbalExecutor'
-    App\Service\PostingTelemetryInterface: '@App\Service\DatabasePostingTelemetry'
-    App\Service\PostingSloTransitionNotifierInterface: '@App\Service\LoggingPostingSloTransitionNotifier'
+    App\Walleting\Service\PostingExecutorInterface: '@App\Walleting\Service\PostingDbalExecutor'
+    App\Walleting\Service\PostingTelemetryInterface: '@App\Walleting\Service\DatabasePostingTelemetry'
+    App\Walleting\Service\PostingSloTransitionNotifierInterface: '@App\Walleting\Service\LoggingPostingSloTransitionNotifier'
 
-    App\:
+    App\Walleting\:
         resource: '../src/'
-        exclude: ['../src/Entity/', '../src/Kernel.php']
+        exclude: ['../src/Entity/', '../src/DependencyInjection/', '../src/WalletingBundle.php', '../src/Kernel.php']

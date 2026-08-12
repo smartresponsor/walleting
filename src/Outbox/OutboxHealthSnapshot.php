@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Outbox;
+namespace App\Walleting\Outbox;
 
 final readonly class OutboxHealthSnapshot
 {

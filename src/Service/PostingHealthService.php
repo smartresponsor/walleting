@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\Service;
+namespace App\Walleting\Service;
 
-use App\Posting\PostingHealthSnapshot;
+use App\Walleting\Posting\PostingHealthSnapshot;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\ParameterType;
 

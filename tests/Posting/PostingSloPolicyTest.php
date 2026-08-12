@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace App\Tests\Posting;
+namespace App\Walleting\Tests\Posting;
 
-use App\Posting\PostingHealthSnapshot;
-use App\Posting\PostingHealthStatus;
-use App\Posting\PostingSloPolicy;
+use App\Walleting\Posting\PostingHealthSnapshot;
+use App\Walleting\Posting\PostingHealthStatus;
+use App\Walleting\Posting\PostingSloPolicy;
 use PHPUnit\Framework\TestCase;
 
 final class PostingSloPolicyTest extends TestCase

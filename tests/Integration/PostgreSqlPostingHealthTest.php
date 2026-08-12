@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace App\Tests\Integration;
+namespace App\Walleting\Tests\Integration;
 
-use App\Posting\PostingExecutionMetric;
-use App\Service\DatabasePostingTelemetry;
-use App\Service\PostingHealthService;
+use App\Walleting\Posting\PostingExecutionMetric;
+use App\Walleting\Service\DatabasePostingTelemetry;
+use App\Walleting\Service\PostingHealthService;
 use Doctrine\DBAL\Connection;
 use Psr\Log\NullLogger;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\ReadModel;
+namespace App\Walleting\ReadModel;
 
 final readonly class BalanceSnapshot
 {

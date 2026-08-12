@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace App\Service;
+namespace App\Walleting\Service;
 
-use App\Entity\Account;
-use App\Ledger\StatementActivity;
-use App\Ledger\StatementPage;
+use App\Walleting\Entity\Account;
+use App\Walleting\Ledger\StatementActivity;
+use App\Walleting\Ledger\StatementPage;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\ParameterType;
 

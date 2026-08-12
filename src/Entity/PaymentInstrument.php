@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace App\Entity;
+namespace App\Walleting\Entity;
 
-use App\Enum\PaymentInstrumentStatus;
-use App\Enum\PaymentInstrumentType;
+use App\Walleting\Enum\PaymentInstrumentStatus;
+use App\Walleting\Enum\PaymentInstrumentType;
 use App\Objecting\EntityInterface\ObjectEntityInterface;
 use App\Objecting\EntityTrait\Embeddable\ObjectAuditEmbeddableTrait;
 use App\Objecting\EntityTrait\Embeddable\ObjectIdentityEmbeddableTrait;

@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace App\Tests\Entity;
+namespace App\Walleting\Tests\Entity;
 
-use App\Entity\InboxReceipt;
-use App\Enum\InboxReceiptStatus;
-use App\Message\OutboxEvent;
+use App\Walleting\Entity\InboxReceipt;
+use App\Walleting\Enum\InboxReceiptStatus;
+use App\Walleting\Message\OutboxEvent;
 use PHPUnit\Framework\TestCase;
 
 final class InboxReceiptTest extends TestCase

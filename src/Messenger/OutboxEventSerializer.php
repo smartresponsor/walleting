@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\Messenger;
+namespace App\Walleting\Messenger;
 
-use App\Message\OutboxEvent;
+use App\Walleting\Message\OutboxEvent;
 use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\Stamp\DelayStamp;
 use Symfony\Component\Messenger\Stamp\ErrorDetailsStamp;

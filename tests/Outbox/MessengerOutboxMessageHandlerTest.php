@@ -2,16 +2,16 @@
 
 declare(strict_types=1);
 
-namespace App\Tests\Outbox;
+namespace App\Walleting\Tests\Outbox;
 
-use App\Entity\Account;
-use App\Entity\LedgerTransaction;
-use App\Entity\OutboxMessage;
-use App\Entity\Wallet;
-use App\Enum\AccountCategory;
-use App\Enum\TransactionType;
-use App\Message\OutboxEvent;
-use App\Outbox\MessengerOutboxMessageHandler;
+use App\Walleting\Entity\Account;
+use App\Walleting\Entity\LedgerTransaction;
+use App\Walleting\Entity\OutboxMessage;
+use App\Walleting\Entity\Wallet;
+use App\Walleting\Enum\AccountCategory;
+use App\Walleting\Enum\TransactionType;
+use App\Walleting\Message\OutboxEvent;
+use App\Walleting\Outbox\MessengerOutboxMessageHandler;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\MessageBusInterface;
