@@ -71,37 +71,80 @@ class Withdrawal
 
     public function start(): void
     {
-        if (WithdrawalStatus::Pending !== $this->status) { throw new \LogicException('Only pending withdrawal can start.'); }
+        if (WithdrawalStatus::Pending !== $this->status) {
+            throw new \LogicException('Only pending withdrawal can start.');
+        }
         $this->status = WithdrawalStatus::Processing;
     }
 
     public function succeed(LedgerTransaction $transaction): void
     {
-        if (WithdrawalStatus::Processing !== $this->status) { throw new \LogicException('Only processing withdrawal can succeed.'); }
+        if (WithdrawalStatus::Processing !== $this->status) {
+            throw new \LogicException('Only processing withdrawal can succeed.');
+        }
         $this->transaction = $transaction;
         $this->status = WithdrawalStatus::Succeeded;
     }
 
     public function fail(): void
     {
-        if (!in_array($this->status, [WithdrawalStatus::Pending, WithdrawalStatus::Processing], true)) { throw new \LogicException('Withdrawal cannot fail from its current status.'); }
+        if (!in_array($this->status, [WithdrawalStatus::Pending, WithdrawalStatus::Processing], true)) {
+            throw new \LogicException('Withdrawal cannot fail from its current status.');
+        }
         $this->status = WithdrawalStatus::Failed;
     }
 
     public function reverse(LedgerTransaction $transaction): void
     {
-        if (WithdrawalStatus::Succeeded !== $this->status) { throw new \LogicException('Only succeeded withdrawal can be reversed.'); }
+        if (WithdrawalStatus::Succeeded !== $this->status) {
+            throw new \LogicException('Only succeeded withdrawal can be reversed.');
+        }
         $this->reversalTransaction = $transaction;
         $this->status = WithdrawalStatus::Reversed;
     }
 
-    public function id(): Uuid { return $this->id; }
-    public function wallet(): Wallet { return $this->wallet; }
-    public function paymentInstrument(): PaymentInstrument { return $this->paymentInstrument; }
-    public function status(): WithdrawalStatus { return $this->status; }
-    public function transaction(): ?LedgerTransaction { return $this->transaction; }
-    public function reversalTransaction(): ?LedgerTransaction { return $this->reversalTransaction; }
-    public function amountMinor(): int { return $this->amountMinor; }
-    public function currency(): string { return $this->currency; }
-    public function idempotencyKey(): string { return $this->idempotencyKey; }
+    public function id(): Uuid
+    {
+        return $this->id;
+    }
+
+    public function wallet(): Wallet
+    {
+        return $this->wallet;
+    }
+
+    public function paymentInstrument(): PaymentInstrument
+    {
+        return $this->paymentInstrument;
+    }
+
+    public function status(): WithdrawalStatus
+    {
+        return $this->status;
+    }
+
+    public function transaction(): ?LedgerTransaction
+    {
+        return $this->transaction;
+    }
+
+    public function reversalTransaction(): ?LedgerTransaction
+    {
+        return $this->reversalTransaction;
+    }
+
+    public function amountMinor(): int
+    {
+        return $this->amountMinor;
+    }
+
+    public function currency(): string
+    {
+        return $this->currency;
+    }
+
+    public function idempotencyKey(): string
+    {
+        return $this->idempotencyKey;
+    }
 }

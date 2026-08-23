@@ -16,7 +16,7 @@ final readonly class ProviderSettlementReconciliationService
 
     /**
      * @param list<ProviderSettlementRecord> $providerRecords
-     * @param list<Funding|Withdrawal> $localOperations
+     * @param list<Funding|Withdrawal>       $localOperations
      */
     public function execute(ReconciliationRun $run, array $providerRecords, array $localOperations): ReconciliationRun
     {

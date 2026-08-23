@@ -18,7 +18,7 @@ final class Version20260808002000 extends AbstractMigration
     {
         $this->abortIf(!$this->connection->getDatabasePlatform() instanceof \Doctrine\DBAL\Platforms\PostgreSQLPlatform, 'Walleting requires PostgreSQL.');
 
-        $this->addSql("CREATE TABLE posting_metric_sample (id UUID NOT NULL, event VARCHAR(16) NOT NULL, transaction_type VARCHAR(32) NOT NULL, attempt INT NOT NULL, retry_count INT NOT NULL, retry_reason VARCHAR(64) DEFAULT NULL, attempt_duration_ms INT NOT NULL, total_duration_ms INT NOT NULL, lock_wait_ms INT DEFAULT NULL, recorded_at TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL, PRIMARY KEY(id))");
+        $this->addSql('CREATE TABLE posting_metric_sample (id UUID NOT NULL, event VARCHAR(16) NOT NULL, transaction_type VARCHAR(32) NOT NULL, attempt INT NOT NULL, retry_count INT NOT NULL, retry_reason VARCHAR(64) DEFAULT NULL, attempt_duration_ms INT NOT NULL, total_duration_ms INT NOT NULL, lock_wait_ms INT DEFAULT NULL, recorded_at TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL, PRIMARY KEY(id))');
         $this->addSql('CREATE INDEX idx_posting_metric_recorded_at ON posting_metric_sample (recorded_at)');
         $this->addSql('CREATE INDEX idx_posting_metric_event_recorded_at ON posting_metric_sample (event, recorded_at)');
         $this->addSql('CREATE INDEX idx_posting_metric_retry_reason_recorded_at ON posting_metric_sample (retry_reason, recorded_at)');

@@ -53,11 +53,38 @@ class Posting
         $this->createdAt = new \DateTimeImmutable();
     }
 
-    public function id(): Uuid { return $this->id; }
-    public function transaction(): LedgerTransaction { return $this->transaction; }
-    public function account(): Account { return $this->account; }
-    public function amountMinor(): int { return $this->amountMinor; }
-    public function currency(): string { return $this->currency; }
-    public function sequence(): int { return $this->sequence; }
-    public function createdAt(): \DateTimeImmutable { return $this->createdAt; }
+    public function id(): Uuid
+    {
+        return $this->id;
+    }
+
+    public function transaction(): LedgerTransaction
+    {
+        return $this->transaction;
+    }
+
+    public function account(): Account
+    {
+        return $this->account;
+    }
+
+    public function amountMinor(): int
+    {
+        return $this->amountMinor;
+    }
+
+    public function currency(): string
+    {
+        return $this->currency;
+    }
+
+    public function sequence(): int
+    {
+        return $this->sequence;
+    }
+
+    public function createdAt(): \DateTimeImmutable
+    {
+        return $this->createdAt;
+    }
 }

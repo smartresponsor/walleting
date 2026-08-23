@@ -19,7 +19,7 @@ final class Version20260808203000 extends AbstractMigration
         $this->abortIf(!$this->connection->getDatabasePlatform() instanceof \Doctrine\DBAL\Platforms\PostgreSQLPlatform, 'Walleting requires PostgreSQL.');
 
         $this->addSql('ALTER TABLE financial_operation_link ADD amount_minor BIGINT DEFAULT NULL');
-        $this->addSql("UPDATE financial_operation_link l SET amount_minor = CASE WHEN l.reservation_id IS NOT NULL THEN (SELECT r.amount_minor FROM reservation r WHERE r.id = l.reservation_id) ELSE (SELECT COALESCE(SUM(CASE WHEN p.amount_minor > 0 THEN p.amount_minor ELSE 0 END), 0) FROM posting p WHERE p.transaction_id = l.result_transaction_id) END");
+        $this->addSql('UPDATE financial_operation_link l SET amount_minor = CASE WHEN l.reservation_id IS NOT NULL THEN (SELECT r.amount_minor FROM reservation r WHERE r.id = l.reservation_id) ELSE (SELECT COALESCE(SUM(CASE WHEN p.amount_minor > 0 THEN p.amount_minor ELSE 0 END), 0) FROM posting p WHERE p.transaction_id = l.result_transaction_id) END');
         $this->addSql('ALTER TABLE financial_operation_link ALTER amount_minor SET NOT NULL');
         $this->addSql('ALTER TABLE financial_operation_link ADD CONSTRAINT chk_financial_operation_amount_positive CHECK (amount_minor > 0)');
 

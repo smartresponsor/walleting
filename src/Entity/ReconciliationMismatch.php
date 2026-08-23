@@ -36,14 +36,48 @@ class ReconciliationMismatch
     public function __construct(ReconciliationRun $run, ReconciliationMismatchType $type, string $externalReference, array $details = [], ?Uuid $id = null)
     {
         $externalReference = trim($externalReference);
-        if ('' === $externalReference) { throw new \InvalidArgumentException('External reference is required.'); }
-        $this->id = $id ?? Uuid::v7(); $this->run = $run; $this->type = $type; $this->externalReference = $externalReference; $this->details = $details; $this->status = ReconciliationMismatchStatus::Open; $this->createdAt = new \DateTimeImmutable();
+        if ('' === $externalReference) {
+            throw new \InvalidArgumentException('External reference is required.');
+        }
+        $this->id = $id ?? Uuid::v7();
+        $this->run = $run;
+        $this->type = $type;
+        $this->externalReference = $externalReference;
+        $this->details = $details;
+        $this->status = ReconciliationMismatchStatus::Open;
+        $this->createdAt = new \DateTimeImmutable();
     }
 
-    public function resolve(): void { $this->close(ReconciliationMismatchStatus::Resolved); }
-    public function ignore(): void { $this->close(ReconciliationMismatchStatus::Ignored); }
-    private function close(ReconciliationMismatchStatus $status): void { if (ReconciliationMismatchStatus::Open !== $this->status) { throw new \LogicException('Only open mismatch can be closed.'); } $this->status = $status; $this->resolvedAt = new \DateTimeImmutable(); }
-    public function status(): ReconciliationMismatchStatus { return $this->status; }
-    public function type(): ReconciliationMismatchType { return $this->type; }
-    public function externalReference(): string { return $this->externalReference; }
+    public function resolve(): void
+    {
+        $this->close(ReconciliationMismatchStatus::Resolved);
+    }
+
+    public function ignore(): void
+    {
+        $this->close(ReconciliationMismatchStatus::Ignored);
+    }
+
+    private function close(ReconciliationMismatchStatus $status): void
+    {
+        if (ReconciliationMismatchStatus::Open !== $this->status) {
+            throw new \LogicException('Only open mismatch can be closed.');
+        } $this->status = $status;
+        $this->resolvedAt = new \DateTimeImmutable();
+    }
+
+    public function status(): ReconciliationMismatchStatus
+    {
+        return $this->status;
+    }
+
+    public function type(): ReconciliationMismatchType
+    {
+        return $this->type;
+    }
+
+    public function externalReference(): string
+    {
+        return $this->externalReference;
+    }
 }

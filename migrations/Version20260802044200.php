@@ -9,7 +9,10 @@ use Doctrine\Migrations\AbstractMigration;
 
 final class Version20260802044200 extends AbstractMigration
 {
-    public function getDescription(): string { return 'Add reconciliation summary counters and lifecycle constraints'; }
+    public function getDescription(): string
+    {
+        return 'Add reconciliation summary counters and lifecycle constraints';
+    }
 
     public function up(Schema $schema): void
     {

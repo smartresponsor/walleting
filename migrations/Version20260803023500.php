@@ -9,7 +9,10 @@ use Doctrine\Migrations\AbstractMigration;
 
 final class Version20260803023500 extends AbstractMigration
 {
-    public function getDescription(): string { return 'Add terminal outbox dead-letter state'; }
+    public function getDescription(): string
+    {
+        return 'Add terminal outbox dead-letter state';
+    }
 
     public function up(Schema $schema): void
     {

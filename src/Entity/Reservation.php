@@ -73,9 +73,20 @@ class Reservation
         $this->createdAt = new \DateTimeImmutable();
     }
 
-    public function capture(): void { $this->transition(ReservationStatus::Captured); }
-    public function release(): void { $this->transition(ReservationStatus::Released); }
-    public function expire(): void { $this->transition(ReservationStatus::Expired); }
+    public function capture(): void
+    {
+        $this->transition(ReservationStatus::Captured);
+    }
+
+    public function release(): void
+    {
+        $this->transition(ReservationStatus::Released);
+    }
+
+    public function expire(): void
+    {
+        $this->transition(ReservationStatus::Expired);
+    }
 
     public function recordSettlementProgress(int $capturedMinor, int $releasedMinor): void
     {
@@ -103,11 +114,38 @@ class Reservation
         $this->status = $status;
     }
 
-    public function id(): Uuid { return $this->id; }
-    public function account(): Account { return $this->account; }
-    public function reserveTransaction(): LedgerTransaction { return $this->reserveTransaction; }
-    public function status(): ReservationStatus { return $this->status; }
-    public function amountMinor(): int { return $this->amountMinor; }
-    public function currency(): string { return $this->currency; }
-    public function idempotencyKey(): string { return $this->idempotencyKey; }
+    public function id(): Uuid
+    {
+        return $this->id;
+    }
+
+    public function account(): Account
+    {
+        return $this->account;
+    }
+
+    public function reserveTransaction(): LedgerTransaction
+    {
+        return $this->reserveTransaction;
+    }
+
+    public function status(): ReservationStatus
+    {
+        return $this->status;
+    }
+
+    public function amountMinor(): int
+    {
+        return $this->amountMinor;
+    }
+
+    public function currency(): string
+    {
+        return $this->currency;
+    }
+
+    public function idempotencyKey(): string
+    {
+        return $this->idempotencyKey;
+    }
 }

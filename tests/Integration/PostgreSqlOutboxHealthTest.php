@@ -35,8 +35,15 @@ final class PostgreSqlOutboxHealthTest extends KernelTestCase
             $service->enqueueOperationalDbal('posting.health.test', 'posting.health.test:one', ['scope' => 'default']);
         });
         $handler = new class implements OutboxMessageHandlerInterface {
-            public function supports(string $messageType): bool { return 'posting.health.test' === $messageType; }
-            public function handle(OutboxMessage $message): void { throw new \RuntimeException('downstream unavailable'); }
+            public function supports(string $messageType): bool
+            {
+                return 'posting.health.test' === $messageType;
+            }
+
+            public function handle(OutboxMessage $message): void
+            {
+                throw new \RuntimeException('downstream unavailable');
+            }
         };
         $dispatcher = new OutboxDispatcher($service, [$handler], maxAttempts: 1, baseDelaySeconds: 30, maxDelaySeconds: 30);
         $dispatcher->dispatchBatchReport(1);

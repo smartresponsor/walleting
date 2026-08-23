@@ -33,8 +33,14 @@ final class PostgreSqlInboxDeliveryContractTest extends KernelTestCase
         $handler = new PostingSloTransitionEventHandler(
             new InboxService($this->entityManager, $this->connection),
             new class($notifications) implements PostingSloTransitionNotifierInterface {
-                public function __construct(private array &$notifications) {}
-                public function notify(PostingSloTransitionNotification $notification): void { $this->notifications[] = $notification; }
+                public function __construct(private array &$notifications)
+                {
+                }
+
+                public function notify(PostingSloTransitionNotification $notification): void
+                {
+                    $this->notifications[] = $notification;
+                }
             },
         );
         $event = $this->event('duplicate-once');
@@ -53,7 +59,10 @@ final class PostgreSqlInboxDeliveryContractTest extends KernelTestCase
         $failing = new PostingSloTransitionEventHandler(
             $inbox,
             new class implements PostingSloTransitionNotifierInterface {
-                public function notify(PostingSloTransitionNotification $notification): void { throw new \RuntimeException('notifier unavailable'); }
+                public function notify(PostingSloTransitionNotification $notification): void
+                {
+                    throw new \RuntimeException('notifier unavailable');
+                }
             },
         );
         $event = $this->event('retry-after-failure');
@@ -70,8 +79,14 @@ final class PostgreSqlInboxDeliveryContractTest extends KernelTestCase
         $retry = new PostingSloTransitionEventHandler(
             $inbox,
             new class($notifications) implements PostingSloTransitionNotifierInterface {
-                public function __construct(private array &$notifications) {}
-                public function notify(PostingSloTransitionNotification $notification): void { $this->notifications[] = $notification; }
+                public function __construct(private array &$notifications)
+                {
+                }
+
+                public function notify(PostingSloTransitionNotification $notification): void
+                {
+                    $this->notifications[] = $notification;
+                }
             },
         );
         $retry($event);

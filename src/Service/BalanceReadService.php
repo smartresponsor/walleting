@@ -84,7 +84,7 @@ final readonly class BalanceReadService
         }
 
         return $this->connection->fetchAllAssociative(
-            "WITH ledger AS (SELECT a.id AS account_id, a.wallet_id, a.currency, COALESCE(SUM(p.amount_minor), 0) AS ledger_balance_minor, COUNT(p.id) AS ledger_posting_count FROM account a LEFT JOIN posting p ON p.account_id = a.id GROUP BY a.id, a.wallet_id, a.currency) SELECT l.account_id, l.wallet_id, l.currency, COALESCE(ab.balance_minor, 0) AS projected_balance_minor, l.ledger_balance_minor, COALESCE(ab.posting_count, 0) AS projected_posting_count, l.ledger_posting_count FROM ledger l LEFT JOIN account_balance ab ON ab.account_id = l.account_id WHERE COALESCE(ab.balance_minor, 0) <> l.ledger_balance_minor OR COALESCE(ab.posting_count, 0) <> l.ledger_posting_count ORDER BY l.account_id LIMIT ?",
+            'WITH ledger AS (SELECT a.id AS account_id, a.wallet_id, a.currency, COALESCE(SUM(p.amount_minor), 0) AS ledger_balance_minor, COUNT(p.id) AS ledger_posting_count FROM account a LEFT JOIN posting p ON p.account_id = a.id GROUP BY a.id, a.wallet_id, a.currency) SELECT l.account_id, l.wallet_id, l.currency, COALESCE(ab.balance_minor, 0) AS projected_balance_minor, l.ledger_balance_minor, COALESCE(ab.posting_count, 0) AS projected_posting_count, l.ledger_posting_count FROM ledger l LEFT JOIN account_balance ab ON ab.account_id = l.account_id WHERE COALESCE(ab.balance_minor, 0) <> l.ledger_balance_minor OR COALESCE(ab.posting_count, 0) <> l.ledger_posting_count ORDER BY l.account_id LIMIT ?',
             [$limit],
             [ParameterType::INTEGER],
         );

@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace App\Walleting\Entity;
 
-use App\Walleting\Enum\AccountCategory;
 use App\Objecting\EntityInterface\ObjectEntityInterface;
 use App\Objecting\EntityTrait\Embeddable\ObjectAuditEmbeddableTrait;
 use App\Objecting\EntityTrait\Embeddable\ObjectIdentityEmbeddableTrait;
 use App\Objecting\EntityTrait\Embeddable\ObjectStateEmbeddableTrait;
 use App\Objecting\EntityTrait\Embeddable\ObjectTitleEmbeddableTrait;
+use App\Walleting\Enum\AccountCategory;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Uid\Uuid;
 
@@ -67,11 +67,38 @@ class Account implements ObjectEntityInterface
         $this->initializeObjectState(objectStatus: 'active');
     }
 
-    public function id(): Uuid { return $this->id; }
-    public function wallet(): Wallet { return $this->wallet; }
-    public function code(): string { return $this->code; }
-    public function currency(): string { return $this->currency; }
-    public function category(): AccountCategory { return $this->category; }
-    public function allowsNegativeBalance(): bool { return $this->allowNegative; }
-    public function createdAt(): \DateTimeImmutable { return $this->getCreatedAt(); }
+    public function id(): Uuid
+    {
+        return $this->id;
+    }
+
+    public function wallet(): Wallet
+    {
+        return $this->wallet;
+    }
+
+    public function code(): string
+    {
+        return $this->code;
+    }
+
+    public function currency(): string
+    {
+        return $this->currency;
+    }
+
+    public function category(): AccountCategory
+    {
+        return $this->category;
+    }
+
+    public function allowsNegativeBalance(): bool
+    {
+        return $this->allowNegative;
+    }
+
+    public function createdAt(): \DateTimeImmutable
+    {
+        return $this->getCreatedAt();
+    }
 }

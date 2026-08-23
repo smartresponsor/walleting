@@ -36,9 +36,19 @@ final class PostgreSqlOutboxDispatchOneTest extends KernelTestCase
         $selectedId = (string) $this->connection->fetchOne("SELECT id FROM outbox_message WHERE deduplication_key = 'posting.dispatch.one:selected'");
         $handledIds = [];
         $handler = new class($handledIds) implements OutboxMessageHandlerInterface {
-            public function __construct(private array &$handledIds) {}
-            public function supports(string $messageType): bool { return 'posting.dispatch.one.test' === $messageType; }
-            public function handle(OutboxMessage $message): void { $this->handledIds[] = $message->id()->toRfc4122(); }
+            public function __construct(private array &$handledIds)
+            {
+            }
+
+            public function supports(string $messageType): bool
+            {
+                return 'posting.dispatch.one.test' === $messageType;
+            }
+
+            public function handle(OutboxMessage $message): void
+            {
+                $this->handledIds[] = $message->id()->toRfc4122();
+            }
         };
         $dispatcher = new OutboxDispatcher($service, [$handler]);
 
@@ -59,8 +69,15 @@ final class PostgreSqlOutboxDispatchOneTest extends KernelTestCase
         $this->enqueue($service, 'failure');
         $id = (string) $this->connection->fetchOne("SELECT id FROM outbox_message WHERE deduplication_key = 'posting.dispatch.one:failure'");
         $handler = new class implements OutboxMessageHandlerInterface {
-            public function supports(string $messageType): bool { return 'posting.dispatch.one.test' === $messageType; }
-            public function handle(OutboxMessage $message): void { throw new \RuntimeException('selected delivery failed'); }
+            public function supports(string $messageType): bool
+            {
+                return 'posting.dispatch.one.test' === $messageType;
+            }
+
+            public function handle(OutboxMessage $message): void
+            {
+                throw new \RuntimeException('selected delivery failed');
+            }
         };
         $dispatcher = new OutboxDispatcher($service, [$handler], maxAttempts: 8, baseDelaySeconds: 30, maxDelaySeconds: 3600);
 

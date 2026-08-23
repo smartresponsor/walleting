@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace App\Walleting\Entity;
 
-use App\Walleting\Enum\WalletStatus;
 use App\Objecting\EntityInterface\ObjectEntityInterface;
 use App\Objecting\EntityTrait\Embeddable\ObjectAuditEmbeddableTrait;
 use App\Objecting\EntityTrait\Embeddable\ObjectIdentityEmbeddableTrait;
 use App\Objecting\EntityTrait\Embeddable\ObjectStateEmbeddableTrait;
 use App\Objecting\EntityTrait\Embeddable\ObjectTitleEmbeddableTrait;
+use App\Walleting\Enum\WalletStatus;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Uid\Uuid;
 
@@ -55,11 +55,30 @@ class Wallet implements ObjectEntityInterface
         $this->initializeObjectState(objectStatus: WalletStatus::Active->value);
     }
 
-    public function id(): Uuid { return $this->id; }
-    public function ownerType(): string { return $this->ownerType; }
-    public function ownerId(): string { return $this->ownerId; }
-    public function status(): WalletStatus { return $this->status; }
-    public function createdAt(): \DateTimeImmutable { return $this->getCreatedAt(); }
+    public function id(): Uuid
+    {
+        return $this->id;
+    }
+
+    public function ownerType(): string
+    {
+        return $this->ownerType;
+    }
+
+    public function ownerId(): string
+    {
+        return $this->ownerId;
+    }
+
+    public function status(): WalletStatus
+    {
+        return $this->status;
+    }
+
+    public function createdAt(): \DateTimeImmutable
+    {
+        return $this->getCreatedAt();
+    }
 
     public function close(): void
     {

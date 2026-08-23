@@ -61,4 +61,3 @@ class AccountBalance
         return $this->updatedAt;
     }
 }
-

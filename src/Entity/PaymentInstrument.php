@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace App\Walleting\Entity;
 
-use App\Walleting\Enum\PaymentInstrumentStatus;
-use App\Walleting\Enum\PaymentInstrumentType;
 use App\Objecting\EntityInterface\ObjectEntityInterface;
 use App\Objecting\EntityTrait\Embeddable\ObjectAuditEmbeddableTrait;
 use App\Objecting\EntityTrait\Embeddable\ObjectIdentityEmbeddableTrait;
 use App\Objecting\EntityTrait\Embeddable\ObjectStateEmbeddableTrait;
 use App\Objecting\EntityTrait\Embeddable\ObjectTitleEmbeddableTrait;
+use App\Walleting\Enum\PaymentInstrumentStatus;
+use App\Walleting\Enum\PaymentInstrumentType;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Uid\Uuid;
 
@@ -70,14 +70,59 @@ class PaymentInstrument implements ObjectEntityInterface
         $this->initializeObjectState(objectStatus: PaymentInstrumentStatus::Active->value);
     }
 
-    public function disable(): void { $this->status = PaymentInstrumentStatus::Disabled; $this->setObjectStatus(PaymentInstrumentStatus::Disabled->value); $this->setObjectActive(false); $this->touchModified(); }
-    public function expire(): void { $this->status = PaymentInstrumentStatus::Expired; $this->setObjectStatus(PaymentInstrumentStatus::Expired->value); $this->setObjectActive(false); $this->touchModified(); }
-    public function id(): Uuid { return $this->id; }
-    public function wallet(): Wallet { return $this->wallet; }
-    public function type(): PaymentInstrumentType { return $this->type; }
-    public function provider(): string { return $this->provider; }
-    public function providerReference(): string { return $this->providerReference; }
-    public function displayLabel(): string { return $this->displayLabel; }
-    public function status(): PaymentInstrumentStatus { return $this->status; }
-    public function createdAt(): \DateTimeImmutable { return $this->getCreatedAt(); }
+    public function disable(): void
+    {
+        $this->status = PaymentInstrumentStatus::Disabled;
+        $this->setObjectStatus(PaymentInstrumentStatus::Disabled->value);
+        $this->setObjectActive(false);
+        $this->touchModified();
+    }
+
+    public function expire(): void
+    {
+        $this->status = PaymentInstrumentStatus::Expired;
+        $this->setObjectStatus(PaymentInstrumentStatus::Expired->value);
+        $this->setObjectActive(false);
+        $this->touchModified();
+    }
+
+    public function id(): Uuid
+    {
+        return $this->id;
+    }
+
+    public function wallet(): Wallet
+    {
+        return $this->wallet;
+    }
+
+    public function type(): PaymentInstrumentType
+    {
+        return $this->type;
+    }
+
+    public function provider(): string
+    {
+        return $this->provider;
+    }
+
+    public function providerReference(): string
+    {
+        return $this->providerReference;
+    }
+
+    public function displayLabel(): string
+    {
+        return $this->displayLabel;
+    }
+
+    public function status(): PaymentInstrumentStatus
+    {
+        return $this->status;
+    }
+
+    public function createdAt(): \DateTimeImmutable
+    {
+        return $this->getCreatedAt();
+    }
 }

@@ -153,23 +153,72 @@ class OutboxMessage
     {
         ksort($value);
         foreach ($value as &$item) {
-            if (is_array($item)) { $item = $this->normalize($item); }
+            if (is_array($item)) {
+                $item = $this->normalize($item);
+            }
         }
         unset($item);
 
         return $value;
     }
 
-    public function id(): Uuid { return $this->id; }
-    public function messageType(): string { return $this->messageType; }
-    public function deduplicationKey(): string { return $this->deduplicationKey; }
-    public function payload(): array { return $this->payload; }
-    public function payloadHash(): string { return $this->payloadHash; }
-    public function ledgerTransaction(): ?LedgerTransaction { return $this->ledgerTransaction; }
-    public function providerEvent(): ?ProviderEvent { return $this->providerEvent; }
-    public function status(): OutboxMessageStatus { return $this->status; }
-    public function attemptCount(): int { return $this->attemptCount; }
-    public function availableAt(): \DateTimeImmutable { return $this->availableAt; }
-    public function createdAt(): \DateTimeImmutable { return $this->createdAt; }
-    public function lastError(): ?string { return $this->lastError; }
+    public function id(): Uuid
+    {
+        return $this->id;
+    }
+
+    public function messageType(): string
+    {
+        return $this->messageType;
+    }
+
+    public function deduplicationKey(): string
+    {
+        return $this->deduplicationKey;
+    }
+
+    public function payload(): array
+    {
+        return $this->payload;
+    }
+
+    public function payloadHash(): string
+    {
+        return $this->payloadHash;
+    }
+
+    public function ledgerTransaction(): ?LedgerTransaction
+    {
+        return $this->ledgerTransaction;
+    }
+
+    public function providerEvent(): ?ProviderEvent
+    {
+        return $this->providerEvent;
+    }
+
+    public function status(): OutboxMessageStatus
+    {
+        return $this->status;
+    }
+
+    public function attemptCount(): int
+    {
+        return $this->attemptCount;
+    }
+
+    public function availableAt(): \DateTimeImmutable
+    {
+        return $this->availableAt;
+    }
+
+    public function createdAt(): \DateTimeImmutable
+    {
+        return $this->createdAt;
+    }
+
+    public function lastError(): ?string
+    {
+        return $this->lastError;
+    }
 }

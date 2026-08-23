@@ -34,9 +34,19 @@ final class PostgreSqlOutboxDispatcherAcknowledgmentTest extends KernelTestCase
         $this->enqueue('success');
         $handledStatus = null;
         $handler = new class($handledStatus) implements OutboxMessageHandlerInterface {
-            public function __construct(private mixed &$handledStatus) {}
-            public function supports(string $messageType): bool { return 'posting.dispatch.ack.test' === $messageType; }
-            public function handle(OutboxMessage $message): void { $this->handledStatus = $message->status(); }
+            public function __construct(private mixed &$handledStatus)
+            {
+            }
+
+            public function supports(string $messageType): bool
+            {
+                return 'posting.dispatch.ack.test' === $messageType;
+            }
+
+            public function handle(OutboxMessage $message): void
+            {
+                $this->handledStatus = $message->status();
+            }
         };
         $dispatcher = new OutboxDispatcher($service, [$handler]);
 
@@ -55,8 +65,15 @@ final class PostgreSqlOutboxDispatcherAcknowledgmentTest extends KernelTestCase
         $service = $this->outboxService();
         $this->enqueue('failure');
         $handler = new class implements OutboxMessageHandlerInterface {
-            public function supports(string $messageType): bool { return 'posting.dispatch.ack.test' === $messageType; }
-            public function handle(OutboxMessage $message): void { throw new \RuntimeException('transport unavailable'); }
+            public function supports(string $messageType): bool
+            {
+                return 'posting.dispatch.ack.test' === $messageType;
+            }
+
+            public function handle(OutboxMessage $message): void
+            {
+                throw new \RuntimeException('transport unavailable');
+            }
         };
         $dispatcher = new OutboxDispatcher($service, [$handler], maxAttempts: 8, baseDelaySeconds: 30, maxDelaySeconds: 3600);
 
@@ -80,8 +97,15 @@ final class PostgreSqlOutboxDispatcherAcknowledgmentTest extends KernelTestCase
         $service = $this->outboxService();
         $this->enqueue('exhaustion');
         $handler = new class implements OutboxMessageHandlerInterface {
-            public function supports(string $messageType): bool { return 'posting.dispatch.ack.test' === $messageType; }
-            public function handle(OutboxMessage $message): void { throw new \RuntimeException('persistent transport failure'); }
+            public function supports(string $messageType): bool
+            {
+                return 'posting.dispatch.ack.test' === $messageType;
+            }
+
+            public function handle(OutboxMessage $message): void
+            {
+                throw new \RuntimeException('persistent transport failure');
+            }
         };
         $dispatcher = new OutboxDispatcher($service, [$handler], maxAttempts: 8, baseDelaySeconds: 30, maxDelaySeconds: 3600);
         $expectedDelays = [30, 60, 120, 240, 480, 960, 1920];
@@ -125,8 +149,15 @@ final class PostgreSqlOutboxDispatcherAcknowledgmentTest extends KernelTestCase
         $service = $this->outboxService();
         $this->enqueue('backoff-cap');
         $handler = new class implements OutboxMessageHandlerInterface {
-            public function supports(string $messageType): bool { return 'posting.dispatch.ack.test' === $messageType; }
-            public function handle(OutboxMessage $message): void { throw new \RuntimeException('temporary failure'); }
+            public function supports(string $messageType): bool
+            {
+                return 'posting.dispatch.ack.test' === $messageType;
+            }
+
+            public function handle(OutboxMessage $message): void
+            {
+                throw new \RuntimeException('temporary failure');
+            }
         };
         $dispatcher = new OutboxDispatcher($service, [$handler], maxAttempts: 8, baseDelaySeconds: 30, maxDelaySeconds: 100);
         $expectedDelays = [30, 60, 100, 100];

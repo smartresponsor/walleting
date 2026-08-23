@@ -20,5 +20,8 @@ final readonly class OutboxDispatchReport
         }
     }
 
-    public function hasFailures(): bool { return $this->retryScheduled > 0 || $this->dead > 0; }
+    public function hasFailures(): bool
+    {
+        return $this->retryScheduled > 0 || $this->dead > 0;
+    }
 }

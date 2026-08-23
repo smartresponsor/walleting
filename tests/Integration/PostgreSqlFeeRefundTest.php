@@ -50,7 +50,7 @@ final class PostgreSqlFeeRefundTest extends KernelTestCase
         ]);
 
         self::assertSame([200, -170, -20, -10], array_map(static fn ($posting): int => $posting->amountMinor(), $refund->postings()->toArray()));
-        self::assertSame(200, (int) $this->entityManager->getConnection()->fetchOne("SELECT amount_minor FROM financial_operation_link WHERE result_transaction_id = ?", [$refund->id()->toRfc4122()]));
+        self::assertSame(200, (int) $this->entityManager->getConnection()->fetchOne('SELECT amount_minor FROM financial_operation_link WHERE result_transaction_id = ?', [$refund->id()->toRfc4122()]));
     }
 
     public function testCumulativeRefundCannotOverdrawOneOriginalFeeBearingLeg(): void

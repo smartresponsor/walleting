@@ -98,14 +98,49 @@ class LedgerTransaction
         $this->postedAt = new \DateTimeImmutable();
     }
 
-    public function id(): Uuid { return $this->id; }
-    public function type(): TransactionType { return $this->type; }
-    public function status(): TransactionStatus { return $this->status; }
-    public function idempotencyKey(): string { return $this->idempotencyKey; }
-    public function requestHash(): string { return $this->requestHash; }
-    public function metadata(): array { return $this->metadata; }
-    public function createdAt(): \DateTimeImmutable { return $this->createdAt; }
-    public function postedAt(): ?\DateTimeImmutable { return $this->postedAt; }
+    public function id(): Uuid
+    {
+        return $this->id;
+    }
+
+    public function type(): TransactionType
+    {
+        return $this->type;
+    }
+
+    public function status(): TransactionStatus
+    {
+        return $this->status;
+    }
+
+    public function idempotencyKey(): string
+    {
+        return $this->idempotencyKey;
+    }
+
+    public function requestHash(): string
+    {
+        return $this->requestHash;
+    }
+
+    public function metadata(): array
+    {
+        return $this->metadata;
+    }
+
+    public function createdAt(): \DateTimeImmutable
+    {
+        return $this->createdAt;
+    }
+
+    public function postedAt(): ?\DateTimeImmutable
+    {
+        return $this->postedAt;
+    }
+
     /** @return Collection<int, Posting> */
-    public function postings(): Collection { return $this->postings; }
+    public function postings(): Collection
+    {
+        return $this->postings;
+    }
 }

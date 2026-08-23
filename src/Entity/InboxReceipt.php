@@ -112,13 +112,48 @@ class InboxReceipt
         return $value;
     }
 
-    public function id(): Uuid { return $this->id; }
-    public function source(): string { return $this->source; }
-    public function messageId(): string { return $this->messageId; }
-    public function schemaVersion(): int { return $this->schemaVersion; }
-    public function eventType(): string { return $this->eventType; }
-    public function deduplicationKey(): string { return $this->deduplicationKey; }
-    public function payloadHash(): string { return $this->payloadHash; }
-    public function status(): InboxReceiptStatus { return $this->status; }
-    public function processedAt(): ?\DateTimeImmutable { return $this->processedAt; }
+    public function id(): Uuid
+    {
+        return $this->id;
+    }
+
+    public function source(): string
+    {
+        return $this->source;
+    }
+
+    public function messageId(): string
+    {
+        return $this->messageId;
+    }
+
+    public function schemaVersion(): int
+    {
+        return $this->schemaVersion;
+    }
+
+    public function eventType(): string
+    {
+        return $this->eventType;
+    }
+
+    public function deduplicationKey(): string
+    {
+        return $this->deduplicationKey;
+    }
+
+    public function payloadHash(): string
+    {
+        return $this->payloadHash;
+    }
+
+    public function status(): InboxReceiptStatus
+    {
+        return $this->status;
+    }
+
+    public function processedAt(): ?\DateTimeImmutable
+    {
+        return $this->processedAt;
+    }
 }

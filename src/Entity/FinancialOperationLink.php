@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Walleting\Entity;
 
-use App\Walleting\Enum\TransactionType;
 use App\Objecting\EntityInterface\ObjectRelationEntityInterface;
 use App\Objecting\EntityTrait\Embeddable\ObjectAuditEmbeddableTrait;
+use App\Walleting\Enum\TransactionType;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Uid\Uuid;
 
@@ -76,9 +76,28 @@ class FinancialOperationLink implements ObjectRelationEntityInterface
         $this->initializeObjectAudit();
     }
 
-    public function operationType(): TransactionType { return $this->operationType; }
-    public function sourceTransaction(): LedgerTransaction { return $this->sourceTransaction; }
-    public function resultTransaction(): LedgerTransaction { return $this->resultTransaction; }
-    public function reservation(): ?Reservation { return $this->reservation; }
-    public function amountMinor(): int { return $this->amountMinor; }
+    public function operationType(): TransactionType
+    {
+        return $this->operationType;
+    }
+
+    public function sourceTransaction(): LedgerTransaction
+    {
+        return $this->sourceTransaction;
+    }
+
+    public function resultTransaction(): LedgerTransaction
+    {
+        return $this->resultTransaction;
+    }
+
+    public function reservation(): ?Reservation
+    {
+        return $this->reservation;
+    }
+
+    public function amountMinor(): int
+    {
+        return $this->amountMinor;
+    }
 }

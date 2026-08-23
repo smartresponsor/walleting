@@ -33,8 +33,15 @@ final class PostgreSqlOutboxDeadLetterRequeueTest extends KernelTestCase
         $this->enqueue();
         $service = $this->outboxService();
         $handler = new class implements OutboxMessageHandlerInterface {
-            public function supports(string $messageType): bool { return 'posting.requeue.test' === $messageType; }
-            public function handle(OutboxMessage $message): void { throw new \RuntimeException('persistent failure'); }
+            public function supports(string $messageType): bool
+            {
+                return 'posting.requeue.test' === $messageType;
+            }
+
+            public function handle(OutboxMessage $message): void
+            {
+                throw new \RuntimeException('persistent failure');
+            }
         };
         $dispatcher = new OutboxDispatcher($service, [$handler], maxAttempts: 1, baseDelaySeconds: 30, maxDelaySeconds: 30);
         $dispatcher->dispatchBatchReport(1);
@@ -68,8 +75,15 @@ final class PostgreSqlOutboxDeadLetterRequeueTest extends KernelTestCase
         $this->enqueue();
         $service = $this->outboxService();
         $handler = new class implements OutboxMessageHandlerInterface {
-            public function supports(string $messageType): bool { return 'posting.requeue.test' === $messageType; }
-            public function handle(OutboxMessage $message): void { throw new \RuntimeException('still broken'); }
+            public function supports(string $messageType): bool
+            {
+                return 'posting.requeue.test' === $messageType;
+            }
+
+            public function handle(OutboxMessage $message): void
+            {
+                throw new \RuntimeException('still broken');
+            }
         };
         $dispatcher = new OutboxDispatcher($service, [$handler], maxAttempts: 1, baseDelaySeconds: 30, maxDelaySeconds: 30);
         $dispatcher->dispatchBatchReport(1);
