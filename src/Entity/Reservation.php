@@ -57,6 +57,9 @@ class Reservation
         if ($account->wallet() !== $wallet) {
             throw new \InvalidArgumentException('Reservation account must belong to the wallet.');
         }
+        if ($account->currency() !== $currency) {
+            throw new \InvalidArgumentException('Reservation currency must match the account currency.');
+        }
 
         $this->id = $id ?? Uuid::v7();
         $this->wallet = $wallet;

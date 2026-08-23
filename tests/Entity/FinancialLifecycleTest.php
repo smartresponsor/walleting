@@ -41,6 +41,17 @@ final class FinancialLifecycleTest extends TestCase
         $reservation->release();
     }
 
+    public function testReservationCurrencyMustMatchAccountCurrency(): void
+    {
+        $wallet = new Wallet('vendor', 'reservation-currency');
+        $account = new Account($wallet, 'reserve', 'EUR', AccountCategory::Reserve);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Reservation currency must match the account currency.');
+
+        new Reservation($wallet, $account, new LedgerTransaction(TransactionType::Reserve, 'reserve-currency'), 500, 'USD', 'reservation-currency');
+    }
+
     public function testFundingMustProcessBeforeSuccess(): void
     {
         $wallet = new Wallet('vendor', '1');
