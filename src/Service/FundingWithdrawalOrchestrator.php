@@ -10,6 +10,7 @@ use App\Walleting\Entity\ProviderEvent;
 use App\Walleting\Entity\Wallet;
 use App\Walleting\Entity\Withdrawal;
 use App\Walleting\Enum\FundingStatus;
+use App\Walleting\Enum\PaymentInstrumentStatus;
 use App\Walleting\Enum\ProviderEventStatus;
 use App\Walleting\Enum\WithdrawalStatus;
 use App\Walleting\Ledger\PostingInstruction;
@@ -67,6 +68,9 @@ final readonly class FundingWithdrawalOrchestrator
     {
         return $this->entityManager->wrapInTransaction(function () use ($funding): ProviderOperationRequest {
             $this->entityManager->lock($funding, LockMode::PESSIMISTIC_WRITE);
+            if (PaymentInstrumentStatus::Active !== $funding->paymentInstrument()->status()) {
+                throw new \DomainException('Funding payment instrument must remain active before provider processing begins.');
+            }
             if (FundingStatus::Processing === $funding->status()) {
                 return $this->requestForFunding($funding);
             }
@@ -81,6 +85,9 @@ final readonly class FundingWithdrawalOrchestrator
     {
         return $this->entityManager->wrapInTransaction(function () use ($withdrawal): ProviderOperationRequest {
             $this->entityManager->lock($withdrawal, LockMode::PESSIMISTIC_WRITE);
+            if (PaymentInstrumentStatus::Active !== $withdrawal->paymentInstrument()->status()) {
+                throw new \DomainException('Withdrawal payment instrument must remain active before provider processing begins.');
+            }
             if (WithdrawalStatus::Processing === $withdrawal->status()) {
                 return $this->requestForWithdrawal($withdrawal);
             }

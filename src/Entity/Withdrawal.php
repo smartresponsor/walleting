@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Walleting\Entity;
 
+use App\Walleting\Enum\PaymentInstrumentStatus;
 use App\Walleting\Enum\WithdrawalStatus;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Uid\Uuid;
@@ -57,6 +58,9 @@ class Withdrawal
         }
         if ($paymentInstrument->wallet() !== $wallet) {
             throw new \InvalidArgumentException('Withdrawal instrument must belong to the wallet.');
+        }
+        if (PaymentInstrumentStatus::Active !== $paymentInstrument->status()) {
+            throw new \InvalidArgumentException('Withdrawal instrument must be active.');
         }
 
         $this->id = $id ?? Uuid::v7();

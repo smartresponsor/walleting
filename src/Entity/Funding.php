@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Walleting\Entity;
 
 use App\Walleting\Enum\FundingStatus;
+use App\Walleting\Enum\PaymentInstrumentStatus;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Uid\Uuid;
 
@@ -57,6 +58,9 @@ class Funding
         }
         if ($paymentInstrument->wallet() !== $wallet) {
             throw new \InvalidArgumentException('Funding instrument must belong to the wallet.');
+        }
+        if (PaymentInstrumentStatus::Active !== $paymentInstrument->status()) {
+            throw new \InvalidArgumentException('Funding instrument must be active.');
         }
 
         $this->id = $id ?? Uuid::v7();

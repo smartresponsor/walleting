@@ -65,6 +65,21 @@ final class FundingWithdrawalOrchestratorTest extends TestCase
         $orchestrator->failFunding($event, $funding);
     }
 
+    public function testBeginFundingRejectsInstrumentDisabledAfterRequestCreation(): void
+    {
+        $entityManager = $this->entityManager();
+        $orchestrator = $this->orchestrator($entityManager);
+        $wallet = new Wallet('vendor', 'funding-disabled-before-begin');
+        $instrument = new PaymentInstrument($wallet, PaymentInstrumentType::Card, 'stripe', 'pm_disabled_before_begin', 'Card');
+        $funding = new Funding($wallet, $instrument, 1200, 'USD', 'funding-disabled-before-begin');
+        $instrument->disable();
+
+        $this->expectException(\DomainException::class);
+        $this->expectExceptionMessage('Funding payment instrument must remain active before provider processing begins.');
+
+        $orchestrator->beginFunding($funding);
+    }
+
     public function testBeginWithdrawalProducesProviderNeutralRequestAndMovesToProcessing(): void
     {
         $entityManager = $this->entityManager();
@@ -80,6 +95,21 @@ final class FundingWithdrawalOrchestratorTest extends TestCase
         self::assertSame('ach', $request->provider);
         self::assertSame('bank_1', $request->providerReference);
         self::assertSame(900, $request->amountMinor);
+    }
+
+    public function testBeginWithdrawalRejectsInstrumentExpiredAfterRequestCreation(): void
+    {
+        $entityManager = $this->entityManager();
+        $orchestrator = $this->orchestrator($entityManager);
+        $wallet = new Wallet('vendor', 'withdrawal-expired-before-begin');
+        $instrument = new PaymentInstrument($wallet, PaymentInstrumentType::BankAccount, 'ach', 'bank_expired_before_begin', 'Bank');
+        $withdrawal = new Withdrawal($wallet, $instrument, 900, 'USD', 'withdrawal-expired-before-begin');
+        $instrument->expire();
+
+        $this->expectException(\DomainException::class);
+        $this->expectExceptionMessage('Withdrawal payment instrument must remain active before provider processing begins.');
+
+        $orchestrator->beginWithdrawal($withdrawal);
     }
 
     private function orchestrator(EntityManagerInterface $entityManager): FundingWithdrawalOrchestrator

@@ -76,6 +76,18 @@ final class FinancialLifecycleTest extends TestCase
         $funding->succeed(new LedgerTransaction(TransactionType::Credit, 'credit-direct-success'));
     }
 
+    public function testFundingRequiresActivePaymentInstrument(): void
+    {
+        $wallet = new Wallet('vendor', 'funding-disabled-instrument');
+        $instrument = new PaymentInstrument($wallet, PaymentInstrumentType::Card, 'stripe', 'pm_disabled', 'Disabled card');
+        $instrument->disable();
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Funding instrument must be active.');
+
+        new Funding($wallet, $instrument, 1000, 'USD', 'funding-disabled-instrument');
+    }
+
     public function testWithdrawalMustProcessBeforeSuccess(): void
     {
         $wallet = new Wallet('vendor', '1');
@@ -86,5 +98,17 @@ final class FinancialLifecycleTest extends TestCase
         $withdrawal->start();
         $withdrawal->succeed(new LedgerTransaction(TransactionType::Debit, 'debit-withdrawal-1'));
         self::assertSame(WithdrawalStatus::Succeeded, $withdrawal->status());
+    }
+
+    public function testWithdrawalRequiresActivePaymentInstrument(): void
+    {
+        $wallet = new Wallet('vendor', 'withdrawal-expired-instrument');
+        $instrument = new PaymentInstrument($wallet, PaymentInstrumentType::BankAccount, 'ach', 'ba_expired', 'Expired bank');
+        $instrument->expire();
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Withdrawal instrument must be active.');
+
+        new Withdrawal($wallet, $instrument, 700, 'USD', 'withdrawal-expired-instrument');
     }
 }
