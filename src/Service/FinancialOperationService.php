@@ -11,7 +11,9 @@ use App\Walleting\Entity\LedgerTransaction;
 use App\Walleting\Entity\Reservation;
 use App\Walleting\Entity\Wallet;
 use App\Walleting\Entity\Withdrawal;
+use App\Walleting\Enum\FundingStatus;
 use App\Walleting\Enum\TransactionType;
+use App\Walleting\Enum\WithdrawalStatus;
 use App\Walleting\Ledger\FeeAllocation;
 use App\Walleting\Ledger\PostingInstruction;
 use Doctrine\DBAL\LockMode;
@@ -152,13 +154,23 @@ final readonly class FinancialOperationService
     /** @param non-empty-list<PostingInstruction> $instructions */
     public function reverseFunding(Funding $funding, string $idempotencyKey, array $instructions): LedgerTransaction
     {
-        $original = $funding->transaction();
-        if (!$original instanceof LedgerTransaction) {
-            throw new \LogicException('Funding must have a successful ledger transaction before reversal.');
-        }
-        $this->assertExactInverse($original, $instructions);
+        return $this->entityManager->wrapInTransaction(function () use ($funding, $idempotencyKey, $instructions): LedgerTransaction {
+            $this->entityManager->lock($funding, LockMode::PESSIMISTIC_WRITE);
+            $original = $funding->transaction();
+            if (!$original instanceof LedgerTransaction) {
+                throw new \LogicException('Funding must have a successful ledger transaction before reversal.');
+            }
+            $this->assertExactInverse($original, $instructions);
 
-        return $this->entityManager->wrapInTransaction(function () use ($funding, $original, $idempotencyKey, $instructions): LedgerTransaction {
+            if (FundingStatus::Reversed === $funding->status()) {
+                $existing = $funding->reversalTransaction();
+                if ($existing instanceof LedgerTransaction && $existing->idempotencyKey() === trim($idempotencyKey)) {
+                    return $existing;
+                }
+
+                throw new \DomainException('Funding reversal already exists with a different idempotency key.');
+            }
+
             $transaction = $this->postingService->postManaged(TransactionType::Reverse, $idempotencyKey, $instructions, ['operation' => 'funding_reversal', 'funding_key' => $funding->idempotencyKey(), 'original_transaction_id' => $original->id()->toRfc4122()]);
             $this->entityManager->persist(new FinancialOperationLink(TransactionType::Reverse, $original, $transaction, $this->transactionAmount($original)));
             $funding->reverse($transaction);
@@ -172,13 +184,23 @@ final readonly class FinancialOperationService
     /** @param non-empty-list<PostingInstruction> $instructions */
     public function reverseWithdrawal(Withdrawal $withdrawal, string $idempotencyKey, array $instructions): LedgerTransaction
     {
-        $original = $withdrawal->transaction();
-        if (!$original instanceof LedgerTransaction) {
-            throw new \LogicException('Withdrawal must have a successful ledger transaction before reversal.');
-        }
-        $this->assertExactInverse($original, $instructions);
+        return $this->entityManager->wrapInTransaction(function () use ($withdrawal, $idempotencyKey, $instructions): LedgerTransaction {
+            $this->entityManager->lock($withdrawal, LockMode::PESSIMISTIC_WRITE);
+            $original = $withdrawal->transaction();
+            if (!$original instanceof LedgerTransaction) {
+                throw new \LogicException('Withdrawal must have a successful ledger transaction before reversal.');
+            }
+            $this->assertExactInverse($original, $instructions);
 
-        return $this->entityManager->wrapInTransaction(function () use ($withdrawal, $original, $idempotencyKey, $instructions): LedgerTransaction {
+            if (WithdrawalStatus::Reversed === $withdrawal->status()) {
+                $existing = $withdrawal->reversalTransaction();
+                if ($existing instanceof LedgerTransaction && $existing->idempotencyKey() === trim($idempotencyKey)) {
+                    return $existing;
+                }
+
+                throw new \DomainException('Withdrawal reversal already exists with a different idempotency key.');
+            }
+
             $transaction = $this->postingService->postManaged(TransactionType::Reverse, $idempotencyKey, $instructions, ['operation' => 'withdrawal_reversal', 'withdrawal_key' => $withdrawal->idempotencyKey(), 'original_transaction_id' => $original->id()->toRfc4122()]);
             $this->entityManager->persist(new FinancialOperationLink(TransactionType::Reverse, $original, $transaction, $this->transactionAmount($original)));
             $withdrawal->reverse($transaction);

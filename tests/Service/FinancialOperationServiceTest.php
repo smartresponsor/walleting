@@ -134,6 +134,108 @@ final class FinancialOperationServiceTest extends TestCase
         self::assertSame($withdrawalReversal, $withdrawal->reversalTransaction());
     }
 
+    public function testFundingReversalReplayReturnsExistingTransactionForSameKey(): void
+    {
+        $entityManager = $this->entityManager();
+        $service = new FinancialOperationService($entityManager, $this->postingService($entityManager));
+        $wallet = new Wallet('vendor', 'vendor-funding-reversal-replay');
+        $cash = new Account($wallet, 'cash', 'USD', AccountCategory::Asset);
+        $clearing = new Account($wallet, 'clearing', 'USD', AccountCategory::Clearing);
+        $instrument = new PaymentInstrument($wallet, PaymentInstrumentType::Card, 'provider', 'instrument-funding-replay', 'Card');
+        $funding = new Funding($wallet, $instrument, 700, 'USD', 'funding-replay');
+        $funding->start();
+        $service->succeedFunding($funding, 'funding-replay-post', [
+            new PostingInstruction($cash, 700),
+            new PostingInstruction($clearing, -700),
+        ]);
+        $instructions = [
+            new PostingInstruction($cash, -700),
+            new PostingInstruction($clearing, 700),
+        ];
+
+        $first = $service->reverseFunding($funding, 'funding-replay-reverse', $instructions);
+        $replayed = $service->reverseFunding($funding, 'funding-replay-reverse', $instructions);
+
+        self::assertSame($first, $replayed);
+        self::assertSame(FundingStatus::Reversed, $funding->status());
+    }
+
+    public function testFundingReversalReplayRejectsDifferentKey(): void
+    {
+        $entityManager = $this->entityManager();
+        $service = new FinancialOperationService($entityManager, $this->postingService($entityManager));
+        $wallet = new Wallet('vendor', 'vendor-funding-reversal-conflict');
+        $cash = new Account($wallet, 'cash', 'USD', AccountCategory::Asset);
+        $clearing = new Account($wallet, 'clearing', 'USD', AccountCategory::Clearing);
+        $instrument = new PaymentInstrument($wallet, PaymentInstrumentType::Card, 'provider', 'instrument-funding-conflict', 'Card');
+        $funding = new Funding($wallet, $instrument, 700, 'USD', 'funding-conflict');
+        $funding->start();
+        $service->succeedFunding($funding, 'funding-conflict-post', [
+            new PostingInstruction($cash, 700),
+            new PostingInstruction($clearing, -700),
+        ]);
+        $instructions = [
+            new PostingInstruction($cash, -700),
+            new PostingInstruction($clearing, 700),
+        ];
+        $service->reverseFunding($funding, 'funding-conflict-reverse-1', $instructions);
+
+        $this->expectException(\DomainException::class);
+        $this->expectExceptionMessage('Funding reversal already exists with a different idempotency key.');
+        $service->reverseFunding($funding, 'funding-conflict-reverse-2', $instructions);
+    }
+
+    public function testWithdrawalReversalReplayReturnsExistingTransactionForSameKey(): void
+    {
+        $entityManager = $this->entityManager();
+        $service = new FinancialOperationService($entityManager, $this->postingService($entityManager));
+        $wallet = new Wallet('vendor', 'vendor-withdrawal-reversal-replay');
+        $cash = new Account($wallet, 'cash', 'USD', AccountCategory::Asset);
+        $clearing = new Account($wallet, 'clearing', 'USD', AccountCategory::Clearing);
+        $instrument = new PaymentInstrument($wallet, PaymentInstrumentType::BankAccount, 'provider', 'instrument-withdrawal-replay', 'Bank');
+        $withdrawal = new Withdrawal($wallet, $instrument, 400, 'USD', 'withdrawal-replay');
+        $withdrawal->start();
+        $service->succeedWithdrawal($withdrawal, 'withdrawal-replay-post', [
+            new PostingInstruction($cash, -400),
+            new PostingInstruction($clearing, 400),
+        ]);
+        $instructions = [
+            new PostingInstruction($cash, 400),
+            new PostingInstruction($clearing, -400),
+        ];
+
+        $first = $service->reverseWithdrawal($withdrawal, 'withdrawal-replay-reverse', $instructions);
+        $replayed = $service->reverseWithdrawal($withdrawal, 'withdrawal-replay-reverse', $instructions);
+
+        self::assertSame($first, $replayed);
+        self::assertSame(WithdrawalStatus::Reversed, $withdrawal->status());
+    }
+
+    public function testWithdrawalReversalReplayRejectsDifferentKey(): void
+    {
+        $entityManager = $this->entityManager();
+        $service = new FinancialOperationService($entityManager, $this->postingService($entityManager));
+        $wallet = new Wallet('vendor', 'vendor-withdrawal-reversal-conflict');
+        $cash = new Account($wallet, 'cash', 'USD', AccountCategory::Asset);
+        $clearing = new Account($wallet, 'clearing', 'USD', AccountCategory::Clearing);
+        $instrument = new PaymentInstrument($wallet, PaymentInstrumentType::BankAccount, 'provider', 'instrument-withdrawal-conflict', 'Bank');
+        $withdrawal = new Withdrawal($wallet, $instrument, 400, 'USD', 'withdrawal-conflict');
+        $withdrawal->start();
+        $service->succeedWithdrawal($withdrawal, 'withdrawal-conflict-post', [
+            new PostingInstruction($cash, -400),
+            new PostingInstruction($clearing, 400),
+        ]);
+        $instructions = [
+            new PostingInstruction($cash, 400),
+            new PostingInstruction($clearing, -400),
+        ];
+        $service->reverseWithdrawal($withdrawal, 'withdrawal-conflict-reverse-1', $instructions);
+
+        $this->expectException(\DomainException::class);
+        $this->expectExceptionMessage('Withdrawal reversal already exists with a different idempotency key.');
+        $service->reverseWithdrawal($withdrawal, 'withdrawal-conflict-reverse-2', $instructions);
+    }
+
     public function testRefundRejectsInverseSourceBeforePosting(): void
     {
         $entityManager = $this->entityManager();
