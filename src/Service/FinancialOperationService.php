@@ -426,6 +426,16 @@ final readonly class FinancialOperationService
     {
         return $this->entityManager->wrapInTransaction(function () use ($type, $original, $amountMinor, $idempotencyKey, $instructions): LedgerTransaction {
             $this->entityManager->lock($original, LockMode::PESSIMISTIC_WRITE);
+            $transaction = $this->postingService->postManaged($type, $idempotencyKey, $instructions, ['original_transaction_id' => $original->id()->toRfc4122(), 'amount_minor' => $amountMinor]);
+            $existingLink = $this->entityManager->getRepository(FinancialOperationLink::class)->findOneBy(['resultTransaction' => $transaction]);
+            if ($existingLink instanceof FinancialOperationLink) {
+                if ($existingLink->sourceTransaction() !== $original || $existingLink->operationType() !== $type || $existingLink->amountMinor() !== $amountMinor) {
+                    throw new \DomainException('Idempotent financial operation replay conflicts with the existing operation link.');
+                }
+
+                return $transaction;
+            }
+
             $sourceAmount = $this->transactionAmount($original);
             $connection = $this->entityManager->getConnection();
             $refundedMinor = (int) $connection->fetchOne("SELECT COALESCE(SUM(amount_minor), 0) FROM financial_operation_link WHERE source_transaction_id = ? AND operation_type = 'refund'", [$original->id()->toRfc4122()]);
@@ -441,7 +451,6 @@ final readonly class FinancialOperationService
                 throw new \DomainException('Reverse requires the full untouched source transaction.');
             }
 
-            $transaction = $this->postingService->postManaged($type, $idempotencyKey, $instructions, ['original_transaction_id' => $original->id()->toRfc4122(), 'amount_minor' => $amountMinor]);
             $this->entityManager->persist(new FinancialOperationLink($type, $original, $transaction, $amountMinor));
             $this->emitLinkedTransaction($type, $original, $transaction);
             $this->entityManager->flush();

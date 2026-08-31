@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Walleting\Tests\Service;
 
 use App\Walleting\Entity\Account;
+use App\Walleting\Entity\FinancialOperationLink;
 use App\Walleting\Entity\Funding;
+use App\Walleting\Entity\LedgerTransaction;
 use App\Walleting\Entity\PaymentInstrument;
 use App\Walleting\Entity\Wallet;
 use App\Walleting\Entity\Withdrawal;
@@ -236,11 +238,79 @@ final class FinancialOperationServiceTest extends TestCase
         $service->reverseWithdrawal($withdrawal, 'withdrawal-conflict-reverse-2', $instructions);
     }
 
+    public function testFullRefundReplayReturnsExistingLinkedTransaction(): void
+    {
+        $entityManager = $this->statefulEntityManager();
+        $service = new FinancialOperationService($entityManager, $this->postingService($entityManager));
+        $wallet = new Wallet('vendor', 'refund-replay-full');
+        $cash = new Account($wallet, 'cash', 'USD', AccountCategory::Asset);
+        $clearing = new Account($wallet, 'clearing', 'USD', AccountCategory::Clearing);
+        $original = new LedgerTransaction(TransactionType::Credit, 'refund-replay-source-full');
+        $original->addPosting($cash, 500);
+        $original->addPosting($clearing, -500);
+        $original->post();
+        $instructions = [
+            new PostingInstruction($cash, -500),
+            new PostingInstruction($clearing, 500),
+        ];
+
+        $first = $service->refund($original, 'refund-replay-full', $instructions);
+        $replayed = $service->refund($original, 'refund-replay-full', $instructions);
+
+        self::assertSame($first, $replayed);
+    }
+
+    public function testPartialRefundReplayReturnsExistingLinkedTransaction(): void
+    {
+        $entityManager = $this->statefulEntityManager();
+        $service = new FinancialOperationService($entityManager, $this->postingService($entityManager));
+        $wallet = new Wallet('vendor', 'refund-replay-partial');
+        $cash = new Account($wallet, 'cash', 'USD', AccountCategory::Asset);
+        $clearing = new Account($wallet, 'clearing', 'USD', AccountCategory::Clearing);
+        $original = new LedgerTransaction(TransactionType::Credit, 'refund-replay-source-partial');
+        $original->addPosting($cash, 500);
+        $original->addPosting($clearing, -500);
+        $original->post();
+        $instructions = [
+            new PostingInstruction($cash, -200),
+            new PostingInstruction($clearing, 200),
+        ];
+
+        $first = $service->refundPartial($original, 200, 'refund-replay-partial', $instructions);
+        $replayed = $service->refundPartial($original, 200, 'refund-replay-partial', $instructions);
+
+        self::assertSame($first, $replayed);
+    }
+
+    public function testRefundReplayKeyCannotChangeRequestContent(): void
+    {
+        $entityManager = $this->statefulEntityManager();
+        $service = new FinancialOperationService($entityManager, $this->postingService($entityManager));
+        $wallet = new Wallet('vendor', 'refund-replay-conflict');
+        $cash = new Account($wallet, 'cash', 'USD', AccountCategory::Asset);
+        $clearing = new Account($wallet, 'clearing', 'USD', AccountCategory::Clearing);
+        $original = new LedgerTransaction(TransactionType::Credit, 'refund-replay-source-conflict');
+        $original->addPosting($cash, 500);
+        $original->addPosting($clearing, -500);
+        $original->post();
+        $service->refundPartial($original, 200, 'refund-replay-conflict', [
+            new PostingInstruction($cash, -200),
+            new PostingInstruction($clearing, 200),
+        ]);
+
+        $this->expectException(\DomainException::class);
+        $this->expectExceptionMessage('Idempotency key is already bound to a different financial request.');
+        $service->refundPartial($original, 300, 'refund-replay-conflict', [
+            new PostingInstruction($cash, -300),
+            new PostingInstruction($clearing, 300),
+        ]);
+    }
+
     public function testRefundRejectsInverseSourceBeforePosting(): void
     {
         $entityManager = $this->entityManager();
         $service = new FinancialOperationService($entityManager, $this->postingService($entityManager));
-        $source = new \App\Walleting\Entity\LedgerTransaction(TransactionType::Reverse, 'inverse-source-service');
+        $source = new LedgerTransaction(TransactionType::Reverse, 'inverse-source-service');
 
         $this->expectException(\DomainException::class);
         $this->expectExceptionMessage('Refund and reverse cannot originate from an inverse transaction.');
@@ -265,6 +335,55 @@ final class FinancialOperationServiceTest extends TestCase
             new PostingInstruction($available, -500),
             new PostingInstruction($reserved, 500),
         ]);
+    }
+
+    private function statefulEntityManager(): EntityManagerInterface&MockObject
+    {
+        $transactions = [];
+        $links = [];
+        $connection = $this->createStub(Connection::class);
+
+        $transactionRepository = $this->createStub(EntityRepository::class);
+        $transactionRepository->method('findOneBy')->willReturnCallback(static function (array $criteria) use (&$transactions): ?LedgerTransaction {
+            foreach ($transactions as $transaction) {
+                if (($criteria['idempotencyKey'] ?? null) === $transaction->idempotencyKey()) {
+                    return $transaction;
+                }
+            }
+
+            return null;
+        });
+
+        $linkRepository = $this->createStub(EntityRepository::class);
+        $linkRepository->method('findOneBy')->willReturnCallback(static function (array $criteria) use (&$links): ?FinancialOperationLink {
+            foreach ($links as $link) {
+                if (($criteria['resultTransaction'] ?? null) === $link->resultTransaction()) {
+                    return $link;
+                }
+            }
+
+            return null;
+        });
+
+        $fallbackRepository = $this->repository();
+        $entityManager = $this->createMock(EntityManagerInterface::class);
+        $entityManager->method('getConnection')->willReturn($connection);
+        $entityManager->method('getRepository')->willReturnCallback(static fn (string $class): EntityRepository => match ($class) {
+            LedgerTransaction::class => $transactionRepository,
+            FinancialOperationLink::class => $linkRepository,
+            default => $fallbackRepository,
+        });
+        $entityManager->method('persist')->willReturnCallback(static function (object $entity) use (&$transactions, &$links): void {
+            if ($entity instanceof LedgerTransaction) {
+                $transactions[] = $entity;
+            }
+            if ($entity instanceof FinancialOperationLink) {
+                $links[] = $entity;
+            }
+        });
+        $entityManager->method('wrapInTransaction')->willReturnCallback(static fn (callable $callback): mixed => $callback());
+
+        return $entityManager;
     }
 
     private function postingService(EntityManagerInterface $entityManager): PostingService
