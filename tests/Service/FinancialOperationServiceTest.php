@@ -9,6 +9,7 @@ use App\Walleting\Entity\FinancialOperationLink;
 use App\Walleting\Entity\Funding;
 use App\Walleting\Entity\LedgerTransaction;
 use App\Walleting\Entity\PaymentInstrument;
+use App\Walleting\Entity\Reservation;
 use App\Walleting\Entity\Wallet;
 use App\Walleting\Entity\Withdrawal;
 use App\Walleting\Enum\AccountCategory;
@@ -70,6 +71,70 @@ final class FinancialOperationServiceTest extends TestCase
         $service->capture($reservation, 'capture-mismatch-1', [
             new PostingInstruction($reserved, -400),
             new PostingInstruction($available, 400),
+        ]);
+    }
+
+    public function testCaptureReplayReturnsExistingSettlementTransaction(): void
+    {
+        $entityManager = $this->statefulEntityManager();
+        $service = new FinancialOperationService($entityManager, $this->postingService($entityManager));
+        $wallet = new Wallet('vendor', 'capture-replay');
+        $available = new Account($wallet, 'available', 'USD', AccountCategory::Asset);
+        $reserved = new Account($wallet, 'reserved', 'USD', AccountCategory::Reserve);
+        $reserveTransaction = new LedgerTransaction(TransactionType::Reserve, 'capture-replay-reserve');
+        $reservation = new Reservation($wallet, $reserved, $reserveTransaction, 500, 'USD', 'capture-replay-reservation');
+        $instructions = [
+            new PostingInstruction($reserved, -500),
+            new PostingInstruction($available, 500),
+        ];
+
+        $first = $service->capture($reservation, 'capture-replay-settlement', $instructions);
+        $replayed = $service->capture($reservation, 'capture-replay-settlement', $instructions);
+
+        self::assertSame($first, $replayed);
+        self::assertSame(ReservationStatus::Captured, $reservation->status());
+    }
+
+    public function testReleaseReplayReturnsExistingSettlementTransaction(): void
+    {
+        $entityManager = $this->statefulEntityManager();
+        $service = new FinancialOperationService($entityManager, $this->postingService($entityManager));
+        $wallet = new Wallet('vendor', 'release-replay');
+        $available = new Account($wallet, 'available', 'USD', AccountCategory::Asset);
+        $reserved = new Account($wallet, 'reserved', 'USD', AccountCategory::Reserve);
+        $reserveTransaction = new LedgerTransaction(TransactionType::Reserve, 'release-replay-reserve');
+        $reservation = new Reservation($wallet, $reserved, $reserveTransaction, 500, 'USD', 'release-replay-reservation');
+        $instructions = [
+            new PostingInstruction($reserved, -500),
+            new PostingInstruction($available, 500),
+        ];
+
+        $first = $service->release($reservation, 'release-replay-settlement', $instructions);
+        $replayed = $service->release($reservation, 'release-replay-settlement', $instructions);
+
+        self::assertSame($first, $replayed);
+        self::assertSame(ReservationStatus::Released, $reservation->status());
+    }
+
+    public function testReservationSettlementReplayKeyCannotChangeRequestContent(): void
+    {
+        $entityManager = $this->statefulEntityManager();
+        $service = new FinancialOperationService($entityManager, $this->postingService($entityManager));
+        $wallet = new Wallet('vendor', 'settlement-replay-conflict');
+        $available = new Account($wallet, 'available', 'USD', AccountCategory::Asset);
+        $reserved = new Account($wallet, 'reserved', 'USD', AccountCategory::Reserve);
+        $reserveTransaction = new LedgerTransaction(TransactionType::Reserve, 'settlement-replay-conflict-reserve');
+        $reservation = new Reservation($wallet, $reserved, $reserveTransaction, 500, 'USD', 'settlement-replay-conflict-reservation');
+        $service->capturePartial($reservation, 200, 'settlement-replay-conflict-key', [
+            new PostingInstruction($reserved, -200),
+            new PostingInstruction($available, 200),
+        ]);
+
+        $this->expectException(\DomainException::class);
+        $this->expectExceptionMessage('Idempotency key is already bound to a different financial request.');
+        $service->capturePartial($reservation, 300, 'settlement-replay-conflict-key', [
+            new PostingInstruction($reserved, -300),
+            new PostingInstruction($available, 300),
         ]);
     }
 

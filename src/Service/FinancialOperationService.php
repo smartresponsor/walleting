@@ -217,12 +217,21 @@ final readonly class FinancialOperationService
 
         return $this->entityManager->wrapInTransaction(function () use ($reservation, $amountMinor, $idempotencyKey, $instructions, $type, $operation, $metadata): LedgerTransaction {
             $this->entityManager->lock($reservation, LockMode::PESSIMISTIC_WRITE);
+            $transaction = $this->postingService->postManaged($type, $idempotencyKey, $instructions, array_replace_recursive(['operation' => $operation, 'reservation_key' => $reservation->idempotencyKey(), 'amount_minor' => $amountMinor], $metadata));
+            $existingLink = $this->entityManager->getRepository(FinancialOperationLink::class)->findOneBy(['resultTransaction' => $transaction]);
+            if ($existingLink instanceof FinancialOperationLink) {
+                if ($existingLink->reservation() !== $reservation || $existingLink->sourceTransaction() !== $reservation->reserveTransaction() || $existingLink->operationType() !== $type || $existingLink->amountMinor() !== $amountMinor) {
+                    throw new \DomainException('Idempotent reservation settlement replay conflicts with the existing operation link.');
+                }
+
+                return $transaction;
+            }
+
             [$capturedMinor, $releasedMinor] = $this->reservationSettlementTotals($reservation);
             if ($capturedMinor + $releasedMinor + $amountMinor > $reservation->amountMinor()) {
                 throw new \DomainException('Reservation settlement exceeds the remaining reserved amount.');
             }
 
-            $transaction = $this->postingService->postManaged($type, $idempotencyKey, $instructions, array_replace_recursive(['operation' => $operation, 'reservation_key' => $reservation->idempotencyKey(), 'amount_minor' => $amountMinor], $metadata));
             $this->entityManager->persist(new FinancialOperationLink($type, $reservation->reserveTransaction(), $transaction, $amountMinor, $reservation));
             'capture' === $operation ? $capturedMinor += $amountMinor : $releasedMinor += $amountMinor;
             $reservation->recordSettlementProgress($capturedMinor, $releasedMinor);
