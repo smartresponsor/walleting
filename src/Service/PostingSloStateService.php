@@ -34,7 +34,7 @@ final readonly class PostingSloStateService
         return $this->connection->transactional(function (Connection $connection) use ($scope, $assessment, $breachEvaluations, $recoveryEvaluations): PostingSloStateTransition {
             $row = $connection->fetchAssociative('SELECT scope, status, pending_status, pending_count, revision, reasons FROM posting_slo_state WHERE scope = ? FOR UPDATE', [$scope]);
             if (false === $row) {
-                $now = (new \DateTimeImmutable())->format('Y-m-d H:i:s');
+                $now = (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->format('Y-m-d H:i:s');
                 $connection->executeStatement(
                     "INSERT INTO posting_slo_state (scope, status, pending_status, pending_count, reasons, evaluated_at, changed_at) VALUES (?, 'healthy', NULL, 0, '[]', ?, ?) ON CONFLICT (scope) DO NOTHING",
                     [$scope, $now, $now],
@@ -74,7 +74,7 @@ final readonly class PostingSloStateService
                 }
             }
 
-            $now = (new \DateTimeImmutable())->format('Y-m-d H:i:s');
+            $now = (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->format('Y-m-d H:i:s');
             $values = [
                 'status' => $current->value,
                 'pending_status' => $pending?->value,

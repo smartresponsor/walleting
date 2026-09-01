@@ -63,7 +63,7 @@ class PaymentInstrument implements ObjectEntityInterface
         $this->providerReference = $providerReference;
         $this->displayLabel = $displayLabel;
         $this->status = PaymentInstrumentStatus::Active;
-        $now = new \DateTimeImmutable();
+        $now = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
         $this->initializeObjectIdentity($this->id->toRfc4122(), 'payment-instrument:'.$this->id->toRfc4122());
         $this->initializeObjectTitle($displayLabel);
         $this->initializeObjectAudit($now);

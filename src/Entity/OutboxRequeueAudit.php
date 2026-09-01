@@ -49,6 +49,6 @@ final class OutboxRequeueAudit
         $this->operator = $operator;
         $this->reason = $reason;
         $this->previousError = null === $previousError ? null : trim($previousError);
-        $this->createdAt = new \DateTimeImmutable();
+        $this->createdAt = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
     }
 }

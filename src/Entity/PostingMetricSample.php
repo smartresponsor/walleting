@@ -65,6 +65,6 @@ final class PostingMetricSample
         $this->attemptDurationMilliseconds = $attemptDurationMilliseconds;
         $this->totalDurationMilliseconds = $totalDurationMilliseconds;
         $this->lockWaitMilliseconds = $lockWaitMilliseconds;
-        $this->recordedAt = $recordedAt ?? new \DateTimeImmutable();
+        $this->recordedAt = $recordedAt ?? new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
     }
 }

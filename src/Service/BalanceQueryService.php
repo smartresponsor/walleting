@@ -47,13 +47,13 @@ final readonly class BalanceQueryService
         );
 
         if (false === $row) {
-            return new BalanceSnapshot($currency, 0, 0, 0, 0, new \DateTimeImmutable());
+            return new BalanceSnapshot($currency, 0, 0, 0, 0, new \DateTimeImmutable('now', new \DateTimeZone('UTC')));
         }
 
         $availableMinor = (int) $row['available_minor'];
         $reservedMinor = (int) $row['reserved_minor'];
         $updatedAt = null === $row['updated_at']
-            ? new \DateTimeImmutable()
+            ? new \DateTimeImmutable('now', new \DateTimeZone('UTC'))
             : new \DateTimeImmutable((string) $row['updated_at']);
 
         return new BalanceSnapshot(

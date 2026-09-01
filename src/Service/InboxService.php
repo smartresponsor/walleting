@@ -76,9 +76,9 @@ final readonly class InboxService
             $statusCounts[(string) $row['status']] = (int) $row['count'];
         }
 
-        $oldestAge = $this->connection->fetchOne("SELECT EXTRACT(EPOCH FROM (CURRENT_TIMESTAMP - MIN(received_at)))::INT FROM inbox_receipt WHERE status = 'processing'");
+        $oldestAge = $this->connection->fetchOne("SELECT EXTRACT(EPOCH FROM ((CURRENT_TIMESTAMP AT TIME ZONE 'UTC') - MIN(received_at)))::INT FROM inbox_receipt WHERE status = 'processing'");
         $stuckCount = (int) $this->connection->fetchOne(
-            "SELECT COUNT(*) FROM inbox_receipt WHERE status = 'processing' AND received_at < CURRENT_TIMESTAMP - (? * INTERVAL '1 second')",
+            "SELECT COUNT(*) FROM inbox_receipt WHERE status = 'processing' AND received_at < (CURRENT_TIMESTAMP AT TIME ZONE 'UTC') - (? * INTERVAL '1 second')",
             [$stuckAfterSeconds],
             [ParameterType::INTEGER],
         );
@@ -98,7 +98,7 @@ final readonly class InboxService
         }
 
         return $this->connection->fetchAllAssociative(
-            "SELECT id, source, message_id, schema_version, event_type, deduplication_key, received_at FROM inbox_receipt WHERE status = 'processing' AND received_at < CURRENT_TIMESTAMP - (? * INTERVAL '1 second') ORDER BY received_at, id LIMIT ?",
+            "SELECT id, source, message_id, schema_version, event_type, deduplication_key, received_at FROM inbox_receipt WHERE status = 'processing' AND received_at < (CURRENT_TIMESTAMP AT TIME ZONE 'UTC') - (? * INTERVAL '1 second') ORDER BY received_at, id LIMIT ?",
             [$stuckAfterSeconds, $limit],
             [ParameterType::INTEGER, ParameterType::INTEGER],
         );
@@ -129,7 +129,7 @@ final readonly class InboxService
         }
 
         return $this->entityManager->wrapInTransaction(fn (): int => (int) $this->connection->executeStatement(
-            "DELETE FROM inbox_receipt WHERE id IN (SELECT id FROM inbox_receipt WHERE status = 'processed' AND processed_at < CURRENT_TIMESTAMP - (? * INTERVAL '1 day') ORDER BY processed_at, id FOR UPDATE SKIP LOCKED LIMIT ?)",
+            "DELETE FROM inbox_receipt WHERE id IN (SELECT id FROM inbox_receipt WHERE status = 'processed' AND processed_at < (CURRENT_TIMESTAMP AT TIME ZONE 'UTC') - (? * INTERVAL '1 day') ORDER BY processed_at, id FOR UPDATE SKIP LOCKED LIMIT ?)",
             [$retentionDays, $limit],
             [ParameterType::INTEGER, ParameterType::INTEGER],
         ));

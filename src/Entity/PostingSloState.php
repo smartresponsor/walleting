@@ -37,7 +37,7 @@ final class PostingSloState
 
     public function __construct(string $scope)
     {
-        $now = new \DateTimeImmutable();
+        $now = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
         $this->scope = $scope;
         $this->status = 'healthy';
         $this->pendingStatus = null;

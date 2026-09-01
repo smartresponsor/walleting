@@ -45,7 +45,7 @@ class ReconciliationMismatch
         $this->externalReference = $externalReference;
         $this->details = $details;
         $this->status = ReconciliationMismatchStatus::Open;
-        $this->createdAt = new \DateTimeImmutable();
+        $this->createdAt = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
     }
 
     public function resolve(): void
@@ -63,7 +63,7 @@ class ReconciliationMismatch
         if (ReconciliationMismatchStatus::Open !== $this->status) {
             throw new \LogicException('Only open mismatch can be closed.');
         } $this->status = $status;
-        $this->resolvedAt = new \DateTimeImmutable();
+        $this->resolvedAt = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
     }
 
     public function status(): ReconciliationMismatchStatus

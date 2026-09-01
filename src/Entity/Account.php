@@ -60,7 +60,7 @@ class Account implements ObjectEntityInterface
         $this->currency = $currency;
         $this->category = $category;
         $this->allowNegative = $allowNegative ?? !in_array($category, [AccountCategory::Asset, AccountCategory::Reserve], true);
-        $now = new \DateTimeImmutable();
+        $now = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
         $this->initializeObjectIdentity($this->id->toRfc4122(), 'account:'.$this->id->toRfc4122());
         $this->initializeObjectTitle($code);
         $this->initializeObjectAudit($now);

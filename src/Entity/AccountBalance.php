@@ -33,7 +33,7 @@ class AccountBalance
         $this->balanceMinor = 0;
         $this->currency = $account->currency();
         $this->postingCount = 0;
-        $this->updatedAt = new \DateTimeImmutable();
+        $this->updatedAt = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
     }
 
     public function account(): Account

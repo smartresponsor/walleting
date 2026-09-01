@@ -60,9 +60,25 @@ final class PostgreSqlPostingHealthTest extends KernelTestCase
         $service = new PostingHealthService($this->connection);
 
         self::assertSame(1, $service->cleanup(30, 1));
-        self::assertSame(1, (int) $this->connection->fetchOne("SELECT COUNT(*) FROM posting_metric_sample WHERE recorded_at < CURRENT_TIMESTAMP - INTERVAL '30 days'"));
+        self::assertSame(1, (int) $this->connection->fetchOne("SELECT COUNT(*) FROM posting_metric_sample WHERE recorded_at < (CURRENT_TIMESTAMP AT TIME ZONE 'UTC') - INTERVAL '30 days'"));
         self::assertSame(1, $service->cleanup(30, 500));
-        self::assertSame(0, (int) $this->connection->fetchOne("SELECT COUNT(*) FROM posting_metric_sample WHERE recorded_at < CURRENT_TIMESTAMP - INTERVAL '30 days'"));
+        self::assertSame(0, (int) $this->connection->fetchOne("SELECT COUNT(*) FROM posting_metric_sample WHERE recorded_at < (CURRENT_TIMESTAMP AT TIME ZONE 'UTC') - INTERVAL '30 days'"));
+    }
+
+    public function testPostingHealthUsesUtcWallClockIndependentOfDatabaseSessionTimezone(): void
+    {
+        $this->connection->executeStatement("SET TIME ZONE 'Asia/Tokyo'");
+        try {
+            $this->insertSample('-2 hours');
+            $this->insertSample('now');
+
+            $snapshot = (new PostingHealthService($this->connection))->snapshot(3600);
+
+            self::assertSame(1, $snapshot->executionCount);
+            self::assertSame(1, $snapshot->completedCount);
+        } finally {
+            $this->connection->executeStatement('RESET TIME ZONE');
+        }
     }
 
     private function insertSample(string $when): void

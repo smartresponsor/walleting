@@ -29,7 +29,7 @@ final readonly class DatabasePostingTelemetry implements PostingTelemetryInterfa
             'attempt_duration_ms' => $metric->attemptDurationMilliseconds,
             'total_duration_ms' => $metric->totalDurationMilliseconds,
             'lock_wait_ms' => $metric->lockWaitMilliseconds,
-            'recorded_at' => (new \DateTimeImmutable())->format('Y-m-d H:i:s'),
+            'recorded_at' => (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->format('Y-m-d H:i:s'),
         ]);
 
         $level = match ($metric->event) {

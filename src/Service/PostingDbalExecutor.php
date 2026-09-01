@@ -129,7 +129,7 @@ final readonly class PostingDbalExecutor implements PostingExecutorInterface
         FinancialPostingRequest $request,
     ): string {
         $transactionId = Uuid::v7()->toRfc4122();
-        $timestamp = (new \DateTimeImmutable())->format('Y-m-d H:i:s');
+        $timestamp = (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->format('Y-m-d H:i:s');
         $connection->insert('ledger_transaction', [
             'id' => $transactionId,
             'type' => $request->type->value,

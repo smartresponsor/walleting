@@ -48,7 +48,7 @@ class ReconciliationRun
         $this->provider = $provider;
         $this->runKey = $runKey;
         $this->status = ReconciliationRunStatus::Pending;
-        $this->createdAt = new \DateTimeImmutable();
+        $this->createdAt = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
     }
 
     public function start(): void
@@ -56,7 +56,7 @@ class ReconciliationRun
         if (ReconciliationRunStatus::Pending !== $this->status) {
             throw new \LogicException('Only pending reconciliation can start.');
         } $this->status = ReconciliationRunStatus::Running;
-        $this->startedAt = new \DateTimeImmutable();
+        $this->startedAt = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
     }
 
     public function recordMatch(): void
@@ -77,7 +77,7 @@ class ReconciliationRun
     {
         $this->assertRunning();
         $this->status = ReconciliationRunStatus::Completed;
-        $this->completedAt = new \DateTimeImmutable();
+        $this->completedAt = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
     }
 
     public function fail(string $message): void
@@ -89,7 +89,7 @@ class ReconciliationRun
             throw new \InvalidArgumentException('Failure message is required.');
         } $this->status = ReconciliationRunStatus::Failed;
         $this->failureMessage = $message;
-        $this->completedAt = new \DateTimeImmutable();
+        $this->completedAt = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
     }
 
     private function assertRunning(): void

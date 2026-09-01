@@ -48,7 +48,7 @@ class Wallet implements ObjectEntityInterface
         $this->ownerType = $ownerType;
         $this->ownerId = $ownerId;
         $this->status = WalletStatus::Active;
-        $now = new \DateTimeImmutable();
+        $now = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
         $this->initializeObjectIdentity($this->id->toRfc4122(), 'wallet:'.$this->id->toRfc4122());
         $this->initializeObjectTitle($ownerType.':'.$ownerId);
         $this->initializeObjectAudit($now);

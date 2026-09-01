@@ -70,7 +70,7 @@ class Reservation
         $this->idempotencyKey = $idempotencyKey;
         $this->status = ReservationStatus::Active;
         $this->expiresAt = $expiresAt;
-        $this->createdAt = new \DateTimeImmutable();
+        $this->createdAt = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
     }
 
     public function capture(): void

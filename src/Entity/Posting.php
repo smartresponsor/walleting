@@ -50,7 +50,7 @@ class Posting
         $this->amountMinor = $amountMinor;
         $this->currency = $account->currency();
         $this->sequence = $sequence;
-        $this->createdAt = new \DateTimeImmutable();
+        $this->createdAt = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
     }
 
     public function id(): Uuid

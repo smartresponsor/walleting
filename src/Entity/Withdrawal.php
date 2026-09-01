@@ -70,7 +70,7 @@ class Withdrawal
         $this->currency = $currency;
         $this->idempotencyKey = $idempotencyKey;
         $this->status = WithdrawalStatus::Pending;
-        $this->createdAt = new \DateTimeImmutable();
+        $this->createdAt = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
     }
 
     public function start(): void

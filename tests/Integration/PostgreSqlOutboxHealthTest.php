@@ -51,10 +51,10 @@ final class PostgreSqlOutboxHealthTest extends KernelTestCase
 
         $this->entityManager->clear();
         (new OutboxDeadLetterService($this->entityManager))->requeue($id, 'operator-health', 'Repair attempted');
-        $this->connection->executeStatement("UPDATE outbox_message SET available_at = CURRENT_TIMESTAMP - INTERVAL '1 second' WHERE id = ?", [$id]);
+        $this->connection->executeStatement("UPDATE outbox_message SET available_at = (CURRENT_TIMESTAMP AT TIME ZONE 'UTC') - INTERVAL '1 second' WHERE id = ?", [$id]);
         $this->entityManager->clear();
         $dispatcher->dispatchBatchReport(1);
-        $this->connection->executeStatement("UPDATE outbox_message SET created_at = CURRENT_TIMESTAMP - INTERVAL '120 seconds' WHERE id = ?", [$id]);
+        $this->connection->executeStatement("UPDATE outbox_message SET created_at = (CURRENT_TIMESTAMP AT TIME ZONE 'UTC') - INTERVAL '120 seconds' WHERE id = ?", [$id]);
 
         $dead = $service->deadLetters(20);
 

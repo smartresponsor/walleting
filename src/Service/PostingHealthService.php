@@ -32,7 +32,7 @@ SELECT
     COUNT(*) FILTER (WHERE retry_reason = 'lock_timeout') AS lock_timeout_count,
     COUNT(*) FILTER (WHERE retry_reason = 'deadlock') AS deadlock_count
 FROM posting_metric_sample
-WHERE recorded_at >= CURRENT_TIMESTAMP - (? * INTERVAL '1 second')
+WHERE recorded_at >= (CURRENT_TIMESTAMP AT TIME ZONE 'UTC') - (? * INTERVAL '1 second')
 SQL,
             [$windowSeconds],
             [ParameterType::INTEGER],
@@ -67,7 +67,7 @@ SQL,
         }
 
         return (int) $this->connection->executeStatement(
-            "DELETE FROM posting_metric_sample WHERE id IN (SELECT id FROM posting_metric_sample WHERE recorded_at < CURRENT_TIMESTAMP - (? * INTERVAL '1 day') ORDER BY recorded_at, id LIMIT ?)",
+            "DELETE FROM posting_metric_sample WHERE id IN (SELECT id FROM posting_metric_sample WHERE recorded_at < (CURRENT_TIMESTAMP AT TIME ZONE 'UTC') - (? * INTERVAL '1 day') ORDER BY recorded_at, id LIMIT ?)",
             [$retentionDays, $limit],
             [ParameterType::INTEGER, ParameterType::INTEGER],
         );

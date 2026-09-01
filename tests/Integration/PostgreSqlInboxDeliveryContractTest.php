@@ -12,6 +12,7 @@ use App\Walleting\Service\PostingSloTransitionNotifierInterface;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
+use Symfony\Component\Uid\Uuid;
 
 final class PostgreSqlInboxDeliveryContractTest extends KernelTestCase
 {
@@ -94,6 +95,38 @@ final class PostgreSqlInboxDeliveryContractTest extends KernelTestCase
         self::assertCount(1, $notifications);
         self::assertSame(1, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM inbox_receipt'));
         self::assertSame('processed', (string) $this->connection->fetchOne('SELECT status FROM inbox_receipt LIMIT 1'));
+    }
+
+    public function testInboxHealthUsesUtcWallClockIndependentOfDatabaseSessionTimezone(): void
+    {
+        $this->connection->executeStatement("SET TIME ZONE 'America/Los_Angeles'");
+        try {
+            $receivedAt = (new \DateTimeImmutable('-120 seconds', new \DateTimeZone('UTC')))->format('Y-m-d H:i:s');
+            $this->connection->insert('inbox_receipt', [
+                'id' => Uuid::v7()->toRfc4122(),
+                'source' => 'utc-test',
+                'message_id' => 'utc-stuck-message',
+                'schema_version' => 1,
+                'event_type' => 'utc.test',
+                'deduplication_key' => 'utc.test:stuck',
+                'payload_hash' => hash('sha256', '{}'),
+                'status' => 'processing',
+                'received_at' => $receivedAt,
+                'processed_at' => null,
+            ]);
+
+            $service = new InboxService($this->entityManager, $this->connection);
+            $snapshot = $service->healthSnapshot(60);
+            $stuck = $service->stuckProcessing(60, 10);
+
+            self::assertSame(1, $snapshot->stuckProcessingCount);
+            self::assertNotNull($snapshot->oldestProcessingAgeSeconds);
+            self::assertGreaterThanOrEqual(119, $snapshot->oldestProcessingAgeSeconds);
+            self::assertCount(1, $stuck);
+            self::assertSame('utc-stuck-message', $stuck[0]['message_id']);
+        } finally {
+            $this->connection->executeStatement('RESET TIME ZONE');
+        }
     }
 
     private function event(string $suffix): OutboxEvent

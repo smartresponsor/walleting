@@ -56,7 +56,7 @@ class InboxReceipt
         $this->deduplicationKey = $this->required($event->deduplicationKey, 'deduplication key');
         $this->payloadHash = hash('sha256', json_encode($this->normalize($event->payload), JSON_THROW_ON_ERROR));
         $this->status = InboxReceiptStatus::Processing;
-        $this->receivedAt = new \DateTimeImmutable();
+        $this->receivedAt = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
     }
 
     public function assertSameEvent(OutboxEvent $event): void
@@ -81,7 +81,7 @@ class InboxReceipt
         }
 
         $this->status = InboxReceiptStatus::Processed;
-        $this->processedAt = new \DateTimeImmutable();
+        $this->processedAt = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
     }
 
     public function isProcessed(): bool

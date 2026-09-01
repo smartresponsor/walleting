@@ -72,7 +72,7 @@ final readonly class OutboxService
             'metadata' => $metadata,
         ];
         $normalizedPayload = $this->normalizePayload($payload);
-        $now = new \DateTimeImmutable();
+        $now = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
 
         $this->connection->insert('outbox_message', [
             'id' => Uuid::v7()->toRfc4122(),
@@ -105,7 +105,7 @@ final readonly class OutboxService
         }
 
         $normalizedPayload = $this->normalizePayload($payload);
-        $now = new \DateTimeImmutable();
+        $now = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
         $this->connection->insert('outbox_message', [
             'id' => Uuid::v7()->toRfc4122(),
             'ledger_transaction_id' => null,

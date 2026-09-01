@@ -85,8 +85,8 @@ class OutboxMessage
         $this->ledgerTransaction = $ledgerTransaction;
         $this->providerEvent = $providerEvent;
         $this->status = OutboxMessageStatus::Pending;
-        $this->availableAt = $availableAt ?? new \DateTimeImmutable();
-        $this->createdAt = new \DateTimeImmutable();
+        $this->availableAt = $availableAt ?? new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
+        $this->createdAt = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
     }
 
     public function claim(): void
@@ -94,12 +94,12 @@ class OutboxMessage
         if (!in_array($this->status, [OutboxMessageStatus::Pending, OutboxMessageStatus::Failed], true)) {
             throw new \LogicException('Only pending or failed outbox messages can be claimed.');
         }
-        if ($this->availableAt > new \DateTimeImmutable()) {
+        if ($this->availableAt > new \DateTimeImmutable('now', new \DateTimeZone('UTC'))) {
             throw new \LogicException('Outbox message is not available for dispatch yet.');
         }
 
         $this->status = OutboxMessageStatus::Claimed;
-        $this->claimedAt = new \DateTimeImmutable();
+        $this->claimedAt = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
         ++$this->attemptCount;
     }
 
@@ -109,7 +109,7 @@ class OutboxMessage
             throw new \LogicException('Only claimed outbox messages can be dispatched.');
         }
         $this->status = OutboxMessageStatus::Dispatched;
-        $this->dispatchedAt = new \DateTimeImmutable();
+        $this->dispatchedAt = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
         $this->lastError = null;
     }
 
@@ -135,7 +135,7 @@ class OutboxMessage
         }
 
         $this->status = OutboxMessageStatus::Failed;
-        $this->availableAt = $availableAt ?? new \DateTimeImmutable();
+        $this->availableAt = $availableAt ?? new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
         $this->dispatchedAt = null;
     }
 

@@ -56,7 +56,7 @@ class ProviderEvent
         $this->payload = $payload;
         $this->payloadHash = hash('sha256', json_encode($this->normalize($payload), JSON_THROW_ON_ERROR));
         $this->status = ProviderEventStatus::Received;
-        $this->receivedAt = new \DateTimeImmutable();
+        $this->receivedAt = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
     }
 
     public function processFunding(Funding $funding): void
@@ -100,7 +100,7 @@ class ProviderEvent
     private function complete(): void
     {
         $this->status = ProviderEventStatus::Processed;
-        $this->processedAt = new \DateTimeImmutable();
+        $this->processedAt = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
     }
 
     private function normalize(array $value): array

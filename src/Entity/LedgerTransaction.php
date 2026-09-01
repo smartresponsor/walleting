@@ -59,7 +59,7 @@ class LedgerTransaction
         $this->idempotencyKey = $idempotencyKey;
         $this->requestHash = $requestHash;
         $this->metadata = $metadata;
-        $this->createdAt = new \DateTimeImmutable();
+        $this->createdAt = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
         $this->postings = new ArrayCollection();
     }
 
@@ -95,7 +95,7 @@ class LedgerTransaction
         }
 
         $this->status = TransactionStatus::Posted;
-        $this->postedAt = new \DateTimeImmutable();
+        $this->postedAt = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
     }
 
     public function id(): Uuid

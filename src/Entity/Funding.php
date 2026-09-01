@@ -70,7 +70,7 @@ class Funding
         $this->currency = $currency;
         $this->idempotencyKey = $idempotencyKey;
         $this->status = FundingStatus::Pending;
-        $this->createdAt = new \DateTimeImmutable();
+        $this->createdAt = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
     }
 
     public function start(): void
