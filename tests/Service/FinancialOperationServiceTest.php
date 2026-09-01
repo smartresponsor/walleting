@@ -55,6 +55,25 @@ final class FinancialOperationServiceTest extends TestCase
         self::assertSame(ReservationStatus::Captured, $reservation->status());
     }
 
+    public function testReserveReplayReturnsExistingReservation(): void
+    {
+        $entityManager = $this->statefulEntityManager();
+        $service = new FinancialOperationService($entityManager, $this->postingService($entityManager));
+        $wallet = new Wallet('vendor', 'reserve-replay');
+        $available = new Account($wallet, 'available', 'USD', AccountCategory::Asset);
+        $reserved = new Account($wallet, 'reserved', 'USD', AccountCategory::Reserve);
+        $instructions = [
+            new PostingInstruction($available, -500),
+            new PostingInstruction($reserved, 500),
+        ];
+
+        $first = $service->reserve($wallet, $reserved, 500, 'USD', 'reserve-replay-key', $instructions);
+        $replayed = $service->reserve($wallet, $reserved, 500, 'USD', 'reserve-replay-key', $instructions);
+
+        self::assertSame($first, $replayed);
+        self::assertSame($first->reserveTransaction(), $replayed->reserveTransaction());
+    }
+
     public function testReservationSettlementRejectsMismatchedAmount(): void
     {
         $entityManager = $this->entityManager();
@@ -136,6 +155,50 @@ final class FinancialOperationServiceTest extends TestCase
             new PostingInstruction($reserved, -300),
             new PostingInstruction($available, 300),
         ]);
+    }
+
+    public function testFundingSuccessReplayReturnsExistingTransaction(): void
+    {
+        $entityManager = $this->statefulEntityManager();
+        $service = new FinancialOperationService($entityManager, $this->postingService($entityManager));
+        $wallet = new Wallet('vendor', 'funding-success-replay');
+        $cash = new Account($wallet, 'cash', 'USD', AccountCategory::Asset);
+        $clearing = new Account($wallet, 'clearing', 'USD', AccountCategory::Clearing);
+        $instrument = new PaymentInstrument($wallet, PaymentInstrumentType::Card, 'provider', 'funding-success-replay-instrument', 'Card');
+        $funding = new Funding($wallet, $instrument, 700, 'USD', 'funding-success-replay');
+        $funding->start();
+        $instructions = [
+            new PostingInstruction($cash, 700),
+            new PostingInstruction($clearing, -700),
+        ];
+
+        $first = $service->succeedFunding($funding, 'funding-success-replay-post', $instructions);
+        $replayed = $service->succeedFunding($funding, 'funding-success-replay-post', $instructions);
+
+        self::assertSame($first, $replayed);
+        self::assertSame(FundingStatus::Succeeded, $funding->status());
+    }
+
+    public function testWithdrawalSuccessReplayReturnsExistingTransaction(): void
+    {
+        $entityManager = $this->statefulEntityManager();
+        $service = new FinancialOperationService($entityManager, $this->postingService($entityManager));
+        $wallet = new Wallet('vendor', 'withdrawal-success-replay');
+        $cash = new Account($wallet, 'cash', 'USD', AccountCategory::Asset);
+        $clearing = new Account($wallet, 'clearing', 'USD', AccountCategory::Clearing);
+        $instrument = new PaymentInstrument($wallet, PaymentInstrumentType::BankAccount, 'provider', 'withdrawal-success-replay-instrument', 'Bank');
+        $withdrawal = new Withdrawal($wallet, $instrument, 400, 'USD', 'withdrawal-success-replay');
+        $withdrawal->start();
+        $instructions = [
+            new PostingInstruction($cash, -400),
+            new PostingInstruction($clearing, 400),
+        ];
+
+        $first = $service->succeedWithdrawal($withdrawal, 'withdrawal-success-replay-post', $instructions);
+        $replayed = $service->succeedWithdrawal($withdrawal, 'withdrawal-success-replay-post', $instructions);
+
+        self::assertSame($first, $replayed);
+        self::assertSame(WithdrawalStatus::Succeeded, $withdrawal->status());
     }
 
     public function testFundingReversalRejectsDifferentPostingTopology(): void
@@ -406,6 +469,7 @@ final class FinancialOperationServiceTest extends TestCase
     {
         $transactions = [];
         $links = [];
+        $reservations = [];
         $connection = $this->createStub(Connection::class);
 
         $transactionRepository = $this->createStub(EntityRepository::class);
@@ -430,20 +494,35 @@ final class FinancialOperationServiceTest extends TestCase
             return null;
         });
 
+        $reservationRepository = $this->createStub(EntityRepository::class);
+        $reservationRepository->method('findOneBy')->willReturnCallback(static function (array $criteria) use (&$reservations): ?Reservation {
+            foreach ($reservations as $reservation) {
+                if (($criteria['idempotencyKey'] ?? null) === $reservation->idempotencyKey()) {
+                    return $reservation;
+                }
+            }
+
+            return null;
+        });
+
         $fallbackRepository = $this->repository();
         $entityManager = $this->createMock(EntityManagerInterface::class);
         $entityManager->method('getConnection')->willReturn($connection);
         $entityManager->method('getRepository')->willReturnCallback(static fn (string $class): EntityRepository => match ($class) {
             LedgerTransaction::class => $transactionRepository,
             FinancialOperationLink::class => $linkRepository,
+            Reservation::class => $reservationRepository,
             default => $fallbackRepository,
         });
-        $entityManager->method('persist')->willReturnCallback(static function (object $entity) use (&$transactions, &$links): void {
+        $entityManager->method('persist')->willReturnCallback(static function (object $entity) use (&$transactions, &$links, &$reservations): void {
             if ($entity instanceof LedgerTransaction) {
                 $transactions[] = $entity;
             }
             if ($entity instanceof FinancialOperationLink) {
                 $links[] = $entity;
+            }
+            if ($entity instanceof Reservation) {
+                $reservations[] = $entity;
             }
         });
         $entityManager->method('wrapInTransaction')->willReturnCallback(static fn (callable $callback): mixed => $callback());

@@ -119,6 +119,11 @@ class Reservation
         return $this->id;
     }
 
+    public function wallet(): Wallet
+    {
+        return $this->wallet;
+    }
+
     public function account(): Account
     {
         return $this->account;

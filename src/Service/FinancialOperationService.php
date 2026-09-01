@@ -34,6 +34,15 @@ final readonly class FinancialOperationService
     {
         return $this->entityManager->wrapInTransaction(function () use ($wallet, $account, $amountMinor, $currency, $idempotencyKey, $instructions, $expiresAt): Reservation {
             $transaction = $this->postingService->postManaged(TransactionType::Reserve, $idempotencyKey, $instructions, ['operation' => 'reserve']);
+            $existing = $this->entityManager->getRepository(Reservation::class)->findOneBy(['idempotencyKey' => trim($idempotencyKey)]);
+            if ($existing instanceof Reservation) {
+                if ($existing->wallet() !== $wallet || $existing->account() !== $account || $existing->reserveTransaction() !== $transaction || $existing->amountMinor() !== $amountMinor || $existing->currency() !== strtoupper(trim($currency))) {
+                    throw new \DomainException('Idempotent reservation replay conflicts with the existing reservation.');
+                }
+
+                return $existing;
+            }
+
             $reservation = new Reservation($wallet, $account, $transaction, $amountMinor, $currency, $idempotencyKey, $expiresAt);
             $this->entityManager->persist($reservation);
             $this->emitReservation('wallet.reservation.created', $reservation, $transaction);
@@ -129,7 +138,17 @@ final readonly class FinancialOperationService
     public function succeedFunding(Funding $funding, string $idempotencyKey, array $instructions): LedgerTransaction
     {
         return $this->entityManager->wrapInTransaction(function () use ($funding, $idempotencyKey, $instructions): LedgerTransaction {
+            $this->entityManager->lock($funding, LockMode::PESSIMISTIC_WRITE);
             $transaction = $this->postingService->postManaged(TransactionType::Credit, $idempotencyKey, $instructions, ['operation' => 'funding', 'funding_key' => $funding->idempotencyKey()]);
+            $existing = $funding->transaction();
+            if ($existing instanceof LedgerTransaction) {
+                if ($existing !== $transaction || !in_array($funding->status(), [FundingStatus::Succeeded, FundingStatus::Reversed], true)) {
+                    throw new \DomainException('Idempotent funding success replay conflicts with the existing funding result.');
+                }
+
+                return $existing;
+            }
+
             $funding->succeed($transaction);
             $this->emitFunding('wallet.funding.succeeded', $funding, $transaction);
             $this->entityManager->flush();
@@ -142,7 +161,17 @@ final readonly class FinancialOperationService
     public function succeedWithdrawal(Withdrawal $withdrawal, string $idempotencyKey, array $instructions): LedgerTransaction
     {
         return $this->entityManager->wrapInTransaction(function () use ($withdrawal, $idempotencyKey, $instructions): LedgerTransaction {
+            $this->entityManager->lock($withdrawal, LockMode::PESSIMISTIC_WRITE);
             $transaction = $this->postingService->postManaged(TransactionType::Debit, $idempotencyKey, $instructions, ['operation' => 'withdrawal', 'withdrawal_key' => $withdrawal->idempotencyKey()]);
+            $existing = $withdrawal->transaction();
+            if ($existing instanceof LedgerTransaction) {
+                if ($existing !== $transaction || !in_array($withdrawal->status(), [WithdrawalStatus::Succeeded, WithdrawalStatus::Reversed], true)) {
+                    throw new \DomainException('Idempotent withdrawal success replay conflicts with the existing withdrawal result.');
+                }
+
+                return $existing;
+            }
+
             $withdrawal->succeed($transaction);
             $this->emitWithdrawal('wallet.withdrawal.succeeded', $withdrawal, $transaction);
             $this->entityManager->flush();
