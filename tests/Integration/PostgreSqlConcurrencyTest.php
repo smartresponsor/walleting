@@ -46,7 +46,7 @@ final class PostgreSqlConcurrencyTest extends KernelTestCase
                 $this->insertPosting($loser, $loserTx, $assetAccount, -700, 1);
                 self::fail('Concurrent spend must wait on the account balance row lock.');
             } catch (Exception $exception) {
-                self::assertStringContainsString('lock timeout', strtolower($exception->getMessage()));
+                self::assertSame('55P03', $exception->getSQLState());
             }
             if ($loser->isTransactionActive()) {
                 $loser->rollBack();
@@ -86,7 +86,7 @@ final class PostgreSqlConcurrencyTest extends KernelTestCase
 
             $workerB->beginTransaction();
             $claimed = $workerB->fetchFirstColumn(
-                "SELECT id FROM outbox_message WHERE status IN ('pending', 'failed') AND available_at <= CURRENT_TIMESTAMP ORDER BY created_at, id FOR UPDATE SKIP LOCKED LIMIT 10",
+                "SELECT id FROM outbox_message WHERE status IN ('pending', 'failed') AND available_at <= (CURRENT_TIMESTAMP AT TIME ZONE 'UTC') ORDER BY created_at, id FOR UPDATE SKIP LOCKED LIMIT 10",
             );
 
             self::assertContains($secondId, array_map('strval', $claimed));

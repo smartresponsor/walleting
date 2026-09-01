@@ -3,8 +3,8 @@
 declare(strict_types=1);
 
 use App\Walleting\Entity\Account;
-use App\Kernel;
-use App\Ledger\PostingInstruction;
+use App\Walleting\Kernel;
+use App\Walleting\Ledger\PostingInstruction;
 use App\Walleting\Service\NullPostingTelemetry;
 use App\Walleting\Service\OutboxService;
 use App\Walleting\Service\PostingDbalExecutor;

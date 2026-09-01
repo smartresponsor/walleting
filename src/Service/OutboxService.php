@@ -133,7 +133,7 @@ final readonly class OutboxService
 
         return $this->entityManager->wrapInTransaction(function () use ($messageId): OutboxMessage {
             $id = $this->connection->fetchOne(
-                "SELECT id FROM outbox_message WHERE id = ? AND status IN ('pending', 'failed') AND available_at <= CURRENT_TIMESTAMP FOR UPDATE",
+                "SELECT id FROM outbox_message WHERE id = ? AND status IN ('pending', 'failed') AND available_at <= (CURRENT_TIMESTAMP AT TIME ZONE 'UTC') FOR UPDATE",
                 [$messageId],
             );
             if (false === $id) {
@@ -160,7 +160,7 @@ final readonly class OutboxService
 
         return $this->entityManager->wrapInTransaction(function () use ($limit): array {
             $rows = $this->connection->fetchFirstColumn(
-                "SELECT id FROM outbox_message WHERE status IN ('pending', 'failed') AND available_at <= CURRENT_TIMESTAMP ORDER BY created_at, id FOR UPDATE SKIP LOCKED LIMIT ?",
+                "SELECT id FROM outbox_message WHERE status IN ('pending', 'failed') AND available_at <= (CURRENT_TIMESTAMP AT TIME ZONE 'UTC') ORDER BY created_at, id FOR UPDATE SKIP LOCKED LIMIT ?",
                 [$limit],
                 [ParameterType::INTEGER],
             );
@@ -187,7 +187,7 @@ final readonly class OutboxService
             $statusCounts[(string) $row['status']] = (int) $row['count'];
         }
 
-        $oldestAge = $this->connection->fetchOne("SELECT EXTRACT(EPOCH FROM (CURRENT_TIMESTAMP - MIN(created_at)))::INT FROM outbox_message WHERE status IN ('pending', 'failed') AND available_at <= CURRENT_TIMESTAMP");
+        $oldestAge = $this->connection->fetchOne("SELECT EXTRACT(EPOCH FROM ((CURRENT_TIMESTAMP AT TIME ZONE 'UTC') - MIN(created_at)))::INT FROM outbox_message WHERE status IN ('pending', 'failed') AND available_at <= (CURRENT_TIMESTAMP AT TIME ZONE 'UTC')");
 
         return new OutboxHealthSnapshot(
             $statusCounts,
@@ -232,7 +232,7 @@ final readonly class OutboxService
         }
 
         return $this->connection->fetchAllAssociative(
-            "SELECT m.id, m.message_type, m.deduplication_key, m.attempt_count, m.last_error, m.claimed_at, m.created_at, EXTRACT(EPOCH FROM (CURRENT_TIMESTAMP - m.created_at))::INT AS age_seconds, COUNT(a.id)::INT AS requeue_count, MAX(a.created_at) AS last_requeued_at FROM outbox_message m LEFT JOIN outbox_requeue_audit a ON a.outbox_message_id = m.id WHERE m.status = 'dead' GROUP BY m.id, m.message_type, m.deduplication_key, m.attempt_count, m.last_error, m.claimed_at, m.created_at ORDER BY m.claimed_at DESC, m.id DESC LIMIT ?",
+            "SELECT m.id, m.message_type, m.deduplication_key, m.attempt_count, m.last_error, m.claimed_at, m.created_at, EXTRACT(EPOCH FROM ((CURRENT_TIMESTAMP AT TIME ZONE 'UTC') - m.created_at))::INT AS age_seconds, COUNT(a.id)::INT AS requeue_count, MAX(a.created_at) AS last_requeued_at FROM outbox_message m LEFT JOIN outbox_requeue_audit a ON a.outbox_message_id = m.id WHERE m.status = 'dead' GROUP BY m.id, m.message_type, m.deduplication_key, m.attempt_count, m.last_error, m.claimed_at, m.created_at ORDER BY m.claimed_at DESC, m.id DESC LIMIT ?",
             [$limit],
             [ParameterType::INTEGER],
         );
@@ -248,7 +248,7 @@ final readonly class OutboxService
         }
 
         return $this->entityManager->wrapInTransaction(fn (): int => (int) $this->connection->executeStatement(
-            "UPDATE outbox_message SET status = 'failed', available_at = CURRENT_TIMESTAMP, last_error = 'Claim lease expired before acknowledgement.' WHERE id IN (SELECT id FROM outbox_message WHERE status = 'claimed' AND claimed_at < CURRENT_TIMESTAMP - (? * INTERVAL '1 second') ORDER BY claimed_at, id FOR UPDATE SKIP LOCKED LIMIT ?)",
+            "UPDATE outbox_message SET status = 'failed', available_at = (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'), last_error = 'Claim lease expired before acknowledgement.' WHERE id IN (SELECT id FROM outbox_message WHERE status = 'claimed' AND claimed_at < (CURRENT_TIMESTAMP AT TIME ZONE 'UTC') - (? * INTERVAL '1 second') ORDER BY claimed_at, id FOR UPDATE SKIP LOCKED LIMIT ?)",
             [$timeoutSeconds, $limit],
             [ParameterType::INTEGER, ParameterType::INTEGER],
         ));
