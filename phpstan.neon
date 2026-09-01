@@ -1,0 +1,11 @@
+parameters:
+  level: 7
+  treatPhpDocTypesAsCertain: false
+  ignoreErrors:
+    - identifier: missingType.iterableValue
+    - identifier: property.onlyWritten
+    - identifier: property.unusedType
+  paths:
+    - src
+  parallel:
+    maximumNumberOfProcesses: 1

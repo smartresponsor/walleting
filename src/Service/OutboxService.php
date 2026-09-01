@@ -247,7 +247,7 @@ final readonly class OutboxService
             throw new \InvalidArgumentException('Outbox recovery limit must be between 1 and 500.');
         }
 
-        return $this->entityManager->wrapInTransaction(fn (): int => $this->connection->executeStatement(
+        return $this->entityManager->wrapInTransaction(fn (): int => (int) $this->connection->executeStatement(
             "UPDATE outbox_message SET status = 'failed', available_at = CURRENT_TIMESTAMP, last_error = 'Claim lease expired before acknowledgement.' WHERE id IN (SELECT id FROM outbox_message WHERE status = 'claimed' AND claimed_at < CURRENT_TIMESTAMP - (? * INTERVAL '1 second') ORDER BY claimed_at, id FOR UPDATE SKIP LOCKED LIMIT ?)",
             [$timeoutSeconds, $limit],
             [ParameterType::INTEGER, ParameterType::INTEGER],

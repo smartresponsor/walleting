@@ -48,7 +48,7 @@ final readonly class PostingSloPolicy
         $this->classify($contentionCount, $this->degradedContentionCount, $this->criticalContentionCount, 'contention', $degradedReasons, $criticalReasons);
 
         if ([] !== $criticalReasons) {
-            return new PostingHealthAssessment(PostingHealthStatus::Critical, $criticalReasons);
+            return new PostingHealthAssessment(PostingHealthStatus::Critical, array_values($criticalReasons));
         }
         if ([] !== $degradedReasons) {
             return new PostingHealthAssessment(PostingHealthStatus::Degraded, $degradedReasons);

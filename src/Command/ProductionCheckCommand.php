@@ -46,7 +46,7 @@ final class ProductionCheckCommand extends Command
     {
         $checks = [];
         $checks['app_env'] = $this->check('prod' === $this->kernel->getEnvironment(), $this->kernel->getEnvironment());
-        $checks['php_84_or_newer'] = $this->check(PHP_VERSION_ID >= 80400, PHP_VERSION);
+        $checks['php_84_or_newer'] = $this->check(version_compare(PHP_VERSION, '8.4.0', '>='), PHP_VERSION);
         $checks['pdo_pgsql'] = $this->check(extension_loaded('pdo_pgsql'), extension_loaded('pdo_pgsql') ? 'loaded' : 'missing');
 
         foreach (['APP_SECRET', 'DATABASE_URL', 'MESSENGER_TRANSPORT_DSN'] as $name) {

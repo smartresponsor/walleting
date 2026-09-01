@@ -128,7 +128,7 @@ final readonly class InboxService
             throw new \InvalidArgumentException('Inbox cleanup limit must be between 1 and 500.');
         }
 
-        return $this->entityManager->wrapInTransaction(fn (): int => $this->connection->executeStatement(
+        return $this->entityManager->wrapInTransaction(fn (): int => (int) $this->connection->executeStatement(
             "DELETE FROM inbox_receipt WHERE id IN (SELECT id FROM inbox_receipt WHERE status = 'processed' AND processed_at < CURRENT_TIMESTAMP - (? * INTERVAL '1 day') ORDER BY processed_at, id FOR UPDATE SKIP LOCKED LIMIT ?)",
             [$retentionDays, $limit],
             [ParameterType::INTEGER, ParameterType::INTEGER],

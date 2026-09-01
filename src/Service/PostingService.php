@@ -116,9 +116,6 @@ final readonly class PostingService
         $currency = null;
         $balance = 0;
         foreach ($instructions as $instruction) {
-            if (!$instruction instanceof PostingInstruction) {
-                throw new \InvalidArgumentException('Every instruction must be a PostingInstruction.');
-            }
             $currency ??= $instruction->account->currency();
             if ($currency !== $instruction->account->currency()) {
                 throw new \InvalidArgumentException('One ledger transaction cannot contain multiple currencies.');

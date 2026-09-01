@@ -240,6 +240,7 @@ final readonly class FinancialOperationService
         });
     }
 
+    /** @param non-empty-list<PostingInstruction> $instructions */
     private function transitionReservation(Reservation $reservation, int $amountMinor, string $idempotencyKey, array $instructions, TransactionType $type, string $operation, array $metadata = []): LedgerTransaction
     {
         $this->assertReservationSettlement($reservation, $amountMinor, $instructions);
@@ -460,6 +461,7 @@ final readonly class FinancialOperationService
         return false === $row ? [0, 0] : [(int) $row['captured_minor'], (int) $row['released_minor']];
     }
 
+    /** @param non-empty-list<PostingInstruction> $instructions */
     private function linkedPosting(TransactionType $type, LedgerTransaction $original, int $amountMinor, string $idempotencyKey, array $instructions): LedgerTransaction
     {
         return $this->entityManager->wrapInTransaction(function () use ($type, $original, $amountMinor, $idempotencyKey, $instructions): LedgerTransaction {

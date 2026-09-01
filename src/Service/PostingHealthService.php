@@ -66,7 +66,7 @@ SQL,
             throw new \InvalidArgumentException('Posting metric retention bounds are invalid.');
         }
 
-        return $this->connection->executeStatement(
+        return (int) $this->connection->executeStatement(
             "DELETE FROM posting_metric_sample WHERE id IN (SELECT id FROM posting_metric_sample WHERE recorded_at < CURRENT_TIMESTAMP - (? * INTERVAL '1 day') ORDER BY recorded_at, id LIMIT ?)",
             [$retentionDays, $limit],
             [ParameterType::INTEGER, ParameterType::INTEGER],
