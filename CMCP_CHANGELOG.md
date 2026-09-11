@@ -153,3 +153,42 @@ Unavailable in this execution surface and therefore not represented as green:
 Что имеем? The release acceptance path is canonically stronger, the stale Objecting runtime accessor defect is repaired, and the reusable Walleting bundle is now executable in standalone mode as required by Canon032.
 
 Что осталось? Canon022/023/024 dependency/package topology is still the principal RC blocker and requires a lock-consistent Composer pass in the actual shared workspace. Iteration 4 should close all remaining debt that can be integrated safely, verify branch/diff coherence, and prepare the bounded repository state for final acceptance without pretending unavailable local gates have passed.
+
+## Iteration 4 — DEBT_CLOSURE_AND_INTEGRATION
+
+Status: bounded debt closed; repository prepared for final acceptance within the available execution surface.
+
+### Integration-boundary closure
+
+- `README.md` previously ended at an empty `## Integration boundary` heading.
+- Filled that section using the existing implementation contract rather than inventing new behavior.
+- Documented `App\Walleting\Service\WalletingFacade` as the host-facing read boundary for balances, account history/statements, reservation progress, funding and withdrawal views.
+- Documented that financial writes remain behind Walleting-owned application services so ledger/idempotency/reservation/fee/outbox/reconciliation invariants remain enforceable.
+- Documented that generic CRUD ownership remains outside Walleting and that shared shell/rendering concerns remain outside the ledger core.
+- Reaffirmed posted ledger transaction/posting immutability and compensating/reversal workflows as the correction boundary.
+
+### Repository integration state
+
+- GitHub repository metadata reports `task/walleting-ledger-foundation` as the default branch.
+- Branch enumeration shows exactly one repository branch: `task/walleting-ledger-foundation`.
+- No `master` or `main` integration target currently exists, so opening a PR from the current branch is structurally impossible without first creating a second base branch. No synthetic base branch was created because the execution specification forbids inventing unrelated repository topology.
+- No existing pull requests were found for the repository.
+- No workflow runs/status contexts are available for the current task head; this remains missing evidence, not a passing CI result.
+
+### Deferred RC blocker
+
+Canon022/023/024 remain the only known material repository-level RC blocker from this run:
+
+- complete direct standalone dependency baseline;
+- local sibling `path` repositories with `symlink: true` for development;
+- lock-consistent Composer regeneration;
+- path-independent `composer.prod.json` production inventory and lock workflow;
+- actual shared-workspace Composer/Gating/full Walleting gate execution.
+
+These items are intentionally not approximated by manual lock edits or guessed package metadata.
+
+### What we have / what remains
+
+Что имеем? Walleting's bounded source/docs/runtime fixes are coherent, the host integration boundary is now explicit, the current branch is the repository's only/default branch, and no hidden PR integration step remains available in GitHub.
+
+Что осталось? Iteration 5 must perform final acceptance against the current head, re-check the accumulated diff and repository evidence, classify RC readiness truthfully, and hand off the exact local Composer/Gating actions required to close Canon022/023/024.
