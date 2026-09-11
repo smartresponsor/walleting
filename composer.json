@@ -40,7 +40,8 @@
         "stan": "php vendor/bin/phpstan analyse --memory-limit=1G --no-progress",
         "test": "phpunit",
         "test:integration": "@php bin/test-integration.php",
-        "lint": ["@php bin/console lint:container", "@php bin/console doctrine:schema:validate --skip-sync"]
+        "lint": ["@php bin/console lint:container", "@php bin/console doctrine:schema:validate --skip-sync"],
+        "quality": ["@cs:check", "@stan", "@lint", "@test"]
     },
     "repositories": [
         {
