@@ -22,6 +22,13 @@ use PHPUnit\Framework\TestCase;
 
 final class FinancialLifecycleTest extends TestCase
 {
+    public function testWalletCreatedAtUsesCanonicalObjectingAuditSurface(): void
+    {
+        $wallet = new Wallet('vendor', 'created-at');
+
+        self::assertSame($wallet->getObjectCreatedAt(), $wallet->createdAt());
+    }
+
     public function testPaymentInstrumentCanBeDisabled(): void
     {
         $instrument = new PaymentInstrument(new Wallet('vendor', '1'), PaymentInstrumentType::Card, 'stripe', 'pm_1', 'Visa 4242');

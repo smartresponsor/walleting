@@ -77,7 +77,7 @@ class Wallet implements ObjectEntityInterface
 
     public function createdAt(): \DateTimeImmutable
     {
-        return $this->getCreatedAt();
+        return $this->getObjectCreatedAt();
     }
 
     public function close(): void
