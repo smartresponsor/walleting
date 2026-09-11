@@ -115,3 +115,41 @@ Required closure when the real shared Composer workspace is available:
 Что имеем? The documented RC gate can no longer silently omit PHPStan or formatting checks; the repository now has one aggregate quality command aligned with Canon029. Canon022/023/024 applicability is proven rather than inferred.
 
 Что осталось? Iteration 3 must verify the actual changed Composer/README surfaces, inspect GitHub status/workflow evidence, run any gates available in the active runtime, and fix findings. The dependency-topology migration remains an explicit RC blocker until a lock-consistent Composer execution can run against the real sibling workspace.
+
+## Iteration 3 — VERIFICATION_AND_FIX
+
+Status: verified within the available execution surface; one concrete canonical runtime defect repaired.
+
+### Verification evidence
+
+- Branch head before the Iteration 3 repair was `292613227b18345548d16183f3bdd0b901acdb06`.
+- The branch is not protected and has no required status checks configured.
+- GitHub exposed no status contexts or workflow runs for the Iteration 2 head; absence of CI evidence is recorded as unavailable evidence, not as a passing gate.
+- PHP 8.4.23 is available in the active execution runtime, but Composer is not installed there and the Windows target worktree/vendor tree is not mounted. Full Composer/Symfony/PHPUnit/PostgreSQL execution therefore cannot be claimed from this environment.
+- Repository search found no remaining legacy Objecting audit accessor calls matching `getCreatedAt()` or `getModifiedAt()` after the Iteration 1 `Wallet::createdAt()` correction.
+- `composer.json` is structurally readable and the aggregate `quality` script remains present as `@cs:check`, `@stan`, `@lint`, `@test`.
+- README release acceptance remains synchronized with `composer validate --no-interaction --strict --check-lock`, `composer quality`, and `composer test:integration`.
+
+### Canon032 defect and repair
+
+- Walleting exposes `src/WalletingBundle.php` as a reusable Symfony bundle entrypoint.
+- Standalone `config/bundles.php` did not register `App\Walleting\WalletingBundle`.
+- Canon032 requires every dual-mode SmartResponsor Symfony component exposing a reusable `src/*Bundle.php` surface to register that bundle in standalone mode; an unregistered decorative Bundle class is explicitly non-canonical.
+- Added `App\Walleting\WalletingBundle::class => ['all' => true]` to `config/bundles.php`.
+- This repair changes runtime registration only; it does not alter ledger schema, posting semantics, reconciliation behavior, provider flow, or sibling repositories.
+
+### Verification boundaries
+
+Unavailable in this execution surface and therefore not represented as green:
+
+- `composer validate --no-interaction --strict --check-lock`
+- `composer quality`
+- `composer test:integration`
+- Symfony container boot with the caller's actual sibling symlinks/vendor tree
+- Gating against the real `D:\\PhpstormProjects\\www\Walleting` workspace
+
+### What we have / what remains
+
+Что имеем? The release acceptance path is canonically stronger, the stale Objecting runtime accessor defect is repaired, and the reusable Walleting bundle is now executable in standalone mode as required by Canon032.
+
+Что осталось? Canon022/023/024 dependency/package topology is still the principal RC blocker and requires a lock-consistent Composer pass in the actual shared workspace. Iteration 4 should close all remaining debt that can be integrated safely, verify branch/diff coherence, and prepare the bounded repository state for final acceptance without pretending unavailable local gates have passed.
