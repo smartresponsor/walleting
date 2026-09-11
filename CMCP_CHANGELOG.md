@@ -66,3 +66,52 @@ Post-RC evaluation: connector/provider breadth, richer operational views, progra
 ### Iteration status
 
 Iteration 1 complete: reconnaissance and baseline journal created. Journal creation is not task completion; proceed to a bounded RC hardening implementation and verification.
+
+## Iteration 2 — MATERIAL_IMPLEMENTATION
+
+Status: implemented; continue to verification.
+
+### Canon and runtime findings
+
+- Walleting is canonically a standalone Symfony application for Canon022 detection because both `bin/console` and `config/bundles.php` exist.
+- Canon022 therefore requires direct runtime dependencies on `cruding/crud`, `viewing/view`, `interfacing/interface`, `objecting/object`, and `easycorp/easyadmin-bundle`.
+- Current `composer.json` declares only `objecting/object` from that platform baseline.
+- Canon023 requires local SmartResponsor development packages to use sibling Composer `path` repositories with `options.symlink: true`.
+- Canon024 requires a path-independent `composer.prod.json`; Walleting currently has no `composer.prod.json`.
+- The missing baseline packages are not already represented in the current `composer.lock`; a lock-consistent Canon022/023 remediation therefore requires a real Composer execution against the shared workspace and must not be hand-edited.
+
+### Material RC hardening completed
+
+- Added the aggregate `composer quality` script.
+- `composer quality` runs `cs:check`, `stan`, `lint`, and the PHPUnit unit/test suite in one reproducible non-destructive acceptance path.
+- Updated `README.md` so documented RC acceptance now runs `composer validate --no-interaction --strict --check-lock`, `composer quality`, and `composer test:integration`.
+- The README now explicitly states that the aggregate quality gate includes PHP-CS-Fixer check mode, PHPStan, Symfony/Doctrine linting, and PHPUnit.
+- This closes the Iteration 1 RC-critical gap where static analysis existed in repository tooling but was omitted from the documented release acceptance path.
+- No financial schema, posting semantics, provider processing, reconciliation behavior, or foreign component repository was changed.
+
+### Canon029 evidence
+
+- `friendsofphp/php-cs-fixer` is declared in `require-dev`.
+- `phpstan/phpstan` is declared in `require-dev`.
+- `.php-cs-fixer.php` is repository-visible.
+- `phpstan.neon` is repository-visible.
+- Composer exposes `cs:check`, `cs:fix`, `stan`, and now the aggregate `quality` path.
+
+### Dependency-topology blocker kept separate
+
+Canon022/023/024 are confirmed RC debt but intentionally not half-patched in this iteration. Editing dependency requirements without regenerating `composer.lock` would make `composer validate --strict --check-lock` fail and would create an internally inconsistent repository. Local sibling symlink topology under `D:\\PhpstormProjects\\www` is also not visible from this execution surface.
+
+Required closure when the real shared Composer workspace is available:
+
+1. Add Cruding, Viewing, Interfacing and EasyAdmin to the development runtime baseline.
+2. Add sibling SmartResponsor path repositories with `symlink: true` for locally developed components.
+3. Generate/update `composer.lock` through Composer, not by hand.
+4. Add a path-independent `composer.prod.json` and its production lock/update workflow.
+5. Register only runtime-required bundles according to the repository runtime-scope policy.
+6. Run Composer validation plus Gating and the complete Walleting quality/integration suite.
+
+### What we have / what remains
+
+Что имеем? The documented RC gate can no longer silently omit PHPStan or formatting checks; the repository now has one aggregate quality command aligned with Canon029. Canon022/023/024 applicability is proven rather than inferred.
+
+Что осталось? Iteration 3 must verify the actual changed Composer/README surfaces, inspect GitHub status/workflow evidence, run any gates available in the active runtime, and fix findings. The dependency-topology migration remains an explicit RC blocker until a lock-consistent Composer execution can run against the real sibling workspace.
