@@ -192,3 +192,43 @@ These items are intentionally not approximated by manual lock edits or guessed p
 Что имеем? Walleting's bounded source/docs/runtime fixes are coherent, the host integration boundary is now explicit, the current branch is the repository's only/default branch, and no hidden PR integration step remains available in GitHub.
 
 Что осталось? Iteration 5 must perform final acceptance against the current head, re-check the accumulated diff and repository evidence, classify RC readiness truthfully, and hand off the exact local Composer/Gating actions required to close Canon022/023/024.
+
+## Iteration 5 — FINAL_ACCEPTANCE_AND_HANDOFF
+
+Status: **BLOCKED — NOT RC READY**.
+
+### Final acceptance evidence
+
+- Final pre-handoff head inspected: `79072f903cc1cb966063024c315d15714c02844f`.
+- GitHub exposes no commit status contexts for that head and no workflow evidence was available during the run. This is missing verification evidence, not a green result.
+- The accumulated task diff remains bounded to the orchestration journal, README release/integration documentation, the aggregate quality script, standalone Walleting bundle registration, the canonical Objecting audit accessor repair, and its regression test.
+- No migrations, ledger posting algorithms, balance projection logic, reconciliation semantics, provider workflows, or sibling repositories were mutated by this task.
+
+### Accepted repairs from this run
+
+- `Wallet::createdAt()` now calls the canonical Objecting accessor `getObjectCreatedAt()`; regression coverage was added.
+- Repository release acceptance now exposes one aggregate `composer quality` path including PHP-CS-Fixer check mode, PHPStan, Symfony/Doctrine linting, and PHPUnit.
+- README release instructions are synchronized with `composer validate --no-interaction --strict --check-lock`, `composer quality`, and `composer test:integration`.
+- `WalletingBundle` is registered in standalone `config/bundles.php`, closing Canon032.
+- README integration boundary now reflects the existing `WalletingFacade`/Walleting-owned service contract and immutable-ledger correction boundary.
+
+### Blocking RC debt
+
+Walleting cannot truthfully be declared RC-ready because Canon022/023/024 are still unsatisfied in the inspected repository state and the required local acceptance gates have not been executed against the actual shared Windows workspace.
+
+Required local closure:
+
+1. In `D:\\PhpstormProjects\\www\\Walleting`, verify the sibling worktrees for Objecting, Cruding, Viewing and Interfacing.
+2. Update development `composer.json` to the Canon022 standalone runtime baseline: `cruding/crud`, `viewing/view`, `interfacing/interface`, `objecting/object`, and `easycorp/easyadmin-bundle` as direct runtime dependencies.
+3. Add/normalize SmartResponsor sibling `path` repositories with `options.symlink: true` per Canon023.
+4. Run Composer in the real workspace to regenerate `composer.lock`; do not hand-edit the lock.
+5. Add path-independent `composer.prod.json` and establish its production lock/update flow per Canon024, with no sibling path repositories.
+6. Register only bundles required by the finalized runtime inventory and verify standalone container boot.
+7. Run, in order: `composer validate --no-interaction --strict --check-lock`, `composer quality`, `composer test:integration`, then the repository Gating/Canonization checks against the real workspace.
+8. Re-run production smoke checks and confirm no schema/ledger invariant regression.
+
+### Final verdict
+
+Что имеем? A materially improved and bounded Walleting repository: one concrete runtime bug fixed with regression coverage, stronger reproducible quality acceptance, canonical standalone bundle registration, and explicit integration boundaries.
+
+Что осталось до RC? One packaging/runtime-topology workstream plus its real local verification. Until Canon022/023/024 are closed with Composer-generated locks and the full local gates pass, the correct release verdict is **BLOCKED — NOT RC READY**.
