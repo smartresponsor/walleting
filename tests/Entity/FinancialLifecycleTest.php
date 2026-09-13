@@ -67,6 +67,9 @@ final class FinancialLifecycleTest extends TestCase
         self::assertSame(FundingStatus::Pending, $funding->status());
 
         $funding->start();
+        $funding->bindProviderOperationReference('ch_funding_1');
+        $funding->bindProviderOperationReference('ch_funding_1');
+        self::assertSame('ch_funding_1', $funding->providerOperationReference());
         $transaction = new LedgerTransaction(TransactionType::Credit, 'credit-funding-1');
         $funding->succeed($transaction);
         self::assertSame(FundingStatus::Succeeded, $funding->status());
@@ -81,6 +84,19 @@ final class FinancialLifecycleTest extends TestCase
 
         $this->expectException(\LogicException::class);
         $funding->succeed(new LedgerTransaction(TransactionType::Credit, 'credit-direct-success'));
+    }
+
+    public function testFundingProviderOperationReferenceCannotBeRebound(): void
+    {
+        $wallet = new Wallet('vendor', 'funding-provider-reference-conflict');
+        $instrument = new PaymentInstrument($wallet, PaymentInstrumentType::Card, 'stripe', 'pm_provider_reference_conflict', 'Card');
+        $funding = new Funding($wallet, $instrument, 1000, 'USD', 'funding-provider-reference-conflict');
+        $funding->start();
+        $funding->bindProviderOperationReference('ch_original');
+
+        $this->expectException(\DomainException::class);
+        $this->expectExceptionMessage('Funding is already bound to a different provider operation reference.');
+        $funding->bindProviderOperationReference('ch_different');
     }
 
     public function testFundingRequiresActivePaymentInstrument(): void
@@ -103,6 +119,9 @@ final class FinancialLifecycleTest extends TestCase
         self::assertSame(WithdrawalStatus::Pending, $withdrawal->status());
 
         $withdrawal->start();
+        $withdrawal->bindProviderOperationReference('po_withdrawal_1');
+        $withdrawal->bindProviderOperationReference('po_withdrawal_1');
+        self::assertSame('po_withdrawal_1', $withdrawal->providerOperationReference());
         $withdrawal->succeed(new LedgerTransaction(TransactionType::Debit, 'debit-withdrawal-1'));
         self::assertSame(WithdrawalStatus::Succeeded, $withdrawal->status());
     }

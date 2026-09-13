@@ -12,6 +12,7 @@ use Symfony\Component\Uid\Uuid;
 #[ORM\Entity]
 #[ORM\Table(name: 'withdrawal')]
 #[ORM\UniqueConstraint(name: 'uniq_withdrawal_idempotency_key', columns: ['idempotency_key'])]
+#[ORM\UniqueConstraint(name: 'uniq_withdrawal_provider_operation_reference', columns: ['provider_operation_reference'])]
 class Withdrawal
 {
     #[ORM\Id]
@@ -46,6 +47,9 @@ class Withdrawal
     #[ORM\Column(enumType: WithdrawalStatus::class)]
     private WithdrawalStatus $status;
 
+    #[ORM\Column(name: 'provider_operation_reference', length: 191, nullable: true)]
+    private ?string $providerOperationReference = null;
+
     #[ORM\Column(name: 'created_at', type: 'datetime_immutable')]
     private \DateTimeImmutable $createdAt;
 
@@ -79,6 +83,26 @@ class Withdrawal
             throw new \LogicException('Only pending withdrawal can start.');
         }
         $this->status = WithdrawalStatus::Processing;
+    }
+
+    public function bindProviderOperationReference(string $reference): void
+    {
+        $reference = trim($reference);
+        if ('' === $reference) {
+            throw new \InvalidArgumentException('Withdrawal provider operation reference is required.');
+        }
+        if (null !== $this->providerOperationReference) {
+            if ($this->providerOperationReference !== $reference) {
+                throw new \DomainException('Withdrawal is already bound to a different provider operation reference.');
+            }
+
+            return;
+        }
+        if (WithdrawalStatus::Processing !== $this->status) {
+            throw new \LogicException('Withdrawal provider operation reference can only be bound while processing.');
+        }
+
+        $this->providerOperationReference = $reference;
     }
 
     public function succeed(LedgerTransaction $transaction): void
@@ -150,5 +174,10 @@ class Withdrawal
     public function idempotencyKey(): string
     {
         return $this->idempotencyKey;
+    }
+
+    public function providerOperationReference(): ?string
+    {
+        return $this->providerOperationReference;
     }
 }

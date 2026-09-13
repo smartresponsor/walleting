@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace App\Walleting\Entity;
 
-use App\Objecting\EntityInterface\ObjectEntityInterface;
+use App\Objecting\EntityInterface\ObjectAuditedInterface;
+use App\Objecting\EntityInterface\ObjectIdentifiedInterface;
+use App\Objecting\EntityInterface\ObjectTitledInterface;
 use App\Objecting\EntityTrait\Embeddable\ObjectAuditEmbeddableTrait;
 use App\Objecting\EntityTrait\Embeddable\ObjectIdentityEmbeddableTrait;
-use App\Objecting\EntityTrait\Embeddable\ObjectStateEmbeddableTrait;
 use App\Objecting\EntityTrait\Embeddable\ObjectTitleEmbeddableTrait;
 use App\Walleting\Enum\PaymentInstrumentStatus;
 use App\Walleting\Enum\PaymentInstrumentType;
@@ -17,12 +18,11 @@ use Symfony\Component\Uid\Uuid;
 #[ORM\Entity]
 #[ORM\Table(name: 'payment_instrument')]
 #[ORM\UniqueConstraint(name: 'uniq_payment_instrument_provider_reference', columns: ['provider', 'provider_reference'])]
-class PaymentInstrument implements ObjectEntityInterface
+class PaymentInstrument implements ObjectAuditedInterface, ObjectIdentifiedInterface, ObjectTitledInterface
 {
     use ObjectIdentityEmbeddableTrait;
     use ObjectTitleEmbeddableTrait;
     use ObjectAuditEmbeddableTrait;
-    use ObjectStateEmbeddableTrait;
     #[ORM\Id]
     #[ORM\Column(type: 'uuid', unique: true)]
     private Uuid $id;
@@ -67,22 +67,17 @@ class PaymentInstrument implements ObjectEntityInterface
         $this->initializeObjectIdentity($this->id->toRfc4122(), 'payment-instrument:'.$this->id->toRfc4122());
         $this->initializeObjectTitle($displayLabel);
         $this->initializeObjectAudit($now);
-        $this->initializeObjectState(objectStatus: PaymentInstrumentStatus::Active->value);
     }
 
     public function disable(): void
     {
         $this->status = PaymentInstrumentStatus::Disabled;
-        $this->setObjectStatus(PaymentInstrumentStatus::Disabled->value);
-        $this->setObjectActive(false);
         $this->touchModified();
     }
 
     public function expire(): void
     {
         $this->status = PaymentInstrumentStatus::Expired;
-        $this->setObjectStatus(PaymentInstrumentStatus::Expired->value);
-        $this->setObjectActive(false);
         $this->touchModified();
     }
 

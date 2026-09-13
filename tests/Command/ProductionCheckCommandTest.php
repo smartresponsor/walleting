@@ -46,6 +46,26 @@ final class ProductionCheckCommandTest extends TestCase
         });
     }
 
+    public function testProductionCheckJsonSurvivesMalformedDatabaseErrorBytes(): void
+    {
+        $this->withEnvironment([
+            'APP_SECRET' => 'secret',
+            'DATABASE_URL' => 'postgresql://walleting@example/walleting',
+            'MESSENGER_TRANSPORT_DSN' => 'doctrine://default?queue_name=walleting_events',
+        ], function (): void {
+            $connection = $this->createStub(Connection::class);
+            $connection->method('fetchOne')->willThrowException(new \RuntimeException("database error \xB1"));
+            $tester = new CommandTester(new ProductionCheckCommand($connection, $this->prodKernel()));
+
+            self::assertSame(Command::FAILURE, $tester->execute(['--json' => true]));
+            $payload = json_decode(trim($tester->getDisplay()), true, flags: JSON_THROW_ON_ERROR);
+
+            self::assertFalse($payload['ok']);
+            self::assertFalse($payload['checks']['database_connection']['ok']);
+            self::assertStringContainsString('database error', $payload['checks']['database_connection']['detail']);
+        });
+    }
+
     private function connectionWithCompleteSchema(): Connection
     {
         $connection = $this->createStub(Connection::class);

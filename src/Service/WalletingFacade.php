@@ -79,6 +79,7 @@ final readonly class WalletingFacade
             $funding->currency(),
             $funding->paymentInstrument()->provider(),
             $funding->paymentInstrument()->providerReference(),
+            $funding->providerOperationReference(),
             $funding->transaction()?->id()->toRfc4122(),
             $funding->reversalTransaction()?->id()->toRfc4122(),
         );
@@ -106,6 +107,7 @@ final readonly class WalletingFacade
             $withdrawal->currency(),
             $withdrawal->paymentInstrument()->provider(),
             $withdrawal->paymentInstrument()->providerReference(),
+            $withdrawal->providerOperationReference(),
             $withdrawal->transaction()?->id()->toRfc4122(),
             $withdrawal->reversalTransaction()?->id()->toRfc4122(),
         );
@@ -122,7 +124,7 @@ final readonly class WalletingFacade
         }
 
         $rows = $this->connection->fetchAllAssociative(
-            sprintf('SELECT o.id, o.status, o.amount_minor, o.currency, pi.provider, pi.provider_reference, o.transaction_id, o.reversal_transaction_id FROM %s o INNER JOIN payment_instrument pi ON pi.id = o.payment_instrument_id WHERE o.wallet_id = ? ORDER BY o.created_at DESC, o.id DESC LIMIT %d', $type, $limit),
+            sprintf('SELECT o.id, o.status, o.amount_minor, o.currency, pi.provider, pi.provider_reference, o.provider_operation_reference, o.transaction_id, o.reversal_transaction_id FROM %s o INNER JOIN payment_instrument pi ON pi.id = o.payment_instrument_id WHERE o.wallet_id = ? ORDER BY o.created_at DESC, o.id DESC LIMIT %d', $type, $limit),
             [$wallet->id()->toRfc4122()],
         );
 
@@ -134,13 +136,14 @@ final readonly class WalletingFacade
             (string) $row['currency'],
             (string) $row['provider'],
             (string) $row['provider_reference'],
+            null === $row['provider_operation_reference'] ? null : (string) $row['provider_operation_reference'],
             null === $row['transaction_id'] ? null : (string) $row['transaction_id'],
             null === $row['reversal_transaction_id'] ? null : (string) $row['reversal_transaction_id'],
         ), $rows);
     }
 
-    private function operationView(string $type, string $id, string $status, int $amountMinor, string $currency, string $provider, string $providerReference, ?string $transactionId, ?string $reversalTransactionId): MoneyOperationView
+    private function operationView(string $type, string $id, string $status, int $amountMinor, string $currency, string $provider, string $providerReference, ?string $providerOperationReference, ?string $transactionId, ?string $reversalTransactionId): MoneyOperationView
     {
-        return new MoneyOperationView($id, $type, $status, $amountMinor, $currency, $provider, $providerReference, $transactionId, $reversalTransactionId);
+        return new MoneyOperationView($id, $type, $status, $amountMinor, $currency, $provider, $providerReference, $providerOperationReference, $transactionId, $reversalTransactionId);
     }
 }

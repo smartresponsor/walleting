@@ -34,7 +34,11 @@ final class PostgreSqlProviderSettlementReconciliationTest extends KernelTestCas
         $wallet = new Wallet('vendor', 'provider-settlement-wallet');
         $instrument = new PaymentInstrument($wallet, PaymentInstrumentType::Card, 'stripe', 'pm_provider_settlement', 'Card');
         $funding = new Funding($wallet, $instrument, 1000, 'USD', 'provider-settlement-funding');
+        $funding->start();
+        $funding->bindProviderOperationReference('ch_provider_settlement');
         $withdrawal = new Withdrawal($wallet, $instrument, 400, 'USD', 'provider-settlement-withdrawal');
+        $withdrawal->start();
+        $withdrawal->bindProviderOperationReference('po_provider_settlement');
         $run = new ReconciliationRun('stripe', 'provider-settlement-run');
         foreach ([$wallet, $instrument, $funding, $withdrawal, $run] as $entity) {
             $this->entityManager->persist($entity);
@@ -43,8 +47,8 @@ final class PostgreSqlProviderSettlementReconciliationTest extends KernelTestCas
 
         $service = new ProviderSettlementReconciliationService(new ReconciliationService($this->entityManager));
         $service->execute($run, [
-            new ProviderSettlementRecord('funding', $funding->id()->toRfc4122(), 1000, 'USD', 'pending'),
-            new ProviderSettlementRecord('funding', '00000000-0000-0000-0000-000000000001', 250, 'USD', 'pending'),
+            new ProviderSettlementRecord('funding', 'ch_provider_settlement', 1000, 'USD', 'processing'),
+            new ProviderSettlementRecord('funding', 'ch_missing_provider_settlement', 250, 'USD', 'processing'),
         ], [$funding, $withdrawal]);
 
         self::assertSame(ReconciliationRunStatus::Completed, $run->status());

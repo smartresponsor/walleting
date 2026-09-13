@@ -5,11 +5,16 @@
     "license": "proprietary",
     "require": {
         "php": ">=8.4",
+        "collectioning/collection": "dev-main || dev-master",
+        "cruding/crud": "dev-master",
         "doctrine/dbal": "^4.3",
         "doctrine/doctrine-bundle": "^3.0",
         "doctrine/doctrine-migrations-bundle": "^4.0",
         "doctrine/orm": "^3.4",
+        "easycorp/easyadmin-bundle": "^5.0",
+        "interfacing/interface": "dev-master",
         "objecting/object": "dev-master",
+        "tabling/table": "dev-main || dev-master",
         "symfony/config": "^8.1",
         "symfony/console": "^8.1",
         "symfony/dependency-injection": "^8.1",
@@ -20,7 +25,8 @@
         "symfony/messenger": "^8.1",
         "symfony/runtime": "^8.1",
         "symfony/uid": "^8.1",
-        "symfony/yaml": "^8.1"
+        "symfony/yaml": "^8.1",
+        "viewing/view": "dev-master"
     },
     "require-dev": {
         "friendsofphp/php-cs-fixer": "^3.95",
@@ -33,7 +39,8 @@
     "scripts": {
         "auto-scripts": {
             "cache:clear": "symfony-cmd",
-            "assets:install %PUBLIC_DIR%": "symfony-cmd"
+            "assets:install %PUBLIC_DIR%": "symfony-cmd",
+            "importmap:install": "symfony-cmd"
         },
         "cs:check": "php vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.php --dry-run --diff",
         "cs:fix": "php vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.php",
@@ -46,7 +53,32 @@
     "repositories": [
         {
             "type": "path",
+            "url": "../Collectioning",
+            "options": {"symlink": true}
+        },
+        {
+            "type": "path",
+            "url": "../Cruding",
+            "options": {"symlink": true}
+        },
+        {
+            "type": "path",
+            "url": "../Interfacing",
+            "options": {"symlink": true}
+        },
+        {
+            "type": "path",
             "url": "../Objecting",
+            "options": {"symlink": true}
+        },
+        {
+            "type": "path",
+            "url": "../Tabling",
+            "options": {"symlink": true}
+        },
+        {
+            "type": "path",
+            "url": "../Viewing",
             "options": {"symlink": true}
         }
     ],

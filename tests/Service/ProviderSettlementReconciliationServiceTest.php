@@ -33,9 +33,11 @@ final class ProviderSettlementReconciliationServiceTest extends TestCase
         $wallet = new Wallet('vendor', 'settlement-unit-wallet');
         $instrument = new PaymentInstrument($wallet, PaymentInstrumentType::Card, 'stripe', 'pm_settlement_unit', 'Card');
         $funding = new Funding($wallet, $instrument, 1000, 'USD', 'settlement-unit-funding');
+        $funding->start();
+        $funding->bindProviderOperationReference('ch_settlement_unit');
         $run = new ReconciliationRun('stripe', 'settlement-unit-run');
 
-        $record = new ProviderSettlementRecord(' funding ', ' '.$funding->id()->toRfc4122().' ', 1000, 'usd', 'pending');
+        $record = new ProviderSettlementRecord(' funding ', ' ch_settlement_unit ', 1000, 'usd', 'processing');
         self::assertSame('funding', $record->operation);
         self::assertSame('USD', $record->currency);
 
@@ -45,6 +47,22 @@ final class ProviderSettlementReconciliationServiceTest extends TestCase
         self::assertSame(1, $run->matchedCount());
         self::assertSame(0, $run->mismatchCount());
         self::assertCount(0, array_filter($persisted, static fn (object $entity): bool => $entity instanceof ReconciliationMismatch));
+    }
+
+    public function testSettlementReconciliationRequiresProviderOperationReference(): void
+    {
+        $repository = $this->createStub(EntityRepository::class);
+        $entityManager = $this->createStub(EntityManagerInterface::class);
+        $entityManager->method('getRepository')->willReturn($repository);
+        $entityManager->method('wrapInTransaction')->willReturnCallback(static fn (callable $callback): mixed => $callback());
+
+        $wallet = new Wallet('vendor', 'settlement-reference-wallet');
+        $instrument = new PaymentInstrument($wallet, PaymentInstrumentType::Card, 'stripe', 'pm_settlement_reference', 'Card');
+        $funding = new Funding($wallet, $instrument, 500, 'USD', 'settlement-reference-funding');
+
+        $this->expectException(\DomainException::class);
+        $this->expectExceptionMessage('Provider settlement reconciliation requires a bound provider operation reference.');
+        (new ProviderSettlementReconciliationService(new ReconciliationService($entityManager)))->execute(new ReconciliationRun('stripe', 'settlement-reference-run'), [], [$funding]);
     }
 
     public function testLocalOperationProviderMustMatchRunProvider(): void

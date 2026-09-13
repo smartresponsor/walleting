@@ -73,7 +73,7 @@ final class ProductionCheckCommand extends Command
 
         $ok = !in_array(false, array_column($checks, 'ok'), true);
         if ((bool) $input->getOption('json')) {
-            $output->writeln(json_encode(['ok' => $ok, 'checks' => $checks], JSON_THROW_ON_ERROR));
+            $output->writeln(json_encode(['ok' => $ok, 'checks' => $checks], JSON_THROW_ON_ERROR | JSON_INVALID_UTF8_SUBSTITUTE));
         } else {
             $io = new SymfonyStyle($input, $output);
             $rows = [];

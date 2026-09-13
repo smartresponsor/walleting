@@ -38,7 +38,7 @@ final readonly class ProviderSettlementReconciliationService
             if ($operation instanceof Funding) {
                 $this->assertProvider($run, $operation->paymentInstrument()->provider());
                 $local[] = [
-                    'external_reference' => 'funding:'.$operation->id()->toRfc4122(),
+                    'external_reference' => $this->providerOperationReference($operation),
                     'amount_minor' => $operation->amountMinor(),
                     'currency' => $operation->currency(),
                     'status' => $operation->status()->value,
@@ -48,7 +48,7 @@ final readonly class ProviderSettlementReconciliationService
             if ($operation instanceof Withdrawal) {
                 $this->assertProvider($run, $operation->paymentInstrument()->provider());
                 $local[] = [
-                    'external_reference' => 'withdrawal:'.$operation->id()->toRfc4122(),
+                    'external_reference' => $this->providerOperationReference($operation),
                     'amount_minor' => $operation->amountMinor(),
                     'currency' => $operation->currency(),
                     'status' => $operation->status()->value,
@@ -60,6 +60,16 @@ final readonly class ProviderSettlementReconciliationService
         }
 
         return $this->reconciliationService->execute($run, $provider, $local);
+    }
+
+    private function providerOperationReference(Funding|Withdrawal $operation): string
+    {
+        $reference = $operation->providerOperationReference();
+        if (null === $reference) {
+            throw new \DomainException('Provider settlement reconciliation requires a bound provider operation reference.');
+        }
+
+        return ($operation instanceof Funding ? 'funding:' : 'withdrawal:').$reference;
     }
 
     private function assertProvider(ReconciliationRun $run, string $provider): void

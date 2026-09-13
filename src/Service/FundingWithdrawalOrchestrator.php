@@ -98,6 +98,24 @@ final readonly class FundingWithdrawalOrchestrator
         });
     }
 
+    public function bindFundingProviderOperationReference(Funding $funding, string $reference): void
+    {
+        $this->entityManager->wrapInTransaction(function () use ($funding, $reference): void {
+            $this->entityManager->lock($funding, LockMode::PESSIMISTIC_WRITE);
+            $funding->bindProviderOperationReference($reference);
+            $this->entityManager->flush();
+        });
+    }
+
+    public function bindWithdrawalProviderOperationReference(Withdrawal $withdrawal, string $reference): void
+    {
+        $this->entityManager->wrapInTransaction(function () use ($withdrawal, $reference): void {
+            $this->entityManager->lock($withdrawal, LockMode::PESSIMISTIC_WRITE);
+            $withdrawal->bindProviderOperationReference($reference);
+            $this->entityManager->flush();
+        });
+    }
+
     /** @param non-empty-list<PostingInstruction> $instructions */
     public function succeedFunding(ProviderEvent $event, Funding $funding, string $ledgerIdempotencyKey, array $instructions): void
     {

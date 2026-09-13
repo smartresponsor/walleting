@@ -28,21 +28,27 @@ final class WalletingFacadeTest extends TestCase
         $card = new PaymentInstrument($wallet, PaymentInstrumentType::Card, 'stripe', 'pm_facade_unit', 'Card');
         $bank = new PaymentInstrument($wallet, PaymentInstrumentType::BankAccount, 'ach', 'bank_facade_unit', 'Bank');
         $funding = new Funding($wallet, $card, 1200, 'USD', 'facade-unit-funding');
+        $funding->start();
+        $funding->bindProviderOperationReference('ch_facade_unit');
         $withdrawal = new Withdrawal($wallet, $bank, 400, 'USD', 'facade-unit-withdrawal');
+        $withdrawal->start();
+        $withdrawal->bindProviderOperationReference('po_facade_unit');
 
         $fundingView = $facade->funding($funding);
         self::assertSame('funding', $fundingView->type);
-        self::assertSame(FundingStatus::Pending->value, $fundingView->status);
+        self::assertSame(FundingStatus::Processing->value, $fundingView->status);
         self::assertSame(1200, $fundingView->amountMinor);
         self::assertSame('stripe', $fundingView->provider);
         self::assertSame('pm_facade_unit', $fundingView->providerReference);
+        self::assertSame('ch_facade_unit', $fundingView->providerOperationReference);
         self::assertNull($fundingView->transactionId);
 
         $withdrawalView = $facade->withdrawal($withdrawal);
         self::assertSame('withdrawal', $withdrawalView->type);
-        self::assertSame(WithdrawalStatus::Pending->value, $withdrawalView->status);
+        self::assertSame(WithdrawalStatus::Processing->value, $withdrawalView->status);
         self::assertSame(400, $withdrawalView->amountMinor);
         self::assertSame('ach', $withdrawalView->provider);
         self::assertSame('bank_facade_unit', $withdrawalView->providerReference);
+        self::assertSame('po_facade_unit', $withdrawalView->providerOperationReference);
     }
 }

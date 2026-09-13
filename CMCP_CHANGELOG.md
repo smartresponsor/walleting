@@ -232,3 +232,28 @@ Required local closure:
 Что имеем? A materially improved and bounded Walleting repository: one concrete runtime bug fixed with regression coverage, stronger reproducible quality acceptance, canonical standalone bundle registration, and explicit integration boundaries.
 
 Что осталось до RC? One packaging/runtime-topology workstream plus its real local verification. Until Canon022/023/024 are closed with Composer-generated locks and the full local gates pass, the correct release verdict is **BLOCKED — NOT RC READY**.
+
+## 2026-09-13 — local RC closure pass
+
+### Material implementation
+
+- Closed the Canon022 standalone dependency baseline with direct runtime dependencies and local sibling path repositories for Cruding, Collectioning, Tabling, Viewing, Interfacing and Objecting, plus EasyAdmin.
+- Composer regenerated the development lock against the real shared Windows workspace; no lock file was hand-edited.
+- Preserved the provider-operation identity/reconciliation change set and its `Version20260901150000` migration.
+- Removed generic Objecting state mapping from `Wallet` and `PaymentInstrument` where financial domain status is the authoritative state machine.
+- Hardened `walleting:production:check --json` so malformed driver bytes remain observable as valid JSON; regression coverage was added.
+
+### Verification evidence
+
+- `composer validate --strict --check-lock`: green.
+- `composer stan`: green.
+- `composer cs:check`: green.
+- `composer lint`: Symfony container and Doctrine mapping green.
+- `composer test`: 114 tests / 343 assertions green.
+- Executable Gating mirrors Canon019, Canon021 and Canon022: 3/3 passed, no warnings/skips.
+- PostgreSQL integration harness reaches schema latest (`Version20260901150000`, 26 migrations) and its production readiness smoke has returned fully green JSON in an observed run.
+- Full `composer test:integration` remains a residual acceptance blocker because the Console MCP transport repeatedly terminates the long-running script without a final exit code; one observed run reached PHPUnit and exposed integration errors, while later runs timed out before a final result. Do not classify that gate as green until a complete exit code is observed.
+
+### Growth workstream
+
+- Higher-throughput ledger engines, programmable money-flow DSLs, richer provider adapters, finance-facing reconciliation UX and deeper analytics/observability remain post-RC maturity work.

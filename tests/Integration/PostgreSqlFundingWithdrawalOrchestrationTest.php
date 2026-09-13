@@ -57,6 +57,8 @@ final class PostgreSqlFundingWithdrawalOrchestrationTest extends KernelTestCase
         $request = $this->orchestrator->beginFunding($funding);
         self::assertSame(FundingStatus::Processing, $funding->status());
         self::assertSame('stripe', $request->provider);
+        $this->orchestrator->bindFundingProviderOperationReference($funding, 'ch_orchestrated_funding');
+        self::assertSame('ch_orchestrated_funding', $funding->providerOperationReference());
 
         $event = $this->providerEvents->receive('stripe', 'evt_orchestrated_funding', 'funding.succeeded', ['operation_id' => $request->operationId]);
         $this->orchestrator->succeedFunding($event, $funding, 'orchestrated-funding-ledger', [
@@ -91,6 +93,8 @@ final class PostgreSqlFundingWithdrawalOrchestrationTest extends KernelTestCase
         $withdrawal = $this->orchestrator->requestWithdrawal($wallet, $instrument, 700, 'USD', 'orchestrated-withdrawal-request');
         $request = $this->orchestrator->beginWithdrawal($withdrawal);
         self::assertSame(WithdrawalStatus::Processing, $withdrawal->status());
+        $this->orchestrator->bindWithdrawalProviderOperationReference($withdrawal, 'po_orchestrated_withdrawal');
+        self::assertSame('po_orchestrated_withdrawal', $withdrawal->providerOperationReference());
 
         $event = $this->providerEvents->receive('ach', 'evt_orchestrated_withdrawal', 'withdrawal.failed', ['operation_id' => $request->operationId]);
         $this->orchestrator->failWithdrawal($event, $withdrawal);
