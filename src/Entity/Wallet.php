@@ -76,7 +76,7 @@ class Wallet implements ObjectAuditedInterface, ObjectIdentifiedInterface, Objec
 
     public function createdAt(): \DateTimeImmutable
     {
-        return $this->getObjectCreatedAt();
+        return $this->getCreatedAt();
     }
 
     public function close(): void

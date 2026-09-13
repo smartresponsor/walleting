@@ -26,7 +26,7 @@ final class FinancialLifecycleTest extends TestCase
     {
         $wallet = new Wallet('vendor', 'created-at');
 
-        self::assertSame($wallet->getObjectCreatedAt(), $wallet->createdAt());
+        self::assertSame($wallet->getCreatedAt(), $wallet->createdAt());
     }
 
     public function testPaymentInstrumentCanBeDisabled(): void
