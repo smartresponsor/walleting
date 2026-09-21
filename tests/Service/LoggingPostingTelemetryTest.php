@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Walleting\Tests\Service;
 
-use App\Walleting\Posting\PostingExecutionMetric;
-use App\Walleting\Service\LoggingPostingTelemetry;
+use App\Walleting\Service\WalletLoggingPostingTelemetry;
+use App\Walleting\ValueObject\Posting\WalletPostingExecutionMetric;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
@@ -14,12 +14,12 @@ final class LoggingPostingTelemetryTest extends TestCase
     public function testRetryMetricIsLoggedWithStructuredContext(): void
     {
         $logger = $this->createMock(LoggerInterface::class);
-        $metric = new PostingExecutionMetric('retry', 'transfer', 1, 1, 'lock_timeout', 100, 100, 100);
+        $metric = new WalletPostingExecutionMetric('retry', 'transfer', 1, 1, 'lock_timeout', 100, 100, 100);
 
         $logger->expects(self::once())
             ->method('log')
             ->with('notice', 'walleting.posting.execution', $metric->context());
 
-        (new LoggingPostingTelemetry($logger))->record($metric);
+        (new WalletLoggingPostingTelemetry($logger))->record($metric);
     }
 }

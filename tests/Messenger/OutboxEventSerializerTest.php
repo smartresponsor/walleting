@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Walleting\Tests\Messenger;
 
-use App\Walleting\Message\OutboxEvent;
-use App\Walleting\Messenger\OutboxEventSerializer;
+use App\Walleting\Codec\Outbox\WalletOutboxEventSerializer;
+use App\Walleting\Event\Outbox\WalletOutboxEvent;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\Retry\MultiplierRetryStrategy;
@@ -21,10 +21,10 @@ final class OutboxEventSerializerTest extends TestCase
         $fixture = file_get_contents(__DIR__.'/../Fixtures/outbox-event-v1.json');
         self::assertIsString($fixture);
 
-        $message = (new OutboxEventSerializer())->decode(['body' => $fixture, 'headers' => []])->getMessage();
-        self::assertInstanceOf(OutboxEvent::class, $message);
-        self::assertSame(OutboxEvent::SCHEMA_VERSION, $message->schemaVersion);
-        self::assertSame(OutboxEvent::SOURCE, $message->source);
+        $message = (new WalletOutboxEventSerializer())->decode(['body' => $fixture, 'headers' => []])->getMessage();
+        self::assertInstanceOf(WalletOutboxEvent::class, $message);
+        self::assertSame(WalletOutboxEvent::SCHEMA_VERSION, $message->schemaVersion);
+        self::assertSame(WalletOutboxEvent::SOURCE, $message->source);
         self::assertSame('0198-contract-v1', $message->messageId);
         self::assertSame('wallet.funding.succeeded', $message->type);
         self::assertSame(['amount' => 1250, 'currency' => 'USD'], $message->payload);
@@ -32,8 +32,8 @@ final class OutboxEventSerializerTest extends TestCase
 
     public function testEncodeUsesStableExternalJsonContract(): void
     {
-        $serializer = new OutboxEventSerializer();
-        $event = new OutboxEvent(
+        $serializer = new WalletOutboxEventSerializer();
+        $event = new WalletOutboxEvent(
             messageId: '0198-encoded',
             type: 'wallet.funding.succeeded',
             deduplicationKey: 'funding:123',
@@ -68,7 +68,7 @@ final class OutboxEventSerializerTest extends TestCase
 
     public function testDecodeRejectsUnsupportedFutureSchemaVersion(): void
     {
-        $serializer = new OutboxEventSerializer();
+        $serializer = new WalletOutboxEventSerializer();
         $encoded = [
             'body' => json_encode([
                 'schema_version' => 2,
@@ -93,8 +93,8 @@ final class OutboxEventSerializerTest extends TestCase
 
     public function testRetryAndFailureStampsSurviveRoundTrip(): void
     {
-        $serializer = new OutboxEventSerializer();
-        $event = new OutboxEvent(
+        $serializer = new WalletOutboxEventSerializer();
+        $event = new WalletOutboxEvent(
             messageId: '0198-stamped',
             type: 'posting.slo.state.changed',
             deduplicationKey: 'posting.slo.state.changed:default:7',
@@ -127,8 +127,8 @@ final class OutboxEventSerializerTest extends TestCase
 
     public function testDecodedRetryCountStopsRetryStrategyAtConfiguredMaximum(): void
     {
-        $serializer = new OutboxEventSerializer();
-        $event = new OutboxEvent(
+        $serializer = new WalletOutboxEventSerializer();
+        $event = new WalletOutboxEvent(
             messageId: '0198-retry-limit',
             type: 'posting.slo.state.changed',
             deduplicationKey: 'posting.slo.state.changed:default:8',
@@ -145,8 +145,8 @@ final class OutboxEventSerializerTest extends TestCase
 
     public function testMalformedMessengerStampHeaderIsRejectedInsteadOfResettingRetryState(): void
     {
-        $serializer = new OutboxEventSerializer();
-        $encoded = $serializer->encode(new Envelope(new OutboxEvent(
+        $serializer = new WalletOutboxEventSerializer();
+        $encoded = $serializer->encode(new Envelope(new WalletOutboxEvent(
             messageId: '0198-invalid-stamp',
             type: 'posting.slo.state.changed',
             deduplicationKey: 'posting.slo.state.changed:default:9',
@@ -163,7 +163,7 @@ final class OutboxEventSerializerTest extends TestCase
 
     public function testDecodeReconstructsOutboxEvent(): void
     {
-        $serializer = new OutboxEventSerializer();
+        $serializer = new WalletOutboxEventSerializer();
         $encoded = [
             'body' => json_encode([
                 'schema_version' => 1,
@@ -182,7 +182,7 @@ final class OutboxEventSerializerTest extends TestCase
         ];
 
         $message = $serializer->decode($encoded)->getMessage();
-        self::assertInstanceOf(OutboxEvent::class, $message);
+        self::assertInstanceOf(WalletOutboxEvent::class, $message);
         self::assertSame('0198-decoded', $message->messageId);
         self::assertSame('provider.event.processed', $message->type);
         self::assertSame('evt-1', $message->providerEventExternalId);

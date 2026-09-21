@@ -1,0 +1,15 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Walleting\ValueObject\Ledger;
+
+final readonly class WalletStatementPage
+{
+    /** @param list<WalletStatementActivity> $items */
+    public function __construct(
+        public array $items,
+        public ?string $nextCursor,
+    ) {
+    }
+}

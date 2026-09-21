@@ -1,0 +1,13 @@
+{
+  "name": "walleting-ui-tests",
+  "private": true,
+  "scripts": {
+    "coverage:behavioral-ui": "node tools/behavioral-ui-coverage.mjs",
+    "smoke": "node tools/behavioral-ui-coverage.mjs && playwright test",
+    "test": "playwright test",
+    "test:ui": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.55.0"
+  }
+}

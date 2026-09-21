@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Walleting\Tests\Contract;
 
-use App\Walleting\Entity\Account;
-use App\Walleting\Enum\TransactionType;
-use App\Walleting\Ledger\FinancialPostingRequest;
-use App\Walleting\Ledger\PostingInstruction;
-use App\Walleting\Service\PostingExecutorInterface;
+use App\Walleting\Entity\WalletAccount;
+use App\Walleting\Enum\WalletTransactionType;
+use App\Walleting\Service\WalletPostingExecutorInterface;
+use App\Walleting\ValueObject\Ledger\WalletFinancialPostingRequest;
+use App\Walleting\ValueObject\Ledger\WalletPostingInstruction;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\DBAL\ParameterType;
@@ -29,14 +29,14 @@ abstract class PostingExecutorContractTest extends KernelTestCase
         self::assertInstanceOf(\Doctrine\DBAL\Platforms\PostgreSQLPlatform::class, $this->connection->getDatabasePlatform());
     }
 
-    abstract protected function createExecutor(): PostingExecutorInterface;
+    abstract protected function createExecutor(): WalletPostingExecutorInterface;
 
     public function testSuccessfulExecutionCommitsLedgerPostingsAndOutboxAtomically(): void
     {
         [$asset, $clearing] = $this->accounts();
-        $request = new FinancialPostingRequest(TransactionType::Credit, [
-            new PostingInstruction($asset, 1250),
-            new PostingInstruction($clearing, -1250),
+        $request = new WalletFinancialPostingRequest(WalletTransactionType::Credit, [
+            new WalletPostingInstruction($asset, 1250),
+            new WalletPostingInstruction($clearing, -1250),
         ], ['operation' => 'executor_contract']);
         $key = 'executor-success-'.Uuid::v7();
 
@@ -50,11 +50,11 @@ abstract class PostingExecutorContractTest extends KernelTestCase
     public function testPostingSequenceMatchesCanonicalRequestOrder(): void
     {
         [$asset, $clearing, $clearingAlt] = $this->accounts(includeThirdAccount: true);
-        self::assertInstanceOf(Account::class, $clearingAlt);
-        $request = new FinancialPostingRequest(TransactionType::Credit, [
-            new PostingInstruction($asset, 500),
-            new PostingInstruction($clearing, -200),
-            new PostingInstruction($clearingAlt, -300),
+        self::assertInstanceOf(WalletAccount::class, $clearingAlt);
+        $request = new WalletFinancialPostingRequest(WalletTransactionType::Credit, [
+            new WalletPostingInstruction($asset, 500),
+            new WalletPostingInstruction($clearing, -200),
+            new WalletPostingInstruction($clearingAlt, -300),
         ]);
 
         $transactionId = $this->createExecutor()->execute('executor-sequence-'.Uuid::v7(), $request);
@@ -70,9 +70,9 @@ abstract class PostingExecutorContractTest extends KernelTestCase
     public function testDuplicateIdempotencyKeySurfacesCollisionWithoutPartialSecondCommit(): void
     {
         [$asset, $clearing] = $this->accounts();
-        $request = new FinancialPostingRequest(TransactionType::Credit, [
-            new PostingInstruction($asset, 500),
-            new PostingInstruction($clearing, -500),
+        $request = new WalletFinancialPostingRequest(WalletTransactionType::Credit, [
+            new WalletPostingInstruction($asset, 500),
+            new WalletPostingInstruction($clearing, -500),
         ]);
         $key = 'executor-collision-'.Uuid::v7();
         $executor = $this->createExecutor();
@@ -91,9 +91,9 @@ abstract class PostingExecutorContractTest extends KernelTestCase
     public function testOverdraftFailureRollsBackTransactionPostingsAndOutbox(): void
     {
         [$asset, $clearing] = $this->accounts();
-        $request = new FinancialPostingRequest(TransactionType::Debit, [
-            new PostingInstruction($asset, -100),
-            new PostingInstruction($clearing, 100),
+        $request = new WalletFinancialPostingRequest(WalletTransactionType::Debit, [
+            new WalletPostingInstruction($asset, -100),
+            new WalletPostingInstruction($clearing, 100),
         ]);
         $key = 'executor-overdraft-'.Uuid::v7();
 
@@ -147,13 +147,13 @@ abstract class PostingExecutorContractTest extends KernelTestCase
             ], ['allow_negative' => ParameterType::BOOLEAN]);
         }
 
-        $asset = $this->entityManager->find(Account::class, $assetId);
-        $clearing = $this->entityManager->find(Account::class, $clearingId);
-        $thirdAccount = null === $thirdAccountId ? null : $this->entityManager->find(Account::class, $thirdAccountId);
-        self::assertInstanceOf(Account::class, $asset);
-        self::assertInstanceOf(Account::class, $clearing);
+        $asset = $this->entityManager->find(WalletAccount::class, $assetId);
+        $clearing = $this->entityManager->find(WalletAccount::class, $clearingId);
+        $thirdAccount = null === $thirdAccountId ? null : $this->entityManager->find(WalletAccount::class, $thirdAccountId);
+        self::assertInstanceOf(WalletAccount::class, $asset);
+        self::assertInstanceOf(WalletAccount::class, $clearing);
         if (null !== $thirdAccountId) {
-            self::assertInstanceOf(Account::class, $thirdAccount);
+            self::assertInstanceOf(WalletAccount::class, $thirdAccount);
         }
 
         return [$asset, $clearing, $thirdAccount];

@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace App\Walleting\Tests\Posting;
 
-use App\Walleting\Posting\PostingExecutionMetric;
+use App\Walleting\ValueObject\Posting\WalletPostingExecutionMetric;
 use PHPUnit\Framework\TestCase;
 
 final class PostingExecutionMetricTest extends TestCase
 {
     public function testContextContainsOnlyOperationalFields(): void
     {
-        $metric = new PostingExecutionMetric('retry', 'transfer', 2, 2, 'lock_timeout', 101, 142, 101);
+        $metric = new WalletPostingExecutionMetric('retry', 'transfer', 2, 2, 'lock_timeout', 101, 142, 101);
 
         self::assertSame([
             'event' => 'retry',

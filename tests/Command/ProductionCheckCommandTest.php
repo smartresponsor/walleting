@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Walleting\Tests\Command;
 
-use App\Walleting\Command\ProductionCheckCommand;
+use App\Walleting\Command\WalletProductionCheckCommand;
 use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Console\Command\Command;
@@ -20,7 +20,7 @@ final class ProductionCheckCommandTest extends TestCase
             'DATABASE_URL' => 'postgresql://walleting@example/walleting',
             'MESSENGER_TRANSPORT_DSN' => 'doctrine://default?queue_name=walleting_events',
         ], function (): void {
-            $tester = new CommandTester(new ProductionCheckCommand($this->connectionWithCompleteSchema(), $this->prodKernel()));
+            $tester = new CommandTester(new WalletProductionCheckCommand($this->connectionWithCompleteSchema(), $this->prodKernel()));
 
             self::assertSame(Command::SUCCESS, $tester->execute(['--json' => true]));
             $payload = json_decode(trim($tester->getDisplay()), true, flags: JSON_THROW_ON_ERROR);
@@ -37,7 +37,7 @@ final class ProductionCheckCommandTest extends TestCase
             'DATABASE_URL' => 'postgresql://walleting@example/walleting',
             'MESSENGER_TRANSPORT_DSN' => 'in-memory://',
         ], function (): void {
-            $tester = new CommandTester(new ProductionCheckCommand($this->connectionWithCompleteSchema(), $this->prodKernel()));
+            $tester = new CommandTester(new WalletProductionCheckCommand($this->connectionWithCompleteSchema(), $this->prodKernel()));
 
             self::assertSame(Command::FAILURE, $tester->execute(['--json' => true]));
             $payload = json_decode(trim($tester->getDisplay()), true, flags: JSON_THROW_ON_ERROR);
@@ -55,7 +55,7 @@ final class ProductionCheckCommandTest extends TestCase
         ], function (): void {
             $connection = $this->createStub(Connection::class);
             $connection->method('fetchOne')->willThrowException(new \RuntimeException("database error \xB1"));
-            $tester = new CommandTester(new ProductionCheckCommand($connection, $this->prodKernel()));
+            $tester = new CommandTester(new WalletProductionCheckCommand($connection, $this->prodKernel()));
 
             self::assertSame(Command::FAILURE, $tester->execute(['--json' => true]));
             $payload = json_decode(trim($tester->getDisplay()), true, flags: JSON_THROW_ON_ERROR);

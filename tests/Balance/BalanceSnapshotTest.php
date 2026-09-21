@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Walleting\Tests\Balance;
 
-use App\Walleting\Balance\AccountBalanceReconciliation;
-use App\Walleting\Balance\WalletCurrencyBalanceSnapshot;
+use App\Walleting\Snapshot\Balance\WalletCurrencyBalanceSnapshot;
+use App\Walleting\ValueObject\Balance\WalletAccountBalanceReconciliation;
 use PHPUnit\Framework\TestCase;
 
 final class BalanceSnapshotTest extends TestCase
@@ -21,9 +21,9 @@ final class BalanceSnapshotTest extends TestCase
 
     public function testReconciliationRequiresBalanceAndPostingCountAgreement(): void
     {
-        $consistent = new AccountBalanceReconciliation('account-1', 'USD', 1250, 1250, 3, 3);
-        $balanceMismatch = new AccountBalanceReconciliation('account-1', 'USD', 1200, 1250, 3, 3);
-        $countMismatch = new AccountBalanceReconciliation('account-1', 'USD', 1250, 1250, 2, 3);
+        $consistent = new WalletAccountBalanceReconciliation('account-1', 'USD', 1250, 1250, 3, 3);
+        $balanceMismatch = new WalletAccountBalanceReconciliation('account-1', 'USD', 1200, 1250, 3, 3);
+        $countMismatch = new WalletAccountBalanceReconciliation('account-1', 'USD', 1250, 1250, 2, 3);
 
         self::assertTrue($consistent->isConsistent());
         self::assertFalse($balanceMismatch->isConsistent());

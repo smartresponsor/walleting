@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace App\Walleting\Tests\Service;
 
-use App\Walleting\Entity\Funding;
-use App\Walleting\Entity\PaymentInstrument;
-use App\Walleting\Entity\ReconciliationMismatch;
-use App\Walleting\Entity\ReconciliationRun;
 use App\Walleting\Entity\Wallet;
-use App\Walleting\Enum\PaymentInstrumentType;
-use App\Walleting\Enum\ReconciliationRunStatus;
-use App\Walleting\Service\ProviderSettlementReconciliationService;
-use App\Walleting\Service\ProviderSettlementRecord;
-use App\Walleting\Service\ReconciliationService;
+use App\Walleting\Entity\WalletFunding;
+use App\Walleting\Entity\WalletPaymentInstrument;
+use App\Walleting\Entity\WalletReconciliationMismatch;
+use App\Walleting\Entity\WalletReconciliationRun;
+use App\Walleting\Enum\WalletPaymentInstrumentType;
+use App\Walleting\Enum\WalletReconciliationRunStatus;
+use App\Walleting\Service\WalletProviderSettlementReconciliationService;
+use App\Walleting\Service\WalletProviderSettlementRecord;
+use App\Walleting\Service\WalletReconciliationService;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\EntityRepository;
 use PHPUnit\Framework\TestCase;
@@ -31,22 +31,22 @@ final class ProviderSettlementReconciliationServiceTest extends TestCase
         $entityManager->method('persist')->willReturnCallback(static function (object $entity) use (&$persisted): void { $persisted[] = $entity; });
 
         $wallet = new Wallet('vendor', 'settlement-unit-wallet');
-        $instrument = new PaymentInstrument($wallet, PaymentInstrumentType::Card, 'stripe', 'pm_settlement_unit', 'Card');
-        $funding = new Funding($wallet, $instrument, 1000, 'USD', 'settlement-unit-funding');
+        $instrument = new WalletPaymentInstrument($wallet, WalletPaymentInstrumentType::Card, 'stripe', 'pm_settlement_unit', 'Card');
+        $funding = new WalletFunding($wallet, $instrument, 1000, 'USD', 'settlement-unit-funding');
         $funding->start();
         $funding->bindProviderOperationReference('ch_settlement_unit');
-        $run = new ReconciliationRun('stripe', 'settlement-unit-run');
+        $run = new WalletReconciliationRun('stripe', 'settlement-unit-run');
 
-        $record = new ProviderSettlementRecord(' funding ', ' ch_settlement_unit ', 1000, 'usd', 'processing');
+        $record = new WalletProviderSettlementRecord(' funding ', ' ch_settlement_unit ', 1000, 'usd', 'processing');
         self::assertSame('funding', $record->operation);
         self::assertSame('USD', $record->currency);
 
-        (new ProviderSettlementReconciliationService(new ReconciliationService($entityManager)))->execute($run, [$record], [$funding]);
+        (new WalletProviderSettlementReconciliationService(new WalletReconciliationService($entityManager)))->execute($run, [$record], [$funding]);
 
-        self::assertSame(ReconciliationRunStatus::Completed, $run->status());
+        self::assertSame(WalletReconciliationRunStatus::Completed, $run->status());
         self::assertSame(1, $run->matchedCount());
         self::assertSame(0, $run->mismatchCount());
-        self::assertCount(0, array_filter($persisted, static fn (object $entity): bool => $entity instanceof ReconciliationMismatch));
+        self::assertCount(0, array_filter($persisted, static fn (object $entity): bool => $entity instanceof WalletReconciliationMismatch));
     }
 
     public function testSettlementReconciliationRequiresProviderOperationReference(): void
@@ -57,12 +57,12 @@ final class ProviderSettlementReconciliationServiceTest extends TestCase
         $entityManager->method('wrapInTransaction')->willReturnCallback(static fn (callable $callback): mixed => $callback());
 
         $wallet = new Wallet('vendor', 'settlement-reference-wallet');
-        $instrument = new PaymentInstrument($wallet, PaymentInstrumentType::Card, 'stripe', 'pm_settlement_reference', 'Card');
-        $funding = new Funding($wallet, $instrument, 500, 'USD', 'settlement-reference-funding');
+        $instrument = new WalletPaymentInstrument($wallet, WalletPaymentInstrumentType::Card, 'stripe', 'pm_settlement_reference', 'Card');
+        $funding = new WalletFunding($wallet, $instrument, 500, 'USD', 'settlement-reference-funding');
 
         $this->expectException(\DomainException::class);
         $this->expectExceptionMessage('Provider settlement reconciliation requires a bound provider operation reference.');
-        (new ProviderSettlementReconciliationService(new ReconciliationService($entityManager)))->execute(new ReconciliationRun('stripe', 'settlement-reference-run'), [], [$funding]);
+        (new WalletProviderSettlementReconciliationService(new WalletReconciliationService($entityManager)))->execute(new WalletReconciliationRun('stripe', 'settlement-reference-run'), [], [$funding]);
     }
 
     public function testLocalOperationProviderMustMatchRunProvider(): void
@@ -73,10 +73,10 @@ final class ProviderSettlementReconciliationServiceTest extends TestCase
         $entityManager->method('wrapInTransaction')->willReturnCallback(static fn (callable $callback): mixed => $callback());
 
         $wallet = new Wallet('vendor', 'settlement-provider-wallet');
-        $instrument = new PaymentInstrument($wallet, PaymentInstrumentType::Card, 'adyen', 'pm_settlement_provider', 'Card');
-        $funding = new Funding($wallet, $instrument, 500, 'USD', 'settlement-provider-funding');
+        $instrument = new WalletPaymentInstrument($wallet, WalletPaymentInstrumentType::Card, 'adyen', 'pm_settlement_provider', 'Card');
+        $funding = new WalletFunding($wallet, $instrument, 500, 'USD', 'settlement-provider-funding');
 
         $this->expectException(\DomainException::class);
-        (new ProviderSettlementReconciliationService(new ReconciliationService($entityManager)))->execute(new ReconciliationRun('stripe', 'settlement-provider-run'), [], [$funding]);
+        (new WalletProviderSettlementReconciliationService(new WalletReconciliationService($entityManager)))->execute(new WalletReconciliationRun('stripe', 'settlement-provider-run'), [], [$funding]);
     }
 }

@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-use App\Walleting\Entity\Account;
+use App\Walleting\Entity\WalletAccount;
 use App\Walleting\Kernel;
-use App\Walleting\Ledger\PostingInstruction;
-use App\Walleting\Service\NullPostingTelemetry;
-use App\Walleting\Service\OutboxService;
-use App\Walleting\Service\PostingDbalExecutor;
-use App\Walleting\Service\PostingRetryPolicy;
-use App\Walleting\Service\PostingService;
+use App\Walleting\ValueObject\Ledger\WalletPostingInstruction;
+use App\Walleting\Service\WalletNullPostingTelemetry;
+use App\Walleting\Service\WalletOutboxService;
+use App\Walleting\Service\WalletPostingDbalExecutor;
+use App\Walleting\Policy\Posting\WalletPostingRetryPolicy;
+use App\Walleting\Service\WalletPostingService;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
 
@@ -48,33 +48,33 @@ try {
         usleep(1000);
     }
 
-    $accountA = $entityManager->find(Account::class, $accountAId);
-    $accountB = $entityManager->find(Account::class, $accountBId);
-    if (!$accountA instanceof Account || !$accountB instanceof Account) {
+    $accountA = $entityManager->find(WalletAccount::class, $accountAId);
+    $accountB = $entityManager->find(WalletAccount::class, $accountBId);
+    if (!$accountA instanceof WalletAccount || !$accountB instanceof WalletAccount) {
         throw new RuntimeException('Posting worker accounts could not be loaded.');
     }
 
-    $outboxService = new OutboxService($entityManager, $connection);
-    $retryPolicy = new PostingRetryPolicy(
+    $outboxService = new WalletOutboxService($entityManager, $connection);
+    $retryPolicy = new WalletPostingRetryPolicy(
         maxAttempts: (int) (getenv('WALLETING_POSTING_MAX_ATTEMPTS') ?: 3),
         baseDelayMilliseconds: (int) (getenv('WALLETING_POSTING_BASE_DELAY_MS') ?: 25),
         maxDelayMilliseconds: (int) (getenv('WALLETING_POSTING_MAX_DELAY_MS') ?: 250),
     );
-    $service = new PostingService(
+    $service = new WalletPostingService(
         $entityManager,
         $outboxService,
-        new PostingDbalExecutor(
+        new WalletPostingDbalExecutor(
             $connection,
             $outboxService,
             $retryPolicy,
-            new NullPostingTelemetry(),
+            new WalletNullPostingTelemetry(),
             (int) (getenv('WALLETING_POSTING_LOCK_TIMEOUT_MS') ?: 1000),
         ),
     );
 
     $transaction = $service->transfer($idempotencyKey, [
-        new PostingInstruction($accountA, -$amount),
-        new PostingInstruction($accountB, $amount),
+        new WalletPostingInstruction($accountA, -$amount),
+        new WalletPostingInstruction($accountB, $amount),
     ], ['operation' => 'concurrency_transfer']);
 
     fwrite(STDOUT, json_encode([

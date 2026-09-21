@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Walleting\Tests\Integration;
 
-use App\Walleting\Entity\OutboxMessage;
-use App\Walleting\Outbox\OutboxMessageHandlerInterface;
-use App\Walleting\Service\OutboxDispatcher;
-use App\Walleting\Service\OutboxService;
+use App\Walleting\Entity\WalletOutboxMessage;
+use App\Walleting\Handler\Outbox\WalletOutboxMessageHandlerInterface;
+use App\Walleting\Service\WalletOutboxDispatcher;
+use App\Walleting\Service\WalletOutboxService;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
@@ -29,13 +29,13 @@ final class PostgreSqlOutboxDispatchOneTest extends KernelTestCase
 
     public function testSelectedDispatchDoesNotClaimOtherDispatchableMessages(): void
     {
-        $service = new OutboxService($this->entityManager, $this->connection);
+        $service = new WalletOutboxService($this->entityManager, $this->connection);
         $this->enqueue($service, 'first');
         $this->enqueue($service, 'selected');
         $firstId = (string) $this->connection->fetchOne("SELECT id FROM outbox_message WHERE deduplication_key = 'posting.dispatch.one:first'");
         $selectedId = (string) $this->connection->fetchOne("SELECT id FROM outbox_message WHERE deduplication_key = 'posting.dispatch.one:selected'");
         $handledIds = [];
-        $handler = new class($handledIds) implements OutboxMessageHandlerInterface {
+        $handler = new class($handledIds) implements WalletOutboxMessageHandlerInterface {
             public function __construct(private array &$handledIds)
             {
             }
@@ -45,12 +45,12 @@ final class PostgreSqlOutboxDispatchOneTest extends KernelTestCase
                 return 'posting.dispatch.one.test' === $messageType;
             }
 
-            public function handle(OutboxMessage $message): void
+            public function handle(WalletOutboxMessage $message): void
             {
                 $this->handledIds[] = $message->id()->toRfc4122();
             }
         };
-        $dispatcher = new OutboxDispatcher($service, [$handler]);
+        $dispatcher = new WalletOutboxDispatcher($service, [$handler]);
 
         $report = $dispatcher->dispatchOneById($selectedId);
 
@@ -65,21 +65,21 @@ final class PostgreSqlOutboxDispatchOneTest extends KernelTestCase
 
     public function testSelectedDispatchUsesNormalFailureAndRetrySemantics(): void
     {
-        $service = new OutboxService($this->entityManager, $this->connection);
+        $service = new WalletOutboxService($this->entityManager, $this->connection);
         $this->enqueue($service, 'failure');
         $id = (string) $this->connection->fetchOne("SELECT id FROM outbox_message WHERE deduplication_key = 'posting.dispatch.one:failure'");
-        $handler = new class implements OutboxMessageHandlerInterface {
+        $handler = new class implements WalletOutboxMessageHandlerInterface {
             public function supports(string $messageType): bool
             {
                 return 'posting.dispatch.one.test' === $messageType;
             }
 
-            public function handle(OutboxMessage $message): void
+            public function handle(WalletOutboxMessage $message): void
             {
                 throw new \RuntimeException('selected delivery failed');
             }
         };
-        $dispatcher = new OutboxDispatcher($service, [$handler], maxAttempts: 8, baseDelaySeconds: 30, maxDelaySeconds: 3600);
+        $dispatcher = new WalletOutboxDispatcher($service, [$handler], maxAttempts: 8, baseDelaySeconds: 30, maxDelaySeconds: 3600);
 
         $report = $dispatcher->dispatchOneById($id);
 
@@ -93,10 +93,10 @@ final class PostgreSqlOutboxDispatchOneTest extends KernelTestCase
 
     public function testNonDispatchableSelectedMessageIsRejectedWithoutMutation(): void
     {
-        $service = new OutboxService($this->entityManager, $this->connection);
+        $service = new WalletOutboxService($this->entityManager, $this->connection);
         $this->enqueue($service, 'future', new \DateTimeImmutable('+1 hour'));
         $id = (string) $this->connection->fetchOne("SELECT id FROM outbox_message WHERE deduplication_key = 'posting.dispatch.one:future'");
-        $dispatcher = new OutboxDispatcher($service, []);
+        $dispatcher = new WalletOutboxDispatcher($service, []);
 
         try {
             $dispatcher->dispatchOneById($id);
@@ -108,7 +108,7 @@ final class PostgreSqlOutboxDispatchOneTest extends KernelTestCase
         self::assertSame(0, (int) $this->connection->fetchOne('SELECT attempt_count FROM outbox_message WHERE id = ?', [$id]));
     }
 
-    private function enqueue(OutboxService $service, string $suffix, ?\DateTimeImmutable $availableAt = null): void
+    private function enqueue(WalletOutboxService $service, string $suffix, ?\DateTimeImmutable $availableAt = null): void
     {
         $this->connection->transactional(function () use ($service, $suffix, $availableAt): void {
             $service->enqueueOperationalDbal('posting.dispatch.one.test', 'posting.dispatch.one:'.$suffix, ['suffix' => $suffix]);

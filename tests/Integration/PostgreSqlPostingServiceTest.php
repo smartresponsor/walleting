@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace App\Walleting\Tests\Integration;
 
-use App\Walleting\Entity\Account;
-use App\Walleting\Enum\TransactionStatus;
-use App\Walleting\Ledger\PostingInstruction;
-use App\Walleting\Service\DatabasePostingTelemetry;
-use App\Walleting\Service\OutboxService;
-use App\Walleting\Service\PostingDbalExecutor;
-use App\Walleting\Service\PostingRetryPolicy;
-use App\Walleting\Service\PostingService;
+use App\Walleting\Entity\WalletAccount;
+use App\Walleting\Enum\WalletTransactionStatus;
+use App\Walleting\Policy\Posting\WalletPostingRetryPolicy;
+use App\Walleting\Service\WalletDatabasePostingTelemetry;
+use App\Walleting\Service\WalletOutboxService;
+use App\Walleting\Service\WalletPostingDbalExecutor;
+use App\Walleting\Service\WalletPostingService;
+use App\Walleting\ValueObject\Ledger\WalletPostingInstruction;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\ParameterType;
 use Doctrine\ORM\EntityManagerInterface;
@@ -36,27 +36,27 @@ final class PostgreSqlPostingServiceTest extends KernelTestCase
     {
         $this->connection->executeStatement('DELETE FROM posting_metric_sample');
         [$assetId, $clearingId] = $this->seedAccounts();
-        $asset = $this->entityManager->find(Account::class, $assetId);
-        $clearing = $this->entityManager->find(Account::class, $clearingId);
-        self::assertInstanceOf(Account::class, $asset);
-        self::assertInstanceOf(Account::class, $clearing);
+        $asset = $this->entityManager->find(WalletAccount::class, $assetId);
+        $clearing = $this->entityManager->find(WalletAccount::class, $clearingId);
+        self::assertInstanceOf(WalletAccount::class, $asset);
+        self::assertInstanceOf(WalletAccount::class, $clearing);
 
-        $outboxService = new OutboxService($this->entityManager, $this->connection);
-        $telemetry = new DatabasePostingTelemetry($this->connection, new NullLogger());
-        $service = new PostingService(
+        $outboxService = new WalletOutboxService($this->entityManager, $this->connection);
+        $telemetry = new WalletDatabasePostingTelemetry($this->connection, new NullLogger());
+        $service = new WalletPostingService(
             $this->entityManager,
             $outboxService,
-            new PostingDbalExecutor($this->connection, $outboxService, new PostingRetryPolicy(), $telemetry),
+            new WalletPostingDbalExecutor($this->connection, $outboxService, new WalletPostingRetryPolicy(), $telemetry),
         );
         $key = 'dbal-hot-path-'.Uuid::v7();
         $instructions = [
-            new PostingInstruction($asset, 1250),
-            new PostingInstruction($clearing, -1250),
+            new WalletPostingInstruction($asset, 1250),
+            new WalletPostingInstruction($clearing, -1250),
         ];
 
         $transaction = $service->credit($key, $instructions, ['operation' => 'integration_credit']);
 
-        self::assertSame(TransactionStatus::Posted, $transaction->status());
+        self::assertSame(WalletTransactionStatus::Posted, $transaction->status());
         self::assertSame($key, $transaction->idempotencyKey());
         self::assertSame(2, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM posting WHERE transaction_id = ?', [$transaction->id()->toRfc4122()]));
         self::assertSame(1250, (int) $this->connection->fetchOne('SELECT balance_minor FROM account_balance WHERE account_id = ?', [$assetId]));

@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace App\Walleting\Tests\Integration;
 
-use App\Walleting\Entity\Account;
-use App\Walleting\Entity\LedgerTransaction;
-use App\Walleting\Entity\Reservation;
 use App\Walleting\Entity\Wallet;
-use App\Walleting\Enum\AccountCategory;
-use App\Walleting\Enum\TransactionType;
+use App\Walleting\Entity\WalletAccount;
+use App\Walleting\Entity\WalletLedgerTransaction;
+use App\Walleting\Entity\WalletReservation;
+use App\Walleting\Enum\WalletAccountCategory;
+use App\Walleting\Enum\WalletTransactionType;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception\DriverException;
 use Doctrine\ORM\EntityManagerInterface;
@@ -31,48 +31,48 @@ final class PostgreSqlFinancialOperationLinkSemanticsTest extends KernelTestCase
 
     public function testDatabaseRejectsInverseOfInverseLink(): void
     {
-        $source = $this->persistTransaction(TransactionType::Refund, 'link-semantic-source-refund');
-        $result = $this->persistTransaction(TransactionType::Reverse, 'link-semantic-result-reverse');
+        $source = $this->persistTransaction(WalletTransactionType::Refund, 'link-semantic-source-refund');
+        $result = $this->persistTransaction(WalletTransactionType::Reverse, 'link-semantic-result-reverse');
 
         $this->expectSemanticViolation('refund and reverse cannot originate from an inverse transaction');
-        $this->insertLink(TransactionType::Reverse, $source, $result);
+        $this->insertLink(WalletTransactionType::Reverse, $source, $result);
     }
 
     public function testDatabaseRejectsResultTypeThatDoesNotMatchOperation(): void
     {
-        $source = $this->persistTransaction(TransactionType::Credit, 'link-semantic-source-credit');
-        $result = $this->persistTransaction(TransactionType::Reverse, 'link-semantic-result-mismatch');
+        $source = $this->persistTransaction(WalletTransactionType::Credit, 'link-semantic-source-credit');
+        $result = $this->persistTransaction(WalletTransactionType::Reverse, 'link-semantic-result-mismatch');
 
         $this->expectSemanticViolation('financial operation result type must match operation type');
-        $this->insertLink(TransactionType::Refund, $source, $result);
+        $this->insertLink(WalletTransactionType::Refund, $source, $result);
     }
 
     public function testDatabaseRejectsCaptureThatDoesNotOriginateFromReserve(): void
     {
         $wallet = new Wallet('vendor', 'link-semantic-wallet');
-        $account = new Account($wallet, 'reserved', 'USD', AccountCategory::Reserve);
-        $source = new LedgerTransaction(TransactionType::Credit, 'link-semantic-capture-source');
-        $result = new LedgerTransaction(TransactionType::Capture, 'link-semantic-capture-result');
-        $reservation = new Reservation($wallet, $account, $source, 500, 'USD', 'link-semantic-reservation');
+        $account = new WalletAccount($wallet, 'reserved', 'USD', WalletAccountCategory::Reserve);
+        $source = new WalletLedgerTransaction(WalletTransactionType::Credit, 'link-semantic-capture-source');
+        $result = new WalletLedgerTransaction(WalletTransactionType::Capture, 'link-semantic-capture-result');
+        $reservation = new WalletReservation($wallet, $account, $source, 500, 'USD', 'link-semantic-reservation');
         foreach ([$wallet, $account, $source, $result, $reservation] as $entity) {
             $this->entityManager->persist($entity);
         }
         $this->entityManager->flush();
 
         $this->expectSemanticViolation('capture and release must originate from a reserve transaction');
-        $this->insertLink(TransactionType::Capture, $source, $result, $reservation);
+        $this->insertLink(WalletTransactionType::Capture, $source, $result, $reservation);
     }
 
-    private function persistTransaction(TransactionType $type, string $idempotencyKey): LedgerTransaction
+    private function persistTransaction(WalletTransactionType $type, string $idempotencyKey): WalletLedgerTransaction
     {
-        $transaction = new LedgerTransaction($type, $idempotencyKey);
+        $transaction = new WalletLedgerTransaction($type, $idempotencyKey);
         $this->entityManager->persist($transaction);
         $this->entityManager->flush();
 
         return $transaction;
     }
 
-    private function insertLink(TransactionType $operationType, LedgerTransaction $source, LedgerTransaction $result, ?Reservation $reservation = null): void
+    private function insertLink(WalletTransactionType $operationType, WalletLedgerTransaction $source, WalletLedgerTransaction $result, ?WalletReservation $reservation = null): void
     {
         $this->connection->insert('financial_operation_link', [
             'id' => Uuid::v7()->toRfc4122(),

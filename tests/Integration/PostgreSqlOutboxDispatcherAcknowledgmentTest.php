@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Walleting\Tests\Integration;
 
-use App\Walleting\Entity\OutboxMessage;
-use App\Walleting\Enum\OutboxMessageStatus;
-use App\Walleting\Outbox\OutboxMessageHandlerInterface;
-use App\Walleting\Service\OutboxDispatcher;
-use App\Walleting\Service\OutboxService;
+use App\Walleting\Entity\WalletOutboxMessage;
+use App\Walleting\Enum\WalletOutboxMessageStatus;
+use App\Walleting\Handler\Outbox\WalletOutboxMessageHandlerInterface;
+use App\Walleting\Service\WalletOutboxDispatcher;
+use App\Walleting\Service\WalletOutboxService;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
@@ -33,7 +33,7 @@ final class PostgreSqlOutboxDispatcherAcknowledgmentTest extends KernelTestCase
         $service = $this->outboxService();
         $this->enqueue('success');
         $handledStatus = null;
-        $handler = new class($handledStatus) implements OutboxMessageHandlerInterface {
+        $handler = new class($handledStatus) implements WalletOutboxMessageHandlerInterface {
             public function __construct(private mixed &$handledStatus)
             {
             }
@@ -43,16 +43,16 @@ final class PostgreSqlOutboxDispatcherAcknowledgmentTest extends KernelTestCase
                 return 'posting.dispatch.ack.test' === $messageType;
             }
 
-            public function handle(OutboxMessage $message): void
+            public function handle(WalletOutboxMessage $message): void
             {
                 $this->handledStatus = $message->status();
             }
         };
-        $dispatcher = new OutboxDispatcher($service, [$handler]);
+        $dispatcher = new WalletOutboxDispatcher($service, [$handler]);
 
         $report = $dispatcher->dispatchBatchReport(1);
 
-        self::assertSame(OutboxMessageStatus::Claimed, $handledStatus);
+        self::assertSame(WalletOutboxMessageStatus::Claimed, $handledStatus);
         self::assertSame(1, $report->dispatched);
         self::assertSame(0, $report->retryScheduled);
         self::assertSame('dispatched', (string) $this->connection->fetchOne("SELECT status FROM outbox_message WHERE deduplication_key = 'posting.dispatch.ack.test:success'"));
@@ -64,18 +64,18 @@ final class PostgreSqlOutboxDispatcherAcknowledgmentTest extends KernelTestCase
     {
         $service = $this->outboxService();
         $this->enqueue('failure');
-        $handler = new class implements OutboxMessageHandlerInterface {
+        $handler = new class implements WalletOutboxMessageHandlerInterface {
             public function supports(string $messageType): bool
             {
                 return 'posting.dispatch.ack.test' === $messageType;
             }
 
-            public function handle(OutboxMessage $message): void
+            public function handle(WalletOutboxMessage $message): void
             {
                 throw new \RuntimeException('transport unavailable');
             }
         };
-        $dispatcher = new OutboxDispatcher($service, [$handler], maxAttempts: 8, baseDelaySeconds: 30, maxDelaySeconds: 3600);
+        $dispatcher = new WalletOutboxDispatcher($service, [$handler], maxAttempts: 8, baseDelaySeconds: 30, maxDelaySeconds: 3600);
 
         $before = new \DateTimeImmutable();
         $report = $dispatcher->dispatchBatchReport(1);
@@ -96,18 +96,18 @@ final class PostgreSqlOutboxDispatcherAcknowledgmentTest extends KernelTestCase
     {
         $service = $this->outboxService();
         $this->enqueue('exhaustion');
-        $handler = new class implements OutboxMessageHandlerInterface {
+        $handler = new class implements WalletOutboxMessageHandlerInterface {
             public function supports(string $messageType): bool
             {
                 return 'posting.dispatch.ack.test' === $messageType;
             }
 
-            public function handle(OutboxMessage $message): void
+            public function handle(WalletOutboxMessage $message): void
             {
                 throw new \RuntimeException('persistent transport failure');
             }
         };
-        $dispatcher = new OutboxDispatcher($service, [$handler], maxAttempts: 8, baseDelaySeconds: 30, maxDelaySeconds: 3600);
+        $dispatcher = new WalletOutboxDispatcher($service, [$handler], maxAttempts: 8, baseDelaySeconds: 30, maxDelaySeconds: 3600);
         $expectedDelays = [30, 60, 120, 240, 480, 960, 1920];
 
         foreach ($expectedDelays as $index => $expectedDelay) {
@@ -148,18 +148,18 @@ final class PostgreSqlOutboxDispatcherAcknowledgmentTest extends KernelTestCase
     {
         $service = $this->outboxService();
         $this->enqueue('backoff-cap');
-        $handler = new class implements OutboxMessageHandlerInterface {
+        $handler = new class implements WalletOutboxMessageHandlerInterface {
             public function supports(string $messageType): bool
             {
                 return 'posting.dispatch.ack.test' === $messageType;
             }
 
-            public function handle(OutboxMessage $message): void
+            public function handle(WalletOutboxMessage $message): void
             {
                 throw new \RuntimeException('temporary failure');
             }
         };
-        $dispatcher = new OutboxDispatcher($service, [$handler], maxAttempts: 8, baseDelaySeconds: 30, maxDelaySeconds: 100);
+        $dispatcher = new WalletOutboxDispatcher($service, [$handler], maxAttempts: 8, baseDelaySeconds: 30, maxDelaySeconds: 100);
         $expectedDelays = [30, 60, 100, 100];
 
         foreach ($expectedDelays as $index => $expectedDelay) {
@@ -185,8 +185,8 @@ final class PostgreSqlOutboxDispatcherAcknowledgmentTest extends KernelTestCase
         });
     }
 
-    private function outboxService(): OutboxService
+    private function outboxService(): WalletOutboxService
     {
-        return new OutboxService($this->entityManager, $this->connection);
+        return new WalletOutboxService($this->entityManager, $this->connection);
     }
 }

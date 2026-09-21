@@ -356,3 +356,24 @@ Required local closure:
 Что имеем? Walleting's financial/runtime acceptance path is materially stronger and reproducible: package topology, production manifest, schema parity, unit/static quality, coverage instrumentation and a clean-database PostgreSQL integration run are all real rather than inferred.
 
 Что осталось до RC? Complete the explicit canonical topology/package-identity migration for Canon001/006/018/020, add the Canon041 browser/UI tooling contract and refresh Gating/coverage evidence. These are now the known RC blockers; the ledger correctness/integration blocker found in this pass is closed.
+
+### 2026-09-21 canonical topology and identity closure
+
+- Added the Canon041 standalone behavioral-test toolchain: direct `symfony/test-pack`, `symfony/panther`, repository-local `@playwright/test`, Playwright config, and an executable browser smoke. `npm run smoke` is green.
+- Added a reproducible Canon042 evidence producer. It inventories Walleting-owned application/UI surfaces, fails closed if such a surface appears without an explicit coverage inventory, and currently proves that Walleting owns no business HTTP/UI surface.
+- Closed Canon034 repository-noise coverage for Node, Playwright output, IDE state, and OS noise.
+- Migrated subject-first source trees to technical-role-first roots. Canon001, Canon006 and Canon020 now pass.
+- Migrated the canonical Composer identity from `smartresponsor/walleting` to `walleting/wallet`, preserving `App\\Walleting\\` as the component namespace and standardizing component-owned PHP declarations on the `Wallet*` subject vocabulary.
+- Resolved the balance snapshot naming collision explicitly with `WalletReadBalanceSnapshot` rather than collapsing distinct read models into one type.
+- Renamed the provider-event Doctrine entity to `WalletProviderEventEntity`; the underlying `provider_event` table and persistence semantics remain unchanged. This closes the generic typed-layer suffix finding without moving a Doctrine entity into an Event tree.
+- Composer lock metadata was synchronized without dependency upgrades after the package-identity change.
+- Post-migration validation is green: strict Composer lock validation, PHPStan, Symfony container lint, Doctrine mapping, PHPUnit 115 tests / 344 assertions, production manifest validation, and schema parity.
+- PHP coverage evidence was regenerated after the rename: 45.31% lines, 38.22% methods, 64.91% branches, 0.95% paths. This remains explicit growth/test debt, not a hidden pass.
+- Final clean-database PostgreSQL acceptance after the identity migration is green: 28 migrations / 288 SQL queries, production readiness all `ok:true`, 53 integration tests / 491 assertions, and the isolated database was dropped.
+- Canonical Gating after the identity migration reports zero hard failures. Canon001, Canon006, Canon018, Canon020, Canon041 and the generic typed-layer rule all pass.
+- Remaining warnings are documentation/test-depth debt only: Canon031 PHPDoc coverage and Canon040 executable PHP coverage. Canon042 evidence was regenerated after the final source rename and its Playwright smoke remains green.
+- Unrelated untracked paths `.console-mcp/`, `.gating/`, and `PRODUCT_CAPABILITY_AUDIT.adoc` remain intentionally untouched.
+
+Что имеем? All previously identified RC hard blockers are closed, the canonical identity/topology migration is executable and verified, and the ledger/runtime acceptance remains green after the migration.
+
+Что осталось до RC? Only warning-level PHPDoc and PHP coverage debt remains. Treat that as a separate quality-growth workstream unless release policy is changed to promote warnings to hard blockers; otherwise the RC implementation itself is ready for bounded commit/push.

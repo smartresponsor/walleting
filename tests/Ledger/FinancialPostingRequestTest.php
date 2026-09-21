@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace App\Walleting\Tests\Ledger;
 
-use App\Walleting\Entity\Account;
 use App\Walleting\Entity\Wallet;
-use App\Walleting\Enum\AccountCategory;
-use App\Walleting\Enum\TransactionType;
-use App\Walleting\Ledger\FinancialPostingRequest;
-use App\Walleting\Ledger\PostingInstruction;
+use App\Walleting\Entity\WalletAccount;
+use App\Walleting\Enum\WalletAccountCategory;
+use App\Walleting\Enum\WalletTransactionType;
+use App\Walleting\ValueObject\Ledger\WalletFinancialPostingRequest;
+use App\Walleting\ValueObject\Ledger\WalletPostingInstruction;
 use PHPUnit\Framework\TestCase;
 
 final class FinancialPostingRequestTest extends TestCase
@@ -18,15 +18,15 @@ final class FinancialPostingRequestTest extends TestCase
     {
         [$cash, $clearing] = $this->accounts();
         $instructions = [
-            new PostingInstruction($cash, 1000),
-            new PostingInstruction($clearing, -1000),
+            new WalletPostingInstruction($cash, 1000),
+            new WalletPostingInstruction($clearing, -1000),
         ];
 
-        $first = new FinancialPostingRequest(TransactionType::Credit, $instructions, [
+        $first = new WalletFinancialPostingRequest(WalletTransactionType::Credit, $instructions, [
             'operation' => 'funding',
             'context' => ['b' => 2, 'a' => 1],
         ]);
-        $second = new FinancialPostingRequest(TransactionType::Credit, $instructions, [
+        $second = new WalletFinancialPostingRequest(WalletTransactionType::Credit, $instructions, [
             'context' => ['a' => 1, 'b' => 2],
             'operation' => 'funding',
         ]);
@@ -38,13 +38,13 @@ final class FinancialPostingRequestTest extends TestCase
     public function testPostingSequenceChangesCanonicalHash(): void
     {
         [$cash, $clearing] = $this->accounts();
-        $first = new FinancialPostingRequest(TransactionType::Transfer, [
-            new PostingInstruction($cash, -500),
-            new PostingInstruction($clearing, 500),
+        $first = new WalletFinancialPostingRequest(WalletTransactionType::Transfer, [
+            new WalletPostingInstruction($cash, -500),
+            new WalletPostingInstruction($clearing, 500),
         ]);
-        $second = new FinancialPostingRequest(TransactionType::Transfer, [
-            new PostingInstruction($clearing, 500),
-            new PostingInstruction($cash, -500),
+        $second = new WalletFinancialPostingRequest(WalletTransactionType::Transfer, [
+            new WalletPostingInstruction($clearing, 500),
+            new WalletPostingInstruction($cash, -500),
         ]);
 
         self::assertNotSame($first->hash(), $second->hash());
@@ -54,13 +54,13 @@ final class FinancialPostingRequestTest extends TestCase
     {
         [$cash, $clearing] = $this->accounts();
         $instructions = [
-            new PostingInstruction($cash, 100),
-            new PostingInstruction($clearing, -100),
+            new WalletPostingInstruction($cash, 100),
+            new WalletPostingInstruction($clearing, -100),
         ];
 
         self::assertNotSame(
-            (new FinancialPostingRequest(TransactionType::Credit, $instructions))->hash(),
-            (new FinancialPostingRequest(TransactionType::Transfer, $instructions))->hash(),
+            (new WalletFinancialPostingRequest(WalletTransactionType::Credit, $instructions))->hash(),
+            (new WalletFinancialPostingRequest(WalletTransactionType::Transfer, $instructions))->hash(),
         );
     }
 
@@ -70,8 +70,8 @@ final class FinancialPostingRequestTest extends TestCase
         $wallet = new Wallet('vendor', 'financial-request-vendor');
 
         return [
-            new Account($wallet, 'cash', 'USD', AccountCategory::Asset),
-            new Account($wallet, 'clearing', 'USD', AccountCategory::Clearing),
+            new WalletAccount($wallet, 'cash', 'USD', WalletAccountCategory::Asset),
+            new WalletAccount($wallet, 'clearing', 'USD', WalletAccountCategory::Clearing),
         ];
     }
 }

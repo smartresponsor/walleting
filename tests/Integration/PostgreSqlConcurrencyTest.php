@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Walleting\Tests\Integration;
 
-use App\Walleting\Service\OutboxService;
+use App\Walleting\Service\WalletOutboxService;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\DriverManager;
 use Doctrine\DBAL\Exception;
@@ -106,8 +106,8 @@ final class PostgreSqlConcurrencyTest extends KernelTestCase
         $transactionId = $this->seedReferenceTransaction();
         [$firstId, $secondId] = $this->seedClaimedOutboxMessages($transactionId);
         $locker = DriverManager::getConnection($this->connection->getParams());
-        $outboxService = self::getContainer()->get(OutboxService::class);
-        self::assertInstanceOf(OutboxService::class, $outboxService);
+        $outboxService = self::getContainer()->get(WalletOutboxService::class);
+        self::assertInstanceOf(WalletOutboxService::class, $outboxService);
 
         try {
             $locker->beginTransaction();

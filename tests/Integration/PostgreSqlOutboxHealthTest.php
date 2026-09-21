@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Walleting\Tests\Integration;
 
-use App\Walleting\Entity\OutboxMessage;
-use App\Walleting\Outbox\OutboxMessageHandlerInterface;
-use App\Walleting\Service\OutboxDeadLetterService;
-use App\Walleting\Service\OutboxDispatcher;
-use App\Walleting\Service\OutboxService;
+use App\Walleting\Entity\WalletOutboxMessage;
+use App\Walleting\Handler\Outbox\WalletOutboxMessageHandlerInterface;
+use App\Walleting\Service\WalletOutboxDeadLetterService;
+use App\Walleting\Service\WalletOutboxDispatcher;
+use App\Walleting\Service\WalletOutboxService;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
@@ -30,27 +30,27 @@ final class PostgreSqlOutboxHealthTest extends KernelTestCase
 
     public function testDeadLetterHealthIncludesAgeAndRequeueMetadata(): void
     {
-        $service = new OutboxService($this->entityManager, $this->connection);
+        $service = new WalletOutboxService($this->entityManager, $this->connection);
         $this->connection->transactional(function () use ($service): void {
             $service->enqueueOperationalDbal('posting.health.test', 'posting.health.test:one', ['scope' => 'default']);
         });
-        $handler = new class implements OutboxMessageHandlerInterface {
+        $handler = new class implements WalletOutboxMessageHandlerInterface {
             public function supports(string $messageType): bool
             {
                 return 'posting.health.test' === $messageType;
             }
 
-            public function handle(OutboxMessage $message): void
+            public function handle(WalletOutboxMessage $message): void
             {
                 throw new \RuntimeException('downstream unavailable');
             }
         };
-        $dispatcher = new OutboxDispatcher($service, [$handler], maxAttempts: 1, baseDelaySeconds: 30, maxDelaySeconds: 30);
+        $dispatcher = new WalletOutboxDispatcher($service, [$handler], maxAttempts: 1, baseDelaySeconds: 30, maxDelaySeconds: 30);
         $dispatcher->dispatchBatchReport(1);
         $id = (string) $this->connection->fetchOne("SELECT id FROM outbox_message WHERE deduplication_key = 'posting.health.test:one'");
 
         $this->entityManager->clear();
-        (new OutboxDeadLetterService($this->entityManager))->requeue($id, 'operator-health', 'Repair attempted');
+        (new WalletOutboxDeadLetterService($this->entityManager))->requeue($id, 'operator-health', 'Repair attempted');
         $this->connection->executeStatement("UPDATE outbox_message SET available_at = (CURRENT_TIMESTAMP AT TIME ZONE 'UTC') - INTERVAL '1 second' WHERE id = ?", [$id]);
         $this->entityManager->clear();
         $dispatcher->dispatchBatchReport(1);

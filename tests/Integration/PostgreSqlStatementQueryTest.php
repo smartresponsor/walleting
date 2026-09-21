@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Walleting\Tests\Integration;
 
-use App\Walleting\Entity\Account;
-use App\Walleting\Service\StatementQueryService;
+use App\Walleting\Entity\WalletAccount;
+use App\Walleting\Service\WalletStatementQueryService;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\ParameterType;
 use Doctrine\ORM\EntityManagerInterface;
@@ -43,9 +43,9 @@ final class PostgreSqlStatementQueryTest extends KernelTestCase
             [$counterpartyId, -300],
         ]);
 
-        $account = $this->entityManager->find(Account::class, $accountId);
-        self::assertInstanceOf(Account::class, $account);
-        $service = new StatementQueryService($this->connection);
+        $account = $this->entityManager->find(WalletAccount::class, $accountId);
+        self::assertInstanceOf(WalletAccount::class, $account);
+        $service = new WalletStatementQueryService($this->connection);
 
         $firstPage = $service->statement($account, 2);
         self::assertCount(2, $firstPage->items);

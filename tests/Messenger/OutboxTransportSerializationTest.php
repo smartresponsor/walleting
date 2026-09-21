@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Walleting\Tests\Messenger;
 
-use App\Walleting\Message\OutboxEvent;
+use App\Walleting\Event\Outbox\WalletOutboxEvent;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\Stamp\ErrorDetailsStamp;
@@ -48,9 +48,9 @@ final class OutboxTransportSerializationTest extends KernelTestCase
         self::assertSame('consumer failed', $sent[0]->last(ErrorDetailsStamp::class)?->getExceptionMessage());
     }
 
-    private function event(string $suffix): OutboxEvent
+    private function event(string $suffix): WalletOutboxEvent
     {
-        return new OutboxEvent(
+        return new WalletOutboxEvent(
             messageId: '0198-transport-'.$suffix,
             type: 'posting.slo.state.changed',
             deduplicationKey: 'posting.slo.state.changed:default:'.$suffix,

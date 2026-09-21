@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Walleting\Tests\Service;
 
-use App\Walleting\Service\PostingRetryPolicy;
+use App\Walleting\Policy\Posting\WalletPostingRetryPolicy;
 use Doctrine\DBAL\Driver\Exception as DriverExceptionInterface;
 use Doctrine\DBAL\Exception\ConnectionLost;
 use Doctrine\DBAL\Exception\DeadlockException;
@@ -16,7 +16,7 @@ final class PostingRetryPolicyTest extends TestCase
 {
     public function testRetriesDeadlockAndSerializationFailuresWithinAttemptBudget(): void
     {
-        $policy = new PostingRetryPolicy(maxAttempts: 3, baseDelayMilliseconds: 10, maxDelayMilliseconds: 100);
+        $policy = new WalletPostingRetryPolicy(maxAttempts: 3, baseDelayMilliseconds: 10, maxDelayMilliseconds: 100);
 
         $deadlock = new DeadlockException($this->driverException('40P01'), null);
         $serialization = new DeadlockException($this->driverException('40001'), null);
@@ -29,7 +29,7 @@ final class PostingRetryPolicyTest extends TestCase
 
     public function testRetriesPostgreSqlLockTimeoutSqlState(): void
     {
-        $policy = new PostingRetryPolicy();
+        $policy = new WalletPostingRetryPolicy();
         $exception = new DriverException($this->driverException('55P03'), null);
 
         self::assertSame('lock_timeout', $policy->retryReason($exception));
@@ -38,7 +38,7 @@ final class PostingRetryPolicyTest extends TestCase
 
     public function testDoesNotRetryUniqueBusinessOrConnectionLossFailures(): void
     {
-        $policy = new PostingRetryPolicy();
+        $policy = new WalletPostingRetryPolicy();
 
         self::assertFalse($policy->shouldRetry(new UniqueConstraintViolationException($this->driverException('23505'), null), 1));
         self::assertFalse($policy->shouldRetry(new \RuntimeException('insufficient available balance'), 1));
@@ -47,7 +47,7 @@ final class PostingRetryPolicyTest extends TestCase
 
     public function testBackoffIsBoundedAndExponential(): void
     {
-        $policy = new PostingRetryPolicy(maxAttempts: 5, baseDelayMilliseconds: 10, maxDelayMilliseconds: 25);
+        $policy = new WalletPostingRetryPolicy(maxAttempts: 5, baseDelayMilliseconds: 10, maxDelayMilliseconds: 25);
 
         self::assertSame(10000, $policy->delayMicroseconds(1));
         self::assertSame(20000, $policy->delayMicroseconds(2));

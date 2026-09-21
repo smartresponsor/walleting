@@ -4,22 +4,22 @@ declare(strict_types=1);
 
 namespace App\Walleting\Tests\Service;
 
-use App\Walleting\Entity\Funding;
-use App\Walleting\Entity\PaymentInstrument;
-use App\Walleting\Entity\ProviderEvent;
 use App\Walleting\Entity\Wallet;
-use App\Walleting\Entity\Withdrawal;
-use App\Walleting\Enum\FundingStatus;
-use App\Walleting\Enum\PaymentInstrumentType;
-use App\Walleting\Enum\WithdrawalStatus;
-use App\Walleting\Service\FinancialOperationService;
-use App\Walleting\Service\FundingWithdrawalOrchestrator;
-use App\Walleting\Service\NullPostingTelemetry;
-use App\Walleting\Service\OutboxService;
-use App\Walleting\Service\PostingDbalExecutor;
-use App\Walleting\Service\PostingRetryPolicy;
-use App\Walleting\Service\PostingService;
-use App\Walleting\Service\ProviderEventService;
+use App\Walleting\Entity\WalletFunding;
+use App\Walleting\Entity\WalletPaymentInstrument;
+use App\Walleting\Entity\WalletProviderEventEntity;
+use App\Walleting\Entity\WalletWithdrawal;
+use App\Walleting\Enum\WalletFundingStatus;
+use App\Walleting\Enum\WalletPaymentInstrumentType;
+use App\Walleting\Enum\WalletWithdrawalStatus;
+use App\Walleting\Policy\Posting\WalletPostingRetryPolicy;
+use App\Walleting\Service\WalletFinancialOperationService;
+use App\Walleting\Service\WalletFundingWithdrawalOrchestrator;
+use App\Walleting\Service\WalletNullPostingTelemetry;
+use App\Walleting\Service\WalletOutboxService;
+use App\Walleting\Service\WalletPostingDbalExecutor;
+use App\Walleting\Service\WalletPostingService;
+use App\Walleting\Service\WalletProviderEventService;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\EntityRepository;
@@ -32,12 +32,12 @@ final class FundingWithdrawalOrchestratorTest extends TestCase
         $entityManager = $this->entityManager();
         $orchestrator = $this->orchestrator($entityManager);
         $wallet = new Wallet('vendor', 'orchestration-wallet');
-        $instrument = new PaymentInstrument($wallet, PaymentInstrumentType::Card, 'stripe', 'pm_orchestration', 'Card');
-        $funding = new Funding($wallet, $instrument, 1200, 'USD', 'funding-orchestration-1');
+        $instrument = new WalletPaymentInstrument($wallet, WalletPaymentInstrumentType::Card, 'stripe', 'pm_orchestration', 'Card');
+        $funding = new WalletFunding($wallet, $instrument, 1200, 'USD', 'funding-orchestration-1');
 
         $request = $orchestrator->beginFunding($funding);
 
-        self::assertSame(FundingStatus::Processing, $funding->status());
+        self::assertSame(WalletFundingStatus::Processing, $funding->status());
         self::assertSame('funding', $request->operation);
         self::assertSame($funding->id()->toRfc4122(), $request->operationId);
         self::assertSame('stripe', $request->provider);
@@ -47,7 +47,7 @@ final class FundingWithdrawalOrchestratorTest extends TestCase
 
         $replayed = $orchestrator->beginFunding($funding);
         self::assertSame($request->operationId, $replayed->operationId);
-        self::assertSame(FundingStatus::Processing, $funding->status());
+        self::assertSame(WalletFundingStatus::Processing, $funding->status());
     }
 
     public function testProviderEventMustMatchPaymentInstrumentProvider(): void
@@ -55,10 +55,10 @@ final class FundingWithdrawalOrchestratorTest extends TestCase
         $entityManager = $this->entityManager();
         $orchestrator = $this->orchestrator($entityManager);
         $wallet = new Wallet('vendor', 'provider-mismatch-wallet');
-        $instrument = new PaymentInstrument($wallet, PaymentInstrumentType::Card, 'stripe', 'pm_provider_mismatch', 'Card');
-        $funding = new Funding($wallet, $instrument, 500, 'USD', 'provider-mismatch-funding');
+        $instrument = new WalletPaymentInstrument($wallet, WalletPaymentInstrumentType::Card, 'stripe', 'pm_provider_mismatch', 'Card');
+        $funding = new WalletFunding($wallet, $instrument, 500, 'USD', 'provider-mismatch-funding');
         $orchestrator->beginFunding($funding);
-        $event = new ProviderEvent('adyen', 'evt_provider_mismatch', 'funding.succeeded', ['amount_minor' => 500]);
+        $event = new WalletProviderEventEntity('adyen', 'evt_provider_mismatch', 'funding.succeeded', ['amount_minor' => 500]);
 
         $this->expectException(\DomainException::class);
         $this->expectExceptionMessage('Provider event does not match the operation payment instrument provider.');
@@ -70,8 +70,8 @@ final class FundingWithdrawalOrchestratorTest extends TestCase
         $entityManager = $this->entityManager();
         $orchestrator = $this->orchestrator($entityManager);
         $wallet = new Wallet('vendor', 'funding-disabled-before-begin');
-        $instrument = new PaymentInstrument($wallet, PaymentInstrumentType::Card, 'stripe', 'pm_disabled_before_begin', 'Card');
-        $funding = new Funding($wallet, $instrument, 1200, 'USD', 'funding-disabled-before-begin');
+        $instrument = new WalletPaymentInstrument($wallet, WalletPaymentInstrumentType::Card, 'stripe', 'pm_disabled_before_begin', 'Card');
+        $funding = new WalletFunding($wallet, $instrument, 1200, 'USD', 'funding-disabled-before-begin');
         $instrument->disable();
 
         $this->expectException(\DomainException::class);
@@ -85,12 +85,12 @@ final class FundingWithdrawalOrchestratorTest extends TestCase
         $entityManager = $this->entityManager();
         $orchestrator = $this->orchestrator($entityManager);
         $wallet = new Wallet('vendor', 'withdrawal-orchestration-wallet');
-        $instrument = new PaymentInstrument($wallet, PaymentInstrumentType::BankAccount, 'ach', 'bank_1', 'Bank');
-        $withdrawal = new Withdrawal($wallet, $instrument, 900, 'USD', 'withdrawal-orchestration-1');
+        $instrument = new WalletPaymentInstrument($wallet, WalletPaymentInstrumentType::BankAccount, 'ach', 'bank_1', 'Bank');
+        $withdrawal = new WalletWithdrawal($wallet, $instrument, 900, 'USD', 'withdrawal-orchestration-1');
 
         $request = $orchestrator->beginWithdrawal($withdrawal);
 
-        self::assertSame(WithdrawalStatus::Processing, $withdrawal->status());
+        self::assertSame(WalletWithdrawalStatus::Processing, $withdrawal->status());
         self::assertSame('withdrawal', $request->operation);
         self::assertSame('ach', $request->provider);
         self::assertSame('bank_1', $request->providerReference);
@@ -102,8 +102,8 @@ final class FundingWithdrawalOrchestratorTest extends TestCase
         $entityManager = $this->entityManager();
         $orchestrator = $this->orchestrator($entityManager);
         $wallet = new Wallet('vendor', 'withdrawal-expired-before-begin');
-        $instrument = new PaymentInstrument($wallet, PaymentInstrumentType::BankAccount, 'ach', 'bank_expired_before_begin', 'Bank');
-        $withdrawal = new Withdrawal($wallet, $instrument, 900, 'USD', 'withdrawal-expired-before-begin');
+        $instrument = new WalletPaymentInstrument($wallet, WalletPaymentInstrumentType::BankAccount, 'ach', 'bank_expired_before_begin', 'Bank');
+        $withdrawal = new WalletWithdrawal($wallet, $instrument, 900, 'USD', 'withdrawal-expired-before-begin');
         $instrument->expire();
 
         $this->expectException(\DomainException::class);
@@ -112,14 +112,14 @@ final class FundingWithdrawalOrchestratorTest extends TestCase
         $orchestrator->beginWithdrawal($withdrawal);
     }
 
-    private function orchestrator(EntityManagerInterface $entityManager): FundingWithdrawalOrchestrator
+    private function orchestrator(EntityManagerInterface $entityManager): WalletFundingWithdrawalOrchestrator
     {
         $connection = $this->createStub(Connection::class);
-        $outbox = new OutboxService($entityManager, $connection);
-        $posting = new PostingService($entityManager, $outbox, new PostingDbalExecutor($connection, $outbox, new PostingRetryPolicy(), new NullPostingTelemetry()));
-        $financial = new FinancialOperationService($entityManager, $posting, $outbox);
+        $outbox = new WalletOutboxService($entityManager, $connection);
+        $posting = new WalletPostingService($entityManager, $outbox, new WalletPostingDbalExecutor($connection, $outbox, new WalletPostingRetryPolicy(), new WalletNullPostingTelemetry()));
+        $financial = new WalletFinancialOperationService($entityManager, $posting, $outbox);
 
-        return new FundingWithdrawalOrchestrator($entityManager, $financial, new ProviderEventService($entityManager, $outbox));
+        return new WalletFundingWithdrawalOrchestrator($entityManager, $financial, new WalletProviderEventService($entityManager, $outbox));
     }
 
     private function entityManager(): EntityManagerInterface

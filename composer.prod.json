@@ -1,5 +1,5 @@
 {
-    "name": "smartresponsor/walleting",
+    "name": "walleting/wallet",
     "description": "Symfony-native immutable double-entry walleting component",
     "type": "library",
     "license": "proprietary",

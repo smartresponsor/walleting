@@ -4,19 +4,19 @@ declare(strict_types=1);
 
 namespace App\Walleting\Tests\Integration;
 
-use App\Walleting\Entity\Account;
 use App\Walleting\Entity\Wallet;
-use App\Walleting\Enum\AccountCategory;
-use App\Walleting\Enum\TransactionType;
-use App\Walleting\Ledger\FeeAllocation;
-use App\Walleting\Ledger\PostingInstruction;
-use App\Walleting\Service\FeePostingComposer;
-use App\Walleting\Service\FinancialOperationService;
-use App\Walleting\Service\NullPostingTelemetry;
-use App\Walleting\Service\OutboxService;
-use App\Walleting\Service\PostingDbalExecutor;
-use App\Walleting\Service\PostingRetryPolicy;
-use App\Walleting\Service\PostingService;
+use App\Walleting\Entity\WalletAccount;
+use App\Walleting\Enum\WalletAccountCategory;
+use App\Walleting\Enum\WalletTransactionType;
+use App\Walleting\Policy\Posting\WalletPostingRetryPolicy;
+use App\Walleting\Service\WalletFeePostingComposer;
+use App\Walleting\Service\WalletFinancialOperationService;
+use App\Walleting\Service\WalletNullPostingTelemetry;
+use App\Walleting\Service\WalletOutboxService;
+use App\Walleting\Service\WalletPostingDbalExecutor;
+use App\Walleting\Service\WalletPostingService;
+use App\Walleting\ValueObject\Ledger\WalletFeeAllocation;
+use App\Walleting\ValueObject\Ledger\WalletPostingInstruction;
 use Doctrine\DBAL\Exception\DriverException;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
@@ -25,17 +25,17 @@ use Symfony\Component\Uid\Uuid;
 final class PostgreSqlFeeRefundTest extends KernelTestCase
 {
     private EntityManagerInterface $entityManager;
-    private FinancialOperationService $operations;
-    private PostingService $postingService;
+    private WalletFinancialOperationService $operations;
+    private WalletPostingService $postingService;
 
     protected function setUp(): void
     {
         self::bootKernel();
         $this->entityManager = self::getContainer()->get('doctrine.orm.entity_manager');
         $connection = $this->entityManager->getConnection();
-        $outbox = new OutboxService($this->entityManager, $connection);
-        $this->postingService = new PostingService($this->entityManager, $outbox, new PostingDbalExecutor($connection, $outbox, new PostingRetryPolicy(), new NullPostingTelemetry()));
-        $this->operations = new FinancialOperationService($this->entityManager, $this->postingService, $outbox, new FeePostingComposer());
+        $outbox = new WalletOutboxService($this->entityManager, $connection);
+        $this->postingService = new WalletPostingService($this->entityManager, $outbox, new WalletPostingDbalExecutor($connection, $outbox, new WalletPostingRetryPolicy(), new WalletNullPostingTelemetry()));
+        $this->operations = new WalletFinancialOperationService($this->entityManager, $this->postingService, $outbox, new WalletFeePostingComposer());
     }
 
     public function testFeeBearingCaptureSupportsExplicitMultiLegPartialRefund(): void
@@ -43,10 +43,10 @@ final class PostgreSqlFeeRefundTest extends KernelTestCase
         [$reserve, $vendor, $platform, $provider, $capture] = $this->feeCapture('allocated-refund');
 
         $refund = $this->operations->refundPartialAllocated($capture, 200, 'allocated-refund-1', [
-            new PostingInstruction($reserve, 200),
-            new PostingInstruction($vendor, -170),
-            new PostingInstruction($platform, -20),
-            new PostingInstruction($provider, -10),
+            new WalletPostingInstruction($reserve, 200),
+            new WalletPostingInstruction($vendor, -170),
+            new WalletPostingInstruction($platform, -20),
+            new WalletPostingInstruction($provider, -10),
         ]);
 
         self::assertSame([200, -170, -20, -10], array_map(static fn ($posting): int => $posting->amountMinor(), $refund->postings()->toArray()));
@@ -57,31 +57,31 @@ final class PostgreSqlFeeRefundTest extends KernelTestCase
     {
         [$reserve, $vendor, $platform, $provider, $capture] = $this->feeCapture('leg-cap');
         $this->operations->refundPartialAllocated($capture, 200, 'leg-cap-refund-1', [
-            new PostingInstruction($reserve, 200),
-            new PostingInstruction($vendor, -200),
+            new WalletPostingInstruction($reserve, 200),
+            new WalletPostingInstruction($vendor, -200),
         ]);
 
         $this->expectException(\DomainException::class);
         $this->expectExceptionMessage('Cumulative refund exceeds an original transaction account leg.');
         $this->operations->refundPartialAllocated($capture, 700, 'leg-cap-refund-2', [
-            new PostingInstruction($reserve, 700),
-            new PostingInstruction($vendor, -700),
+            new WalletPostingInstruction($reserve, 700),
+            new WalletPostingInstruction($vendor, -700),
         ]);
     }
 
     public function testDatabaseRejectsRefundThatOverdrawsOneOriginalLegViaRawLinkInsert(): void
     {
         [$reserve, $vendor, $platform, $provider, $capture] = $this->feeCapture('raw-leg-cap');
-        $refund = $this->postingService->post(TransactionType::Refund, 'raw-leg-cap-refund', [
-            new PostingInstruction($reserve, 900),
-            new PostingInstruction($vendor, -900),
+        $refund = $this->postingService->post(WalletTransactionType::Refund, 'raw-leg-cap-refund', [
+            new WalletPostingInstruction($reserve, 900),
+            new WalletPostingInstruction($vendor, -900),
         ]);
 
         $this->expectException(DriverException::class);
         $this->expectExceptionMessage('refund must invert only original transaction account legs');
         $this->entityManager->getConnection()->insert('financial_operation_link', [
             'id' => Uuid::v7()->toRfc4122(),
-            'operation_type' => TransactionType::Refund->value,
+            'operation_type' => WalletTransactionType::Refund->value,
             'source_transaction_id' => $capture->id()->toRfc4122(),
             'result_transaction_id' => $refund->id()->toRfc4122(),
             'reservation_id' => null,
@@ -94,23 +94,23 @@ final class PostgreSqlFeeRefundTest extends KernelTestCase
     private function feeCapture(string $prefix): array
     {
         $wallet = new Wallet('vendor', $prefix.'-wallet');
-        $reserve = new Account($wallet, 'reserve', 'USD', AccountCategory::Reserve);
-        $funding = new Account($wallet, 'funding', 'USD', AccountCategory::Clearing);
-        $vendor = new Account($wallet, 'vendor-net', 'USD', AccountCategory::Liability);
-        $platform = new Account($wallet, 'platform-fee', 'USD', AccountCategory::Revenue);
-        $provider = new Account($wallet, 'provider-fee', 'USD', AccountCategory::Clearing);
+        $reserve = new WalletAccount($wallet, 'reserve', 'USD', WalletAccountCategory::Reserve);
+        $funding = new WalletAccount($wallet, 'funding', 'USD', WalletAccountCategory::Clearing);
+        $vendor = new WalletAccount($wallet, 'vendor-net', 'USD', WalletAccountCategory::Liability);
+        $platform = new WalletAccount($wallet, 'platform-fee', 'USD', WalletAccountCategory::Revenue);
+        $provider = new WalletAccount($wallet, 'provider-fee', 'USD', WalletAccountCategory::Clearing);
         foreach ([$wallet, $reserve, $funding, $vendor, $platform, $provider] as $entity) {
             $this->entityManager->persist($entity);
         }
         $this->entityManager->flush();
 
         $reservation = $this->operations->reserve($wallet, $reserve, 1000, 'USD', $prefix.'-reserve', [
-            new PostingInstruction($funding, -1000),
-            new PostingInstruction($reserve, 1000),
+            new WalletPostingInstruction($funding, -1000),
+            new WalletPostingInstruction($reserve, 1000),
         ]);
         $capture = $this->operations->captureWithFees($reservation, $vendor, [
-            new FeeAllocation('platform_fee', $platform, 100),
-            new FeeAllocation('provider_fee', $provider, 50),
+            new WalletFeeAllocation('platform_fee', $platform, 100),
+            new WalletFeeAllocation('provider_fee', $provider, 50),
         ], $prefix.'-capture');
 
         return [$reserve, $vendor, $platform, $provider, $capture];

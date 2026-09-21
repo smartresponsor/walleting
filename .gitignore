@@ -28,3 +28,15 @@
 /public/assets/
 /assets/vendor/
 ###< symfony/asset-mapper ###
+
+###> node/playwright ###
+/node_modules/
+/test-results/
+/playwright-report/
+###< node/playwright ###
+
+###> local tooling / OS ###
+/.idea/
+.DS_Store
+Thumbs.db
+###< local tooling / OS ###

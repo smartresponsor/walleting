@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Walleting\Tests\MessageHandler;
 
-use App\Walleting\Message\OutboxEvent;
-use App\Walleting\Posting\PostingHealthStatus;
-use App\Walleting\Posting\PostingSloTransitionNotification;
-use App\Walleting\Service\LoggingPostingSloTransitionNotifier;
+use App\Walleting\Event\Outbox\WalletOutboxEvent;
+use App\Walleting\Service\WalletLoggingPostingSloTransitionNotifier;
+use App\Walleting\ValueObject\Posting\WalletPostingHealthStatus;
+use App\Walleting\ValueObject\Posting\WalletPostingSloTransitionNotification;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
@@ -24,12 +24,12 @@ final class PostingSloTransitionEventHandlerTest extends TestCase
             'changed_at' => '2026-08-08 03:00:00',
         ]);
 
-        $notification = PostingSloTransitionNotification::fromEvent($event);
+        $notification = WalletPostingSloTransitionNotification::fromEvent($event);
 
         self::assertSame('default', $notification->scope);
         self::assertSame(3, $notification->revision);
-        self::assertSame(PostingHealthStatus::Degraded, $notification->previousStatus);
-        self::assertSame(PostingHealthStatus::Critical, $notification->currentStatus);
+        self::assertSame(WalletPostingHealthStatus::Degraded, $notification->previousStatus);
+        self::assertSame(WalletPostingHealthStatus::Critical, $notification->currentStatus);
         self::assertSame(['sustained_burn_rate'], $notification->reasons);
     }
 
@@ -37,7 +37,7 @@ final class PostingSloTransitionEventHandlerTest extends TestCase
     {
         $this->expectException(\InvalidArgumentException::class);
 
-        PostingSloTransitionNotification::fromEvent($this->event([
+        WalletPostingSloTransitionNotification::fromEvent($this->event([
             'scope' => 'default',
             'revision' => 0,
             'previous_status' => 'healthy',
@@ -58,20 +58,20 @@ final class PostingSloTransitionEventHandlerTest extends TestCase
                 self::callback(static fn (array $context): bool => 'critical' === $context['current_status'] && 4 === $context['revision']),
             );
 
-        (new LoggingPostingSloTransitionNotifier($logger))->notify(new PostingSloTransitionNotification(
+        (new WalletLoggingPostingSloTransitionNotifier($logger))->notify(new WalletPostingSloTransitionNotification(
             'default',
             4,
-            PostingHealthStatus::Degraded,
-            PostingHealthStatus::Critical,
+            WalletPostingHealthStatus::Degraded,
+            WalletPostingHealthStatus::Critical,
             ['sustained_critical'],
             new \DateTimeImmutable('2026-08-08 03:00:00'),
         ));
     }
 
     /** @param array<string, mixed> $payload */
-    private function event(array $payload): OutboxEvent
+    private function event(array $payload): WalletOutboxEvent
     {
-        return new OutboxEvent(
+        return new WalletOutboxEvent(
             messageId: '019c1234-1234-7000-8000-000000000001',
             type: 'posting.slo.state.changed',
             deduplicationKey: 'posting.slo.state.changed:default:3',

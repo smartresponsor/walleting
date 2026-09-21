@@ -3,12 +3,12 @@ services:
         autowire: true
         autoconfigure: true
     _instanceof:
-        App\Walleting\Outbox\OutboxMessageHandlerInterface:
+        App\Walleting\Handler\Outbox\WalletOutboxMessageHandlerInterface:
             tags: ['app.outbox_message_handler']
 
-    App\Walleting\Service\PostingExecutorInterface: '@App\Walleting\Service\PostingDbalExecutor'
-    App\Walleting\Service\PostingTelemetryInterface: '@App\Walleting\Service\DatabasePostingTelemetry'
-    App\Walleting\Service\PostingSloTransitionNotifierInterface: '@App\Walleting\Service\LoggingPostingSloTransitionNotifier'
+    App\Walleting\Service\WalletPostingExecutorInterface: '@App\Walleting\Service\WalletPostingDbalExecutor'
+    App\Walleting\Service\WalletPostingTelemetryInterface: '@App\Walleting\Service\WalletDatabasePostingTelemetry'
+    App\Walleting\Service\WalletPostingSloTransitionNotifierInterface: '@App\Walleting\Service\WalletLoggingPostingSloTransitionNotifier'
 
     App\Walleting\:
         resource: '../src/'

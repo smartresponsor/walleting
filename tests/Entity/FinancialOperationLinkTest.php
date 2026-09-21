@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace App\Walleting\Tests\Entity;
 
-use App\Walleting\Entity\Account;
-use App\Walleting\Entity\FinancialOperationLink;
-use App\Walleting\Entity\LedgerTransaction;
-use App\Walleting\Entity\Reservation;
 use App\Walleting\Entity\Wallet;
-use App\Walleting\Enum\AccountCategory;
-use App\Walleting\Enum\TransactionType;
+use App\Walleting\Entity\WalletAccount;
+use App\Walleting\Entity\WalletFinancialOperationLink;
+use App\Walleting\Entity\WalletLedgerTransaction;
+use App\Walleting\Entity\WalletReservation;
+use App\Walleting\Enum\WalletAccountCategory;
+use App\Walleting\Enum\WalletTransactionType;
 use PHPUnit\Framework\TestCase;
 
 final class FinancialOperationLinkTest extends TestCase
@@ -18,12 +18,12 @@ final class FinancialOperationLinkTest extends TestCase
     public function testCaptureRequiresMatchingReservationSource(): void
     {
         $wallet = new Wallet('vendor', 'vendor-1');
-        $account = new Account($wallet, 'reserve', 'USD', AccountCategory::Reserve);
-        $reserve = new LedgerTransaction(TransactionType::Reserve, 'reserve-link-1');
-        $capture = new LedgerTransaction(TransactionType::Capture, 'capture-link-1');
-        $reservation = new Reservation($wallet, $account, $reserve, 500, 'USD', 'reservation-link-1');
+        $account = new WalletAccount($wallet, 'reserve', 'USD', WalletAccountCategory::Reserve);
+        $reserve = new WalletLedgerTransaction(WalletTransactionType::Reserve, 'reserve-link-1');
+        $capture = new WalletLedgerTransaction(WalletTransactionType::Capture, 'capture-link-1');
+        $reservation = new WalletReservation($wallet, $account, $reserve, 500, 'USD', 'reservation-link-1');
 
-        $link = new FinancialOperationLink(TransactionType::Capture, $reserve, $capture, 500, $reservation);
+        $link = new WalletFinancialOperationLink(WalletTransactionType::Capture, $reserve, $capture, 500, $reservation);
 
         self::assertSame($reserve, $link->sourceTransaction());
         self::assertSame($capture, $link->resultTransaction());
@@ -32,33 +32,33 @@ final class FinancialOperationLinkTest extends TestCase
 
     public function testResultTransactionTypeMustMatchLinkedOperation(): void
     {
-        $source = new LedgerTransaction(TransactionType::Credit, 'source-result-mismatch');
-        $result = new LedgerTransaction(TransactionType::Reverse, 'result-result-mismatch');
+        $source = new WalletLedgerTransaction(WalletTransactionType::Credit, 'source-result-mismatch');
+        $result = new WalletLedgerTransaction(WalletTransactionType::Reverse, 'result-result-mismatch');
 
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Linked result transaction type must match the operation type.');
-        new FinancialOperationLink(TransactionType::Refund, $source, $result, 500);
+        new WalletFinancialOperationLink(WalletTransactionType::Refund, $source, $result, 500);
     }
 
     public function testInverseOperationRejectsInverseSourceTransaction(): void
     {
-        $source = new LedgerTransaction(TransactionType::Refund, 'source-inverse');
-        $result = new LedgerTransaction(TransactionType::Reverse, 'result-inverse');
+        $source = new WalletLedgerTransaction(WalletTransactionType::Refund, 'source-inverse');
+        $result = new WalletLedgerTransaction(WalletTransactionType::Reverse, 'result-inverse');
 
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Refund and reverse cannot originate from an inverse transaction.');
-        new FinancialOperationLink(TransactionType::Reverse, $source, $result, 500);
+        new WalletFinancialOperationLink(WalletTransactionType::Reverse, $source, $result, 500);
     }
 
     public function testRefundRejectsReservationAssociation(): void
     {
         $wallet = new Wallet('vendor', 'vendor-1');
-        $account = new Account($wallet, 'reserve', 'USD', AccountCategory::Reserve);
-        $source = new LedgerTransaction(TransactionType::Credit, 'credit-link-1');
-        $result = new LedgerTransaction(TransactionType::Refund, 'refund-link-1');
-        $reservation = new Reservation($wallet, $account, $source, 500, 'USD', 'reservation-link-2');
+        $account = new WalletAccount($wallet, 'reserve', 'USD', WalletAccountCategory::Reserve);
+        $source = new WalletLedgerTransaction(WalletTransactionType::Credit, 'credit-link-1');
+        $result = new WalletLedgerTransaction(WalletTransactionType::Refund, 'refund-link-1');
+        $reservation = new WalletReservation($wallet, $account, $source, 500, 'USD', 'reservation-link-2');
 
         $this->expectException(\InvalidArgumentException::class);
-        new FinancialOperationLink(TransactionType::Refund, $source, $result, 500, $reservation);
+        new WalletFinancialOperationLink(WalletTransactionType::Refund, $source, $result, 500, $reservation);
     }
 }

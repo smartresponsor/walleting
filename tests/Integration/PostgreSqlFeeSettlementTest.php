@@ -4,65 +4,65 @@ declare(strict_types=1);
 
 namespace App\Walleting\Tests\Integration;
 
-use App\Walleting\Entity\Account;
 use App\Walleting\Entity\Wallet;
-use App\Walleting\Enum\AccountCategory;
-use App\Walleting\Enum\ReservationStatus;
-use App\Walleting\Ledger\FeeAllocation;
-use App\Walleting\Ledger\PostingInstruction;
-use App\Walleting\Service\FeePostingComposer;
-use App\Walleting\Service\FinancialOperationService;
-use App\Walleting\Service\NullPostingTelemetry;
-use App\Walleting\Service\OutboxService;
-use App\Walleting\Service\PostingDbalExecutor;
-use App\Walleting\Service\PostingRetryPolicy;
-use App\Walleting\Service\PostingService;
+use App\Walleting\Entity\WalletAccount;
+use App\Walleting\Enum\WalletAccountCategory;
+use App\Walleting\Enum\WalletReservationStatus;
+use App\Walleting\Policy\Posting\WalletPostingRetryPolicy;
+use App\Walleting\Service\WalletFeePostingComposer;
+use App\Walleting\Service\WalletFinancialOperationService;
+use App\Walleting\Service\WalletNullPostingTelemetry;
+use App\Walleting\Service\WalletOutboxService;
+use App\Walleting\Service\WalletPostingDbalExecutor;
+use App\Walleting\Service\WalletPostingService;
+use App\Walleting\ValueObject\Ledger\WalletFeeAllocation;
+use App\Walleting\ValueObject\Ledger\WalletPostingInstruction;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 final class PostgreSqlFeeSettlementTest extends KernelTestCase
 {
     private EntityManagerInterface $entityManager;
-    private FinancialOperationService $operations;
+    private WalletFinancialOperationService $operations;
 
     protected function setUp(): void
     {
         self::bootKernel();
         $this->entityManager = self::getContainer()->get('doctrine.orm.entity_manager');
         $connection = $this->entityManager->getConnection();
-        $outbox = new OutboxService($this->entityManager, $connection);
-        $posting = new PostingService(
+        $outbox = new WalletOutboxService($this->entityManager, $connection);
+        $posting = new WalletPostingService(
             $this->entityManager,
             $outbox,
-            new PostingDbalExecutor($connection, $outbox, new PostingRetryPolicy(), new NullPostingTelemetry()),
+            new WalletPostingDbalExecutor($connection, $outbox, new WalletPostingRetryPolicy(), new WalletNullPostingTelemetry()),
         );
-        $this->operations = new FinancialOperationService($this->entityManager, $posting, $outbox, new FeePostingComposer());
+        $this->operations = new WalletFinancialOperationService($this->entityManager, $posting, $outbox, new WalletFeePostingComposer());
         self::assertInstanceOf(\Doctrine\DBAL\Platforms\PostgreSQLPlatform::class, $connection->getDatabasePlatform());
     }
 
     public function testCaptureWithFeesPostsGrossNetAndCommissionsAtomically(): void
     {
         $wallet = new Wallet('vendor', 'fee-settlement-wallet');
-        $reserve = new Account($wallet, 'reserve', 'USD', AccountCategory::Reserve);
-        $funding = new Account($wallet, 'funding-clearing', 'USD', AccountCategory::Clearing);
-        $vendorNet = new Account($wallet, 'vendor-net', 'USD', AccountCategory::Liability);
-        $platformFee = new Account($wallet, 'platform-fee', 'USD', AccountCategory::Revenue);
-        $providerFee = new Account($wallet, 'provider-fee', 'USD', AccountCategory::Clearing);
+        $reserve = new WalletAccount($wallet, 'reserve', 'USD', WalletAccountCategory::Reserve);
+        $funding = new WalletAccount($wallet, 'funding-clearing', 'USD', WalletAccountCategory::Clearing);
+        $vendorNet = new WalletAccount($wallet, 'vendor-net', 'USD', WalletAccountCategory::Liability);
+        $platformFee = new WalletAccount($wallet, 'platform-fee', 'USD', WalletAccountCategory::Revenue);
+        $providerFee = new WalletAccount($wallet, 'provider-fee', 'USD', WalletAccountCategory::Clearing);
         foreach ([$wallet, $reserve, $funding, $vendorNet, $platformFee, $providerFee] as $entity) {
             $this->entityManager->persist($entity);
         }
         $this->entityManager->flush();
 
         $reservation = $this->operations->reserve($wallet, $reserve, 1000, 'USD', 'fee-reserve-1', [
-            new PostingInstruction($funding, -1000),
-            new PostingInstruction($reserve, 1000),
+            new WalletPostingInstruction($funding, -1000),
+            new WalletPostingInstruction($reserve, 1000),
         ]);
         $transaction = $this->operations->captureWithFees($reservation, $vendorNet, [
-            new FeeAllocation('platform_fee', $platformFee, 100),
-            new FeeAllocation('provider_fee', $providerFee, 50),
+            new WalletFeeAllocation('platform_fee', $platformFee, 100),
+            new WalletFeeAllocation('provider_fee', $providerFee, 50),
         ], 'fee-capture-1');
 
-        self::assertSame(ReservationStatus::Captured, $reservation->status());
+        self::assertSame(WalletReservationStatus::Captured, $reservation->status());
         self::assertCount(4, $transaction->postings());
         self::assertSame([-1000, 850, 100, 50], array_map(static fn ($posting): int => $posting->amountMinor(), $transaction->postings()->toArray()));
         self::assertSame(1000, $transaction->metadata()['settlement']['gross_amount_minor']);

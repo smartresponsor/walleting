@@ -1,0 +1,15 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Walleting\Enum;
+
+enum WalletReservationStatus: string
+{
+    case Active = 'active';
+    case PartiallySettled = 'partially_settled';
+    case Settled = 'settled';
+    case Captured = 'captured';
+    case Released = 'released';
+    case Expired = 'expired';
+}

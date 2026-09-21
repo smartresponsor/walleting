@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Walleting\Tests\Integration;
 
-use App\Walleting\Message\OutboxEvent;
-use App\Walleting\MessageHandler\PostingSloTransitionEventHandler;
-use App\Walleting\Posting\PostingSloTransitionNotification;
-use App\Walleting\Service\InboxService;
-use App\Walleting\Service\PostingSloTransitionNotifierInterface;
+use App\Walleting\Event\Outbox\WalletOutboxEvent;
+use App\Walleting\Handler\Posting\WalletPostingSloTransitionEventHandler;
+use App\Walleting\Service\WalletInboxService;
+use App\Walleting\Service\WalletPostingSloTransitionNotifierInterface;
+use App\Walleting\ValueObject\Posting\WalletPostingSloTransitionNotification;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
@@ -31,14 +31,14 @@ final class PostgreSqlInboxDeliveryContractTest extends KernelTestCase
     public function testDuplicateDeliveryNotifiesExactlyOnceAndCreatesOneProcessedReceipt(): void
     {
         $notifications = [];
-        $handler = new PostingSloTransitionEventHandler(
-            new InboxService($this->entityManager, $this->connection),
-            new class($notifications) implements PostingSloTransitionNotifierInterface {
+        $handler = new WalletPostingSloTransitionEventHandler(
+            new WalletInboxService($this->entityManager, $this->connection),
+            new class($notifications) implements WalletPostingSloTransitionNotifierInterface {
                 public function __construct(private array &$notifications)
                 {
                 }
 
-                public function notify(PostingSloTransitionNotification $notification): void
+                public function notify(WalletPostingSloTransitionNotification $notification): void
                 {
                     $this->notifications[] = $notification;
                 }
@@ -56,11 +56,11 @@ final class PostgreSqlInboxDeliveryContractTest extends KernelTestCase
 
     public function testNotifierFailureRollsBackReceiptSoMessengerRetryCanProcessLater(): void
     {
-        $inbox = new InboxService($this->entityManager, $this->connection);
-        $failing = new PostingSloTransitionEventHandler(
+        $inbox = new WalletInboxService($this->entityManager, $this->connection);
+        $failing = new WalletPostingSloTransitionEventHandler(
             $inbox,
-            new class implements PostingSloTransitionNotifierInterface {
-                public function notify(PostingSloTransitionNotification $notification): void
+            new class implements WalletPostingSloTransitionNotifierInterface {
+                public function notify(WalletPostingSloTransitionNotification $notification): void
                 {
                     throw new \RuntimeException('notifier unavailable');
                 }
@@ -77,14 +77,14 @@ final class PostgreSqlInboxDeliveryContractTest extends KernelTestCase
         self::assertSame(0, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM inbox_receipt'));
 
         $notifications = [];
-        $retry = new PostingSloTransitionEventHandler(
+        $retry = new WalletPostingSloTransitionEventHandler(
             $inbox,
-            new class($notifications) implements PostingSloTransitionNotifierInterface {
+            new class($notifications) implements WalletPostingSloTransitionNotifierInterface {
                 public function __construct(private array &$notifications)
                 {
                 }
 
-                public function notify(PostingSloTransitionNotification $notification): void
+                public function notify(WalletPostingSloTransitionNotification $notification): void
                 {
                     $this->notifications[] = $notification;
                 }
@@ -115,7 +115,7 @@ final class PostgreSqlInboxDeliveryContractTest extends KernelTestCase
                 'processed_at' => null,
             ]);
 
-            $service = new InboxService($this->entityManager, $this->connection);
+            $service = new WalletInboxService($this->entityManager, $this->connection);
             $snapshot = $service->healthSnapshot(60);
             $stuck = $service->stuckProcessing(60, 10);
 
@@ -129,9 +129,9 @@ final class PostgreSqlInboxDeliveryContractTest extends KernelTestCase
         }
     }
 
-    private function event(string $suffix): OutboxEvent
+    private function event(string $suffix): WalletOutboxEvent
     {
-        return new OutboxEvent(
+        return new WalletOutboxEvent(
             messageId: '0198-inbox-'.$suffix,
             type: 'posting.slo.state.changed',
             deduplicationKey: 'posting.slo.state.changed:default:'.$suffix,

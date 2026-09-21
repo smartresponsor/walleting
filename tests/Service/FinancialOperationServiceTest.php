@@ -4,25 +4,25 @@ declare(strict_types=1);
 
 namespace App\Walleting\Tests\Service;
 
-use App\Walleting\Entity\Account;
-use App\Walleting\Entity\FinancialOperationLink;
-use App\Walleting\Entity\Funding;
-use App\Walleting\Entity\LedgerTransaction;
-use App\Walleting\Entity\PaymentInstrument;
-use App\Walleting\Entity\Reservation;
 use App\Walleting\Entity\Wallet;
-use App\Walleting\Entity\Withdrawal;
-use App\Walleting\Enum\AccountCategory;
-use App\Walleting\Enum\FundingStatus;
-use App\Walleting\Enum\PaymentInstrumentType;
-use App\Walleting\Enum\ReservationStatus;
-use App\Walleting\Enum\TransactionType;
-use App\Walleting\Enum\WithdrawalStatus;
-use App\Walleting\Ledger\PostingInstruction;
-use App\Walleting\Service\FinancialOperationService;
-use App\Walleting\Service\OutboxService;
-use App\Walleting\Service\PostingDbalExecutor;
-use App\Walleting\Service\PostingService;
+use App\Walleting\Entity\WalletAccount;
+use App\Walleting\Entity\WalletFinancialOperationLink;
+use App\Walleting\Entity\WalletFunding;
+use App\Walleting\Entity\WalletLedgerTransaction;
+use App\Walleting\Entity\WalletPaymentInstrument;
+use App\Walleting\Entity\WalletReservation;
+use App\Walleting\Entity\WalletWithdrawal;
+use App\Walleting\Enum\WalletAccountCategory;
+use App\Walleting\Enum\WalletFundingStatus;
+use App\Walleting\Enum\WalletPaymentInstrumentType;
+use App\Walleting\Enum\WalletReservationStatus;
+use App\Walleting\Enum\WalletTransactionType;
+use App\Walleting\Enum\WalletWithdrawalStatus;
+use App\Walleting\Service\WalletFinancialOperationService;
+use App\Walleting\Service\WalletOutboxService;
+use App\Walleting\Service\WalletPostingDbalExecutor;
+use App\Walleting\Service\WalletPostingService;
+use App\Walleting\ValueObject\Ledger\WalletPostingInstruction;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\EntityRepository;
@@ -36,35 +36,35 @@ final class FinancialOperationServiceTest extends TestCase
     public function testReserveAndCaptureUseSingleManagedTransactionBoundary(): void
     {
         $entityManager = $this->entityManager();
-        $service = new FinancialOperationService($entityManager, $this->postingService($entityManager));
+        $service = new WalletFinancialOperationService($entityManager, $this->postingService($entityManager));
         $wallet = new Wallet('vendor', 'vendor-1');
-        $available = new Account($wallet, 'available', 'USD', AccountCategory::Asset);
-        $reserved = new Account($wallet, 'reserved', 'USD', AccountCategory::Reserve);
+        $available = new WalletAccount($wallet, 'available', 'USD', WalletAccountCategory::Asset);
+        $reserved = new WalletAccount($wallet, 'reserved', 'USD', WalletAccountCategory::Reserve);
 
         $reservation = $service->reserve($wallet, $reserved, 500, 'USD', 'reserve-operation-1', [
-            new PostingInstruction($available, -500),
-            new PostingInstruction($reserved, 500),
+            new WalletPostingInstruction($available, -500),
+            new WalletPostingInstruction($reserved, 500),
         ]);
-        self::assertSame(ReservationStatus::Active, $reservation->status());
+        self::assertSame(WalletReservationStatus::Active, $reservation->status());
 
         $transaction = $service->capture($reservation, 'capture-operation-1', [
-            new PostingInstruction($reserved, -500),
-            new PostingInstruction($available, 500),
+            new WalletPostingInstruction($reserved, -500),
+            new WalletPostingInstruction($available, 500),
         ]);
-        self::assertSame(TransactionType::Capture, $transaction->type());
-        self::assertSame(ReservationStatus::Captured, $reservation->status());
+        self::assertSame(WalletTransactionType::Capture, $transaction->type());
+        self::assertSame(WalletReservationStatus::Captured, $reservation->status());
     }
 
     public function testReserveReplayReturnsExistingReservation(): void
     {
         $entityManager = $this->statefulEntityManager();
-        $service = new FinancialOperationService($entityManager, $this->postingService($entityManager));
+        $service = new WalletFinancialOperationService($entityManager, $this->postingService($entityManager));
         $wallet = new Wallet('vendor', 'reserve-replay');
-        $available = new Account($wallet, 'available', 'USD', AccountCategory::Asset);
-        $reserved = new Account($wallet, 'reserved', 'USD', AccountCategory::Reserve);
+        $available = new WalletAccount($wallet, 'available', 'USD', WalletAccountCategory::Asset);
+        $reserved = new WalletAccount($wallet, 'reserved', 'USD', WalletAccountCategory::Reserve);
         $instructions = [
-            new PostingInstruction($available, -500),
-            new PostingInstruction($reserved, 500),
+            new WalletPostingInstruction($available, -500),
+            new WalletPostingInstruction($reserved, 500),
         ];
 
         $first = $service->reserve($wallet, $reserved, 500, 'USD', 'reserve-replay-key', $instructions);
@@ -77,189 +77,189 @@ final class FinancialOperationServiceTest extends TestCase
     public function testReservationSettlementRejectsMismatchedAmount(): void
     {
         $entityManager = $this->entityManager();
-        $service = new FinancialOperationService($entityManager, $this->postingService($entityManager));
+        $service = new WalletFinancialOperationService($entityManager, $this->postingService($entityManager));
         $wallet = new Wallet('vendor', 'vendor-reservation-mismatch');
-        $available = new Account($wallet, 'available', 'USD', AccountCategory::Asset);
-        $reserved = new Account($wallet, 'reserved', 'USD', AccountCategory::Reserve);
+        $available = new WalletAccount($wallet, 'available', 'USD', WalletAccountCategory::Asset);
+        $reserved = new WalletAccount($wallet, 'reserved', 'USD', WalletAccountCategory::Reserve);
         $reservation = $service->reserve($wallet, $reserved, 500, 'USD', 'reserve-mismatch-1', [
-            new PostingInstruction($available, -500),
-            new PostingInstruction($reserved, 500),
+            new WalletPostingInstruction($available, -500),
+            new WalletPostingInstruction($reserved, 500),
         ]);
 
         $this->expectException(\DomainException::class);
         $service->capture($reservation, 'capture-mismatch-1', [
-            new PostingInstruction($reserved, -400),
-            new PostingInstruction($available, 400),
+            new WalletPostingInstruction($reserved, -400),
+            new WalletPostingInstruction($available, 400),
         ]);
     }
 
     public function testCaptureReplayReturnsExistingSettlementTransaction(): void
     {
         $entityManager = $this->statefulEntityManager();
-        $service = new FinancialOperationService($entityManager, $this->postingService($entityManager));
+        $service = new WalletFinancialOperationService($entityManager, $this->postingService($entityManager));
         $wallet = new Wallet('vendor', 'capture-replay');
-        $available = new Account($wallet, 'available', 'USD', AccountCategory::Asset);
-        $reserved = new Account($wallet, 'reserved', 'USD', AccountCategory::Reserve);
-        $reserveTransaction = new LedgerTransaction(TransactionType::Reserve, 'capture-replay-reserve');
-        $reservation = new Reservation($wallet, $reserved, $reserveTransaction, 500, 'USD', 'capture-replay-reservation');
+        $available = new WalletAccount($wallet, 'available', 'USD', WalletAccountCategory::Asset);
+        $reserved = new WalletAccount($wallet, 'reserved', 'USD', WalletAccountCategory::Reserve);
+        $reserveTransaction = new WalletLedgerTransaction(WalletTransactionType::Reserve, 'capture-replay-reserve');
+        $reservation = new WalletReservation($wallet, $reserved, $reserveTransaction, 500, 'USD', 'capture-replay-reservation');
         $instructions = [
-            new PostingInstruction($reserved, -500),
-            new PostingInstruction($available, 500),
+            new WalletPostingInstruction($reserved, -500),
+            new WalletPostingInstruction($available, 500),
         ];
 
         $first = $service->capture($reservation, 'capture-replay-settlement', $instructions);
         $replayed = $service->capture($reservation, 'capture-replay-settlement', $instructions);
 
         self::assertSame($first, $replayed);
-        self::assertSame(ReservationStatus::Captured, $reservation->status());
+        self::assertSame(WalletReservationStatus::Captured, $reservation->status());
     }
 
     public function testReleaseReplayReturnsExistingSettlementTransaction(): void
     {
         $entityManager = $this->statefulEntityManager();
-        $service = new FinancialOperationService($entityManager, $this->postingService($entityManager));
+        $service = new WalletFinancialOperationService($entityManager, $this->postingService($entityManager));
         $wallet = new Wallet('vendor', 'release-replay');
-        $available = new Account($wallet, 'available', 'USD', AccountCategory::Asset);
-        $reserved = new Account($wallet, 'reserved', 'USD', AccountCategory::Reserve);
-        $reserveTransaction = new LedgerTransaction(TransactionType::Reserve, 'release-replay-reserve');
-        $reservation = new Reservation($wallet, $reserved, $reserveTransaction, 500, 'USD', 'release-replay-reservation');
+        $available = new WalletAccount($wallet, 'available', 'USD', WalletAccountCategory::Asset);
+        $reserved = new WalletAccount($wallet, 'reserved', 'USD', WalletAccountCategory::Reserve);
+        $reserveTransaction = new WalletLedgerTransaction(WalletTransactionType::Reserve, 'release-replay-reserve');
+        $reservation = new WalletReservation($wallet, $reserved, $reserveTransaction, 500, 'USD', 'release-replay-reservation');
         $instructions = [
-            new PostingInstruction($reserved, -500),
-            new PostingInstruction($available, 500),
+            new WalletPostingInstruction($reserved, -500),
+            new WalletPostingInstruction($available, 500),
         ];
 
         $first = $service->release($reservation, 'release-replay-settlement', $instructions);
         $replayed = $service->release($reservation, 'release-replay-settlement', $instructions);
 
         self::assertSame($first, $replayed);
-        self::assertSame(ReservationStatus::Released, $reservation->status());
+        self::assertSame(WalletReservationStatus::Released, $reservation->status());
     }
 
     public function testReservationSettlementReplayKeyCannotChangeRequestContent(): void
     {
         $entityManager = $this->statefulEntityManager();
-        $service = new FinancialOperationService($entityManager, $this->postingService($entityManager));
+        $service = new WalletFinancialOperationService($entityManager, $this->postingService($entityManager));
         $wallet = new Wallet('vendor', 'settlement-replay-conflict');
-        $available = new Account($wallet, 'available', 'USD', AccountCategory::Asset);
-        $reserved = new Account($wallet, 'reserved', 'USD', AccountCategory::Reserve);
-        $reserveTransaction = new LedgerTransaction(TransactionType::Reserve, 'settlement-replay-conflict-reserve');
-        $reservation = new Reservation($wallet, $reserved, $reserveTransaction, 500, 'USD', 'settlement-replay-conflict-reservation');
+        $available = new WalletAccount($wallet, 'available', 'USD', WalletAccountCategory::Asset);
+        $reserved = new WalletAccount($wallet, 'reserved', 'USD', WalletAccountCategory::Reserve);
+        $reserveTransaction = new WalletLedgerTransaction(WalletTransactionType::Reserve, 'settlement-replay-conflict-reserve');
+        $reservation = new WalletReservation($wallet, $reserved, $reserveTransaction, 500, 'USD', 'settlement-replay-conflict-reservation');
         $service->capturePartial($reservation, 200, 'settlement-replay-conflict-key', [
-            new PostingInstruction($reserved, -200),
-            new PostingInstruction($available, 200),
+            new WalletPostingInstruction($reserved, -200),
+            new WalletPostingInstruction($available, 200),
         ]);
 
         $this->expectException(\DomainException::class);
         $this->expectExceptionMessage('Idempotency key is already bound to a different financial request.');
         $service->capturePartial($reservation, 300, 'settlement-replay-conflict-key', [
-            new PostingInstruction($reserved, -300),
-            new PostingInstruction($available, 300),
+            new WalletPostingInstruction($reserved, -300),
+            new WalletPostingInstruction($available, 300),
         ]);
     }
 
     public function testFundingSuccessReplayReturnsExistingTransaction(): void
     {
         $entityManager = $this->statefulEntityManager();
-        $service = new FinancialOperationService($entityManager, $this->postingService($entityManager));
+        $service = new WalletFinancialOperationService($entityManager, $this->postingService($entityManager));
         $wallet = new Wallet('vendor', 'funding-success-replay');
-        $cash = new Account($wallet, 'cash', 'USD', AccountCategory::Asset);
-        $clearing = new Account($wallet, 'clearing', 'USD', AccountCategory::Clearing);
-        $instrument = new PaymentInstrument($wallet, PaymentInstrumentType::Card, 'provider', 'funding-success-replay-instrument', 'Card');
-        $funding = new Funding($wallet, $instrument, 700, 'USD', 'funding-success-replay');
+        $cash = new WalletAccount($wallet, 'cash', 'USD', WalletAccountCategory::Asset);
+        $clearing = new WalletAccount($wallet, 'clearing', 'USD', WalletAccountCategory::Clearing);
+        $instrument = new WalletPaymentInstrument($wallet, WalletPaymentInstrumentType::Card, 'provider', 'funding-success-replay-instrument', 'Card');
+        $funding = new WalletFunding($wallet, $instrument, 700, 'USD', 'funding-success-replay');
         $funding->start();
         $instructions = [
-            new PostingInstruction($cash, 700),
-            new PostingInstruction($clearing, -700),
+            new WalletPostingInstruction($cash, 700),
+            new WalletPostingInstruction($clearing, -700),
         ];
 
         $first = $service->succeedFunding($funding, 'funding-success-replay-post', $instructions);
         $replayed = $service->succeedFunding($funding, 'funding-success-replay-post', $instructions);
 
         self::assertSame($first, $replayed);
-        self::assertSame(FundingStatus::Succeeded, $funding->status());
+        self::assertSame(WalletFundingStatus::Succeeded, $funding->status());
     }
 
     public function testWithdrawalSuccessReplayReturnsExistingTransaction(): void
     {
         $entityManager = $this->statefulEntityManager();
-        $service = new FinancialOperationService($entityManager, $this->postingService($entityManager));
+        $service = new WalletFinancialOperationService($entityManager, $this->postingService($entityManager));
         $wallet = new Wallet('vendor', 'withdrawal-success-replay');
-        $cash = new Account($wallet, 'cash', 'USD', AccountCategory::Asset);
-        $clearing = new Account($wallet, 'clearing', 'USD', AccountCategory::Clearing);
-        $instrument = new PaymentInstrument($wallet, PaymentInstrumentType::BankAccount, 'provider', 'withdrawal-success-replay-instrument', 'Bank');
-        $withdrawal = new Withdrawal($wallet, $instrument, 400, 'USD', 'withdrawal-success-replay');
+        $cash = new WalletAccount($wallet, 'cash', 'USD', WalletAccountCategory::Asset);
+        $clearing = new WalletAccount($wallet, 'clearing', 'USD', WalletAccountCategory::Clearing);
+        $instrument = new WalletPaymentInstrument($wallet, WalletPaymentInstrumentType::BankAccount, 'provider', 'withdrawal-success-replay-instrument', 'Bank');
+        $withdrawal = new WalletWithdrawal($wallet, $instrument, 400, 'USD', 'withdrawal-success-replay');
         $withdrawal->start();
         $instructions = [
-            new PostingInstruction($cash, -400),
-            new PostingInstruction($clearing, 400),
+            new WalletPostingInstruction($cash, -400),
+            new WalletPostingInstruction($clearing, 400),
         ];
 
         $first = $service->succeedWithdrawal($withdrawal, 'withdrawal-success-replay-post', $instructions);
         $replayed = $service->succeedWithdrawal($withdrawal, 'withdrawal-success-replay-post', $instructions);
 
         self::assertSame($first, $replayed);
-        self::assertSame(WithdrawalStatus::Succeeded, $withdrawal->status());
+        self::assertSame(WalletWithdrawalStatus::Succeeded, $withdrawal->status());
     }
 
     public function testFundingReversalRejectsDifferentPostingTopology(): void
     {
         $entityManager = $this->entityManager();
-        $service = new FinancialOperationService($entityManager, $this->postingService($entityManager));
+        $service = new WalletFinancialOperationService($entityManager, $this->postingService($entityManager));
         $wallet = new Wallet('vendor', 'vendor-reversal-mismatch');
-        $cash = new Account($wallet, 'cash', 'USD', AccountCategory::Asset);
-        $clearing = new Account($wallet, 'clearing', 'USD', AccountCategory::Clearing);
-        $other = new Account($wallet, 'other', 'USD', AccountCategory::Liability);
-        $instrument = new PaymentInstrument($wallet, PaymentInstrumentType::Card, 'provider', 'instrument-mismatch', 'Card');
-        $funding = new Funding($wallet, $instrument, 700, 'USD', 'funding-mismatch-1');
+        $cash = new WalletAccount($wallet, 'cash', 'USD', WalletAccountCategory::Asset);
+        $clearing = new WalletAccount($wallet, 'clearing', 'USD', WalletAccountCategory::Clearing);
+        $other = new WalletAccount($wallet, 'other', 'USD', WalletAccountCategory::Liability);
+        $instrument = new WalletPaymentInstrument($wallet, WalletPaymentInstrumentType::Card, 'provider', 'instrument-mismatch', 'Card');
+        $funding = new WalletFunding($wallet, $instrument, 700, 'USD', 'funding-mismatch-1');
         $funding->start();
         $service->succeedFunding($funding, 'funding-mismatch-post-1', [
-            new PostingInstruction($cash, 700),
-            new PostingInstruction($clearing, -700),
+            new WalletPostingInstruction($cash, 700),
+            new WalletPostingInstruction($clearing, -700),
         ]);
 
         $this->expectException(\DomainException::class);
         $service->reverseFunding($funding, 'funding-mismatch-reverse-1', [
-            new PostingInstruction($cash, -700),
-            new PostingInstruction($other, 700),
+            new WalletPostingInstruction($cash, -700),
+            new WalletPostingInstruction($other, 700),
         ]);
     }
 
     public function testFundingAndWithdrawalReversalsRecordLedgerTransactions(): void
     {
         $entityManager = $this->entityManager();
-        $service = new FinancialOperationService($entityManager, $this->postingService($entityManager));
+        $service = new WalletFinancialOperationService($entityManager, $this->postingService($entityManager));
         $wallet = new Wallet('vendor', 'vendor-reversal');
-        $cash = new Account($wallet, 'cash', 'USD', AccountCategory::Asset);
-        $clearing = new Account($wallet, 'clearing', 'USD', AccountCategory::Clearing);
-        $instrument = new PaymentInstrument($wallet, PaymentInstrumentType::Card, 'provider', 'instrument-1', 'Card');
+        $cash = new WalletAccount($wallet, 'cash', 'USD', WalletAccountCategory::Asset);
+        $clearing = new WalletAccount($wallet, 'clearing', 'USD', WalletAccountCategory::Clearing);
+        $instrument = new WalletPaymentInstrument($wallet, WalletPaymentInstrumentType::Card, 'provider', 'instrument-1', 'Card');
 
-        $funding = new Funding($wallet, $instrument, 700, 'USD', 'funding-1');
+        $funding = new WalletFunding($wallet, $instrument, 700, 'USD', 'funding-1');
         $funding->start();
         $fundingTransaction = $service->succeedFunding($funding, 'funding-post-1', [
-            new PostingInstruction($cash, 700),
-            new PostingInstruction($clearing, -700),
+            new WalletPostingInstruction($cash, 700),
+            new WalletPostingInstruction($clearing, -700),
         ]);
         $fundingReversal = $service->reverseFunding($funding, 'funding-reverse-1', [
-            new PostingInstruction($cash, -700),
-            new PostingInstruction($clearing, 700),
+            new WalletPostingInstruction($cash, -700),
+            new WalletPostingInstruction($clearing, 700),
         ]);
 
-        self::assertSame(FundingStatus::Reversed, $funding->status());
+        self::assertSame(WalletFundingStatus::Reversed, $funding->status());
         self::assertSame($fundingTransaction, $funding->transaction());
         self::assertSame($fundingReversal, $funding->reversalTransaction());
 
-        $withdrawal = new Withdrawal($wallet, $instrument, 400, 'USD', 'withdrawal-1');
+        $withdrawal = new WalletWithdrawal($wallet, $instrument, 400, 'USD', 'withdrawal-1');
         $withdrawal->start();
         $withdrawalTransaction = $service->succeedWithdrawal($withdrawal, 'withdrawal-post-1', [
-            new PostingInstruction($cash, -400),
-            new PostingInstruction($clearing, 400),
+            new WalletPostingInstruction($cash, -400),
+            new WalletPostingInstruction($clearing, 400),
         ]);
         $withdrawalReversal = $service->reverseWithdrawal($withdrawal, 'withdrawal-reverse-1', [
-            new PostingInstruction($cash, 400),
-            new PostingInstruction($clearing, -400),
+            new WalletPostingInstruction($cash, 400),
+            new WalletPostingInstruction($clearing, -400),
         ]);
 
-        self::assertSame(WithdrawalStatus::Reversed, $withdrawal->status());
+        self::assertSame(WalletWithdrawalStatus::Reversed, $withdrawal->status());
         self::assertSame($withdrawalTransaction, $withdrawal->transaction());
         self::assertSame($withdrawalReversal, $withdrawal->reversalTransaction());
     }
@@ -267,46 +267,46 @@ final class FinancialOperationServiceTest extends TestCase
     public function testFundingReversalReplayReturnsExistingTransactionForSameKey(): void
     {
         $entityManager = $this->entityManager();
-        $service = new FinancialOperationService($entityManager, $this->postingService($entityManager));
+        $service = new WalletFinancialOperationService($entityManager, $this->postingService($entityManager));
         $wallet = new Wallet('vendor', 'vendor-funding-reversal-replay');
-        $cash = new Account($wallet, 'cash', 'USD', AccountCategory::Asset);
-        $clearing = new Account($wallet, 'clearing', 'USD', AccountCategory::Clearing);
-        $instrument = new PaymentInstrument($wallet, PaymentInstrumentType::Card, 'provider', 'instrument-funding-replay', 'Card');
-        $funding = new Funding($wallet, $instrument, 700, 'USD', 'funding-replay');
+        $cash = new WalletAccount($wallet, 'cash', 'USD', WalletAccountCategory::Asset);
+        $clearing = new WalletAccount($wallet, 'clearing', 'USD', WalletAccountCategory::Clearing);
+        $instrument = new WalletPaymentInstrument($wallet, WalletPaymentInstrumentType::Card, 'provider', 'instrument-funding-replay', 'Card');
+        $funding = new WalletFunding($wallet, $instrument, 700, 'USD', 'funding-replay');
         $funding->start();
         $service->succeedFunding($funding, 'funding-replay-post', [
-            new PostingInstruction($cash, 700),
-            new PostingInstruction($clearing, -700),
+            new WalletPostingInstruction($cash, 700),
+            new WalletPostingInstruction($clearing, -700),
         ]);
         $instructions = [
-            new PostingInstruction($cash, -700),
-            new PostingInstruction($clearing, 700),
+            new WalletPostingInstruction($cash, -700),
+            new WalletPostingInstruction($clearing, 700),
         ];
 
         $first = $service->reverseFunding($funding, 'funding-replay-reverse', $instructions);
         $replayed = $service->reverseFunding($funding, 'funding-replay-reverse', $instructions);
 
         self::assertSame($first, $replayed);
-        self::assertSame(FundingStatus::Reversed, $funding->status());
+        self::assertSame(WalletFundingStatus::Reversed, $funding->status());
     }
 
     public function testFundingReversalReplayRejectsDifferentKey(): void
     {
         $entityManager = $this->entityManager();
-        $service = new FinancialOperationService($entityManager, $this->postingService($entityManager));
+        $service = new WalletFinancialOperationService($entityManager, $this->postingService($entityManager));
         $wallet = new Wallet('vendor', 'vendor-funding-reversal-conflict');
-        $cash = new Account($wallet, 'cash', 'USD', AccountCategory::Asset);
-        $clearing = new Account($wallet, 'clearing', 'USD', AccountCategory::Clearing);
-        $instrument = new PaymentInstrument($wallet, PaymentInstrumentType::Card, 'provider', 'instrument-funding-conflict', 'Card');
-        $funding = new Funding($wallet, $instrument, 700, 'USD', 'funding-conflict');
+        $cash = new WalletAccount($wallet, 'cash', 'USD', WalletAccountCategory::Asset);
+        $clearing = new WalletAccount($wallet, 'clearing', 'USD', WalletAccountCategory::Clearing);
+        $instrument = new WalletPaymentInstrument($wallet, WalletPaymentInstrumentType::Card, 'provider', 'instrument-funding-conflict', 'Card');
+        $funding = new WalletFunding($wallet, $instrument, 700, 'USD', 'funding-conflict');
         $funding->start();
         $service->succeedFunding($funding, 'funding-conflict-post', [
-            new PostingInstruction($cash, 700),
-            new PostingInstruction($clearing, -700),
+            new WalletPostingInstruction($cash, 700),
+            new WalletPostingInstruction($clearing, -700),
         ]);
         $instructions = [
-            new PostingInstruction($cash, -700),
-            new PostingInstruction($clearing, 700),
+            new WalletPostingInstruction($cash, -700),
+            new WalletPostingInstruction($clearing, 700),
         ];
         $service->reverseFunding($funding, 'funding-conflict-reverse-1', $instructions);
 
@@ -318,46 +318,46 @@ final class FinancialOperationServiceTest extends TestCase
     public function testWithdrawalReversalReplayReturnsExistingTransactionForSameKey(): void
     {
         $entityManager = $this->entityManager();
-        $service = new FinancialOperationService($entityManager, $this->postingService($entityManager));
+        $service = new WalletFinancialOperationService($entityManager, $this->postingService($entityManager));
         $wallet = new Wallet('vendor', 'vendor-withdrawal-reversal-replay');
-        $cash = new Account($wallet, 'cash', 'USD', AccountCategory::Asset);
-        $clearing = new Account($wallet, 'clearing', 'USD', AccountCategory::Clearing);
-        $instrument = new PaymentInstrument($wallet, PaymentInstrumentType::BankAccount, 'provider', 'instrument-withdrawal-replay', 'Bank');
-        $withdrawal = new Withdrawal($wallet, $instrument, 400, 'USD', 'withdrawal-replay');
+        $cash = new WalletAccount($wallet, 'cash', 'USD', WalletAccountCategory::Asset);
+        $clearing = new WalletAccount($wallet, 'clearing', 'USD', WalletAccountCategory::Clearing);
+        $instrument = new WalletPaymentInstrument($wallet, WalletPaymentInstrumentType::BankAccount, 'provider', 'instrument-withdrawal-replay', 'Bank');
+        $withdrawal = new WalletWithdrawal($wallet, $instrument, 400, 'USD', 'withdrawal-replay');
         $withdrawal->start();
         $service->succeedWithdrawal($withdrawal, 'withdrawal-replay-post', [
-            new PostingInstruction($cash, -400),
-            new PostingInstruction($clearing, 400),
+            new WalletPostingInstruction($cash, -400),
+            new WalletPostingInstruction($clearing, 400),
         ]);
         $instructions = [
-            new PostingInstruction($cash, 400),
-            new PostingInstruction($clearing, -400),
+            new WalletPostingInstruction($cash, 400),
+            new WalletPostingInstruction($clearing, -400),
         ];
 
         $first = $service->reverseWithdrawal($withdrawal, 'withdrawal-replay-reverse', $instructions);
         $replayed = $service->reverseWithdrawal($withdrawal, 'withdrawal-replay-reverse', $instructions);
 
         self::assertSame($first, $replayed);
-        self::assertSame(WithdrawalStatus::Reversed, $withdrawal->status());
+        self::assertSame(WalletWithdrawalStatus::Reversed, $withdrawal->status());
     }
 
     public function testWithdrawalReversalReplayRejectsDifferentKey(): void
     {
         $entityManager = $this->entityManager();
-        $service = new FinancialOperationService($entityManager, $this->postingService($entityManager));
+        $service = new WalletFinancialOperationService($entityManager, $this->postingService($entityManager));
         $wallet = new Wallet('vendor', 'vendor-withdrawal-reversal-conflict');
-        $cash = new Account($wallet, 'cash', 'USD', AccountCategory::Asset);
-        $clearing = new Account($wallet, 'clearing', 'USD', AccountCategory::Clearing);
-        $instrument = new PaymentInstrument($wallet, PaymentInstrumentType::BankAccount, 'provider', 'instrument-withdrawal-conflict', 'Bank');
-        $withdrawal = new Withdrawal($wallet, $instrument, 400, 'USD', 'withdrawal-conflict');
+        $cash = new WalletAccount($wallet, 'cash', 'USD', WalletAccountCategory::Asset);
+        $clearing = new WalletAccount($wallet, 'clearing', 'USD', WalletAccountCategory::Clearing);
+        $instrument = new WalletPaymentInstrument($wallet, WalletPaymentInstrumentType::BankAccount, 'provider', 'instrument-withdrawal-conflict', 'Bank');
+        $withdrawal = new WalletWithdrawal($wallet, $instrument, 400, 'USD', 'withdrawal-conflict');
         $withdrawal->start();
         $service->succeedWithdrawal($withdrawal, 'withdrawal-conflict-post', [
-            new PostingInstruction($cash, -400),
-            new PostingInstruction($clearing, 400),
+            new WalletPostingInstruction($cash, -400),
+            new WalletPostingInstruction($clearing, 400),
         ]);
         $instructions = [
-            new PostingInstruction($cash, 400),
-            new PostingInstruction($clearing, -400),
+            new WalletPostingInstruction($cash, 400),
+            new WalletPostingInstruction($clearing, -400),
         ];
         $service->reverseWithdrawal($withdrawal, 'withdrawal-conflict-reverse-1', $instructions);
 
@@ -369,17 +369,17 @@ final class FinancialOperationServiceTest extends TestCase
     public function testFullRefundReplayReturnsExistingLinkedTransaction(): void
     {
         $entityManager = $this->statefulEntityManager();
-        $service = new FinancialOperationService($entityManager, $this->postingService($entityManager));
+        $service = new WalletFinancialOperationService($entityManager, $this->postingService($entityManager));
         $wallet = new Wallet('vendor', 'refund-replay-full');
-        $cash = new Account($wallet, 'cash', 'USD', AccountCategory::Asset);
-        $clearing = new Account($wallet, 'clearing', 'USD', AccountCategory::Clearing);
-        $original = new LedgerTransaction(TransactionType::Credit, 'refund-replay-source-full');
+        $cash = new WalletAccount($wallet, 'cash', 'USD', WalletAccountCategory::Asset);
+        $clearing = new WalletAccount($wallet, 'clearing', 'USD', WalletAccountCategory::Clearing);
+        $original = new WalletLedgerTransaction(WalletTransactionType::Credit, 'refund-replay-source-full');
         $original->addPosting($cash, 500);
         $original->addPosting($clearing, -500);
         $original->post();
         $instructions = [
-            new PostingInstruction($cash, -500),
-            new PostingInstruction($clearing, 500),
+            new WalletPostingInstruction($cash, -500),
+            new WalletPostingInstruction($clearing, 500),
         ];
 
         $first = $service->refund($original, 'refund-replay-full', $instructions);
@@ -391,17 +391,17 @@ final class FinancialOperationServiceTest extends TestCase
     public function testPartialRefundReplayReturnsExistingLinkedTransaction(): void
     {
         $entityManager = $this->statefulEntityManager();
-        $service = new FinancialOperationService($entityManager, $this->postingService($entityManager));
+        $service = new WalletFinancialOperationService($entityManager, $this->postingService($entityManager));
         $wallet = new Wallet('vendor', 'refund-replay-partial');
-        $cash = new Account($wallet, 'cash', 'USD', AccountCategory::Asset);
-        $clearing = new Account($wallet, 'clearing', 'USD', AccountCategory::Clearing);
-        $original = new LedgerTransaction(TransactionType::Credit, 'refund-replay-source-partial');
+        $cash = new WalletAccount($wallet, 'cash', 'USD', WalletAccountCategory::Asset);
+        $clearing = new WalletAccount($wallet, 'clearing', 'USD', WalletAccountCategory::Clearing);
+        $original = new WalletLedgerTransaction(WalletTransactionType::Credit, 'refund-replay-source-partial');
         $original->addPosting($cash, 500);
         $original->addPosting($clearing, -500);
         $original->post();
         $instructions = [
-            new PostingInstruction($cash, -200),
-            new PostingInstruction($clearing, 200),
+            new WalletPostingInstruction($cash, -200),
+            new WalletPostingInstruction($clearing, 200),
         ];
 
         $first = $service->refundPartial($original, 200, 'refund-replay-partial', $instructions);
@@ -413,32 +413,32 @@ final class FinancialOperationServiceTest extends TestCase
     public function testRefundReplayKeyCannotChangeRequestContent(): void
     {
         $entityManager = $this->statefulEntityManager();
-        $service = new FinancialOperationService($entityManager, $this->postingService($entityManager));
+        $service = new WalletFinancialOperationService($entityManager, $this->postingService($entityManager));
         $wallet = new Wallet('vendor', 'refund-replay-conflict');
-        $cash = new Account($wallet, 'cash', 'USD', AccountCategory::Asset);
-        $clearing = new Account($wallet, 'clearing', 'USD', AccountCategory::Clearing);
-        $original = new LedgerTransaction(TransactionType::Credit, 'refund-replay-source-conflict');
+        $cash = new WalletAccount($wallet, 'cash', 'USD', WalletAccountCategory::Asset);
+        $clearing = new WalletAccount($wallet, 'clearing', 'USD', WalletAccountCategory::Clearing);
+        $original = new WalletLedgerTransaction(WalletTransactionType::Credit, 'refund-replay-source-conflict');
         $original->addPosting($cash, 500);
         $original->addPosting($clearing, -500);
         $original->post();
         $service->refundPartial($original, 200, 'refund-replay-conflict', [
-            new PostingInstruction($cash, -200),
-            new PostingInstruction($clearing, 200),
+            new WalletPostingInstruction($cash, -200),
+            new WalletPostingInstruction($clearing, 200),
         ]);
 
         $this->expectException(\DomainException::class);
         $this->expectExceptionMessage('Idempotency key is already bound to a different financial request.');
         $service->refundPartial($original, 300, 'refund-replay-conflict', [
-            new PostingInstruction($cash, -300),
-            new PostingInstruction($clearing, 300),
+            new WalletPostingInstruction($cash, -300),
+            new WalletPostingInstruction($clearing, 300),
         ]);
     }
 
     public function testRefundRejectsInverseSourceBeforePosting(): void
     {
         $entityManager = $this->entityManager();
-        $service = new FinancialOperationService($entityManager, $this->postingService($entityManager));
-        $source = new LedgerTransaction(TransactionType::Reverse, 'inverse-source-service');
+        $service = new WalletFinancialOperationService($entityManager, $this->postingService($entityManager));
+        $source = new WalletLedgerTransaction(WalletTransactionType::Reverse, 'inverse-source-service');
 
         $this->expectException(\DomainException::class);
         $this->expectExceptionMessage('Refund and reverse cannot originate from an inverse transaction.');
@@ -453,15 +453,15 @@ final class FinancialOperationServiceTest extends TestCase
             $callback();
             throw new \RuntimeException('commit failed');
         });
-        $service = new FinancialOperationService($entityManager, $this->postingService($entityManager));
+        $service = new WalletFinancialOperationService($entityManager, $this->postingService($entityManager));
         $wallet = new Wallet('vendor', 'vendor-1');
-        $available = new Account($wallet, 'available', 'USD', AccountCategory::Asset);
-        $reserved = new Account($wallet, 'reserved', 'USD', AccountCategory::Reserve);
+        $available = new WalletAccount($wallet, 'available', 'USD', WalletAccountCategory::Asset);
+        $reserved = new WalletAccount($wallet, 'reserved', 'USD', WalletAccountCategory::Reserve);
 
         $this->expectException(\RuntimeException::class);
         $service->reserve($wallet, $reserved, 500, 'USD', 'reserve-operation-fail', [
-            new PostingInstruction($available, -500),
-            new PostingInstruction($reserved, 500),
+            new WalletPostingInstruction($available, -500),
+            new WalletPostingInstruction($reserved, 500),
         ]);
     }
 
@@ -473,7 +473,7 @@ final class FinancialOperationServiceTest extends TestCase
         $connection = $this->createStub(Connection::class);
 
         $transactionRepository = $this->createStub(EntityRepository::class);
-        $transactionRepository->method('findOneBy')->willReturnCallback(static function (array $criteria) use (&$transactions): ?LedgerTransaction {
+        $transactionRepository->method('findOneBy')->willReturnCallback(static function (array $criteria) use (&$transactions): ?WalletLedgerTransaction {
             foreach ($transactions as $transaction) {
                 if (($criteria['idempotencyKey'] ?? null) === $transaction->idempotencyKey()) {
                     return $transaction;
@@ -484,7 +484,7 @@ final class FinancialOperationServiceTest extends TestCase
         });
 
         $linkRepository = $this->createStub(EntityRepository::class);
-        $linkRepository->method('findOneBy')->willReturnCallback(static function (array $criteria) use (&$links): ?FinancialOperationLink {
+        $linkRepository->method('findOneBy')->willReturnCallback(static function (array $criteria) use (&$links): ?WalletFinancialOperationLink {
             foreach ($links as $link) {
                 if (($criteria['resultTransaction'] ?? null) === $link->resultTransaction()) {
                     return $link;
@@ -495,7 +495,7 @@ final class FinancialOperationServiceTest extends TestCase
         });
 
         $reservationRepository = $this->createStub(EntityRepository::class);
-        $reservationRepository->method('findOneBy')->willReturnCallback(static function (array $criteria) use (&$reservations): ?Reservation {
+        $reservationRepository->method('findOneBy')->willReturnCallback(static function (array $criteria) use (&$reservations): ?WalletReservation {
             foreach ($reservations as $reservation) {
                 if (($criteria['idempotencyKey'] ?? null) === $reservation->idempotencyKey()) {
                     return $reservation;
@@ -509,19 +509,19 @@ final class FinancialOperationServiceTest extends TestCase
         $entityManager = $this->createMock(EntityManagerInterface::class);
         $entityManager->method('getConnection')->willReturn($connection);
         $entityManager->method('getRepository')->willReturnCallback(static fn (string $class): EntityRepository => match ($class) {
-            LedgerTransaction::class => $transactionRepository,
-            FinancialOperationLink::class => $linkRepository,
-            Reservation::class => $reservationRepository,
+            WalletLedgerTransaction::class => $transactionRepository,
+            WalletFinancialOperationLink::class => $linkRepository,
+            WalletReservation::class => $reservationRepository,
             default => $fallbackRepository,
         });
         $entityManager->method('persist')->willReturnCallback(static function (object $entity) use (&$transactions, &$links, &$reservations): void {
-            if ($entity instanceof LedgerTransaction) {
+            if ($entity instanceof WalletLedgerTransaction) {
                 $transactions[] = $entity;
             }
-            if ($entity instanceof FinancialOperationLink) {
+            if ($entity instanceof WalletFinancialOperationLink) {
                 $links[] = $entity;
             }
-            if ($entity instanceof Reservation) {
+            if ($entity instanceof WalletReservation) {
                 $reservations[] = $entity;
             }
         });
@@ -530,15 +530,15 @@ final class FinancialOperationServiceTest extends TestCase
         return $entityManager;
     }
 
-    private function postingService(EntityManagerInterface $entityManager): PostingService
+    private function postingService(EntityManagerInterface $entityManager): WalletPostingService
     {
         $connection = $this->createStub(Connection::class);
-        $outboxService = new OutboxService($entityManager, $connection);
+        $outboxService = new WalletOutboxService($entityManager, $connection);
 
-        return new PostingService(
+        return new WalletPostingService(
             $entityManager,
             $outboxService,
-            new PostingDbalExecutor($connection, $outboxService, new \App\Walleting\Service\PostingRetryPolicy(), new \App\Walleting\Service\NullPostingTelemetry()),
+            new WalletPostingDbalExecutor($connection, $outboxService, new \App\Walleting\Policy\Posting\WalletPostingRetryPolicy(), new \App\Walleting\Service\WalletNullPostingTelemetry()),
         );
     }
 

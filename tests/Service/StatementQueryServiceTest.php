@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Walleting\Tests\Service;
 
-use App\Walleting\Entity\Account;
 use App\Walleting\Entity\Wallet;
-use App\Walleting\Enum\AccountCategory;
-use App\Walleting\Service\StatementQueryService;
+use App\Walleting\Entity\WalletAccount;
+use App\Walleting\Enum\WalletAccountCategory;
+use App\Walleting\Service\WalletStatementQueryService;
 use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\TestCase;
@@ -24,7 +24,7 @@ final class StatementQueryServiceTest extends TestCase
             $this->row('tx-1', '2026-08-07 02:01:00', 1000, 1200),
         ]);
 
-        $page = (new StatementQueryService($connection))->statement($this->account(), 2);
+        $page = (new WalletStatementQueryService($connection))->statement($this->account(), 2);
 
         self::assertCount(2, $page->items);
         self::assertSame('tx-3', $page->items[0]->transactionId);
@@ -37,7 +37,7 @@ final class StatementQueryServiceTest extends TestCase
 
     public function testStatementRejectsInvalidDateRange(): void
     {
-        $service = new StatementQueryService($this->createStub(Connection::class));
+        $service = new WalletStatementQueryService($this->createStub(Connection::class));
 
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Statement from date cannot be later than to date.');
@@ -50,7 +50,7 @@ final class StatementQueryServiceTest extends TestCase
 
     public function testStatementRejectsInvalidCursor(): void
     {
-        $service = new StatementQueryService($this->createStub(Connection::class));
+        $service = new WalletStatementQueryService($this->createStub(Connection::class));
 
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Statement cursor is invalid.');
@@ -78,8 +78,8 @@ final class StatementQueryServiceTest extends TestCase
         ];
     }
 
-    private function account(): Account
+    private function account(): WalletAccount
     {
-        return new Account(new Wallet('vendor', 'statement-vendor'), 'cash', 'USD', AccountCategory::Asset);
+        return new WalletAccount(new Wallet('vendor', 'statement-vendor'), 'cash', 'USD', WalletAccountCategory::Asset);
     }
 }

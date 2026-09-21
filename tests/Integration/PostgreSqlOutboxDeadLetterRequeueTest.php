@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Walleting\Tests\Integration;
 
-use App\Walleting\Entity\OutboxMessage;
-use App\Walleting\Outbox\OutboxMessageHandlerInterface;
-use App\Walleting\Service\OutboxDeadLetterService;
-use App\Walleting\Service\OutboxDispatcher;
-use App\Walleting\Service\OutboxService;
+use App\Walleting\Entity\WalletOutboxMessage;
+use App\Walleting\Handler\Outbox\WalletOutboxMessageHandlerInterface;
+use App\Walleting\Service\WalletOutboxDeadLetterService;
+use App\Walleting\Service\WalletOutboxDispatcher;
+use App\Walleting\Service\WalletOutboxService;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
@@ -32,18 +32,18 @@ final class PostgreSqlOutboxDeadLetterRequeueTest extends KernelTestCase
     {
         $this->enqueue();
         $service = $this->outboxService();
-        $handler = new class implements OutboxMessageHandlerInterface {
+        $handler = new class implements WalletOutboxMessageHandlerInterface {
             public function supports(string $messageType): bool
             {
                 return 'posting.requeue.test' === $messageType;
             }
 
-            public function handle(OutboxMessage $message): void
+            public function handle(WalletOutboxMessage $message): void
             {
                 throw new \RuntimeException('persistent failure');
             }
         };
-        $dispatcher = new OutboxDispatcher($service, [$handler], maxAttempts: 1, baseDelaySeconds: 30, maxDelaySeconds: 30);
+        $dispatcher = new WalletOutboxDispatcher($service, [$handler], maxAttempts: 1, baseDelaySeconds: 30, maxDelaySeconds: 30);
         $dispatcher->dispatchBatchReport(1);
 
         $row = $this->connection->fetchAssociative("SELECT id, status, attempt_count, last_error FROM outbox_message WHERE deduplication_key = 'posting.requeue.test:one'");
@@ -52,7 +52,7 @@ final class PostgreSqlOutboxDeadLetterRequeueTest extends KernelTestCase
         self::assertSame(1, (int) $row['attempt_count']);
 
         $this->entityManager->clear();
-        $requeued = (new OutboxDeadLetterService($this->entityManager))->requeue((string) $row['id'], 'ops@example.com', 'Transport configuration repaired');
+        $requeued = (new WalletOutboxDeadLetterService($this->entityManager))->requeue((string) $row['id'], 'ops@example.com', 'Transport configuration repaired');
 
         self::assertSame('failed', $requeued->status()->value);
         self::assertSame(1, $requeued->attemptCount());
@@ -74,23 +74,23 @@ final class PostgreSqlOutboxDeadLetterRequeueTest extends KernelTestCase
     {
         $this->enqueue();
         $service = $this->outboxService();
-        $handler = new class implements OutboxMessageHandlerInterface {
+        $handler = new class implements WalletOutboxMessageHandlerInterface {
             public function supports(string $messageType): bool
             {
                 return 'posting.requeue.test' === $messageType;
             }
 
-            public function handle(OutboxMessage $message): void
+            public function handle(WalletOutboxMessage $message): void
             {
                 throw new \RuntimeException('still broken');
             }
         };
-        $dispatcher = new OutboxDispatcher($service, [$handler], maxAttempts: 1, baseDelaySeconds: 30, maxDelaySeconds: 30);
+        $dispatcher = new WalletOutboxDispatcher($service, [$handler], maxAttempts: 1, baseDelaySeconds: 30, maxDelaySeconds: 30);
         $dispatcher->dispatchBatchReport(1);
         $id = (string) $this->connection->fetchOne("SELECT id FROM outbox_message WHERE deduplication_key = 'posting.requeue.test:one'");
 
         $this->entityManager->clear();
-        (new OutboxDeadLetterService($this->entityManager))->requeue($id, 'operator-1', 'Retry after repair');
+        (new WalletOutboxDeadLetterService($this->entityManager))->requeue($id, 'operator-1', 'Retry after repair');
         $this->entityManager->clear();
 
         $report = $dispatcher->dispatchBatchReport(1);
@@ -111,7 +111,7 @@ final class PostgreSqlOutboxDeadLetterRequeueTest extends KernelTestCase
 
         $this->expectException(\LogicException::class);
         $this->expectExceptionMessage('Only dead outbox messages can be requeued.');
-        (new OutboxDeadLetterService($this->entityManager))->requeue($id, 'operator-1', 'Invalid attempt');
+        (new WalletOutboxDeadLetterService($this->entityManager))->requeue($id, 'operator-1', 'Invalid attempt');
     }
 
     private function enqueue(): void
@@ -121,8 +121,8 @@ final class PostgreSqlOutboxDeadLetterRequeueTest extends KernelTestCase
         });
     }
 
-    private function outboxService(): OutboxService
+    private function outboxService(): WalletOutboxService
     {
-        return new OutboxService($this->entityManager, $this->connection);
+        return new WalletOutboxService($this->entityManager, $this->connection);
     }
 }

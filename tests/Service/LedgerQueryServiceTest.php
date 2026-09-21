@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Walleting\Tests\Service;
 
-use App\Walleting\Entity\Account;
 use App\Walleting\Entity\Wallet;
-use App\Walleting\Enum\AccountCategory;
-use App\Walleting\Service\LedgerQueryService;
+use App\Walleting\Entity\WalletAccount;
+use App\Walleting\Enum\WalletAccountCategory;
+use App\Walleting\Service\WalletLedgerQueryService;
 use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\TestCase;
@@ -24,7 +24,7 @@ final class LedgerQueryServiceTest extends TestCase
             $this->row('posting-1', '2026-08-07 01:01:00', 100),
         ]);
 
-        $page = (new LedgerQueryService($connection))->history($this->account(), 2);
+        $page = (new WalletLedgerQueryService($connection))->history($this->account(), 2);
 
         self::assertCount(2, $page->items);
         self::assertSame('posting-3', $page->items[0]->postingId);
@@ -34,7 +34,7 @@ final class LedgerQueryServiceTest extends TestCase
 
     public function testHistoryRejectsInvalidCursor(): void
     {
-        $service = new LedgerQueryService($this->createStub(Connection::class));
+        $service = new WalletLedgerQueryService($this->createStub(Connection::class));
 
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Ledger history cursor is invalid.');
@@ -46,7 +46,7 @@ final class LedgerQueryServiceTest extends TestCase
         $connection = $this->createMock(Connection::class);
         $connection->expects(self::once())->method('fetchOne')->willReturn('1250');
 
-        $balance = (new LedgerQueryService($connection))->balanceAt($this->account(), new \DateTimeImmutable('2026-08-07T01:30:00-05:00'));
+        $balance = (new WalletLedgerQueryService($connection))->balanceAt($this->account(), new \DateTimeImmutable('2026-08-07T01:30:00-05:00'));
 
         self::assertSame(1250, $balance);
     }
@@ -66,8 +66,8 @@ final class LedgerQueryServiceTest extends TestCase
         ];
     }
 
-    private function account(): Account
+    private function account(): WalletAccount
     {
-        return new Account(new Wallet('vendor', 'ledger-query-vendor'), 'cash', 'USD', AccountCategory::Asset);
+        return new WalletAccount(new Wallet('vendor', 'ledger-query-vendor'), 'cash', 'USD', WalletAccountCategory::Asset);
     }
 }

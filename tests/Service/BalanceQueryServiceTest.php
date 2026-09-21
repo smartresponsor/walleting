@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Walleting\Tests\Service;
 
-use App\Walleting\Entity\Account;
 use App\Walleting\Entity\Wallet;
-use App\Walleting\Enum\AccountCategory;
-use App\Walleting\Service\BalanceQueryService;
+use App\Walleting\Entity\WalletAccount;
+use App\Walleting\Enum\WalletAccountCategory;
+use App\Walleting\Service\WalletBalanceQueryService;
 use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\TestCase;
 
@@ -26,7 +26,7 @@ final class BalanceQueryServiceTest extends TestCase
                 'updated_at' => '2026-08-02 01:30:00',
             ]);
 
-        $snapshot = (new BalanceQueryService($connection))->wallet(new Wallet('vendor', 'balance-query'), 'usd');
+        $snapshot = (new WalletBalanceQueryService($connection))->wallet(new Wallet('vendor', 'balance-query'), 'usd');
 
         self::assertSame('USD', $snapshot->currency);
         self::assertSame(1600, $snapshot->ledgerMinor);
@@ -44,9 +44,9 @@ final class BalanceQueryServiceTest extends TestCase
             ->willReturn(false);
 
         $wallet = new Wallet('vendor', 'empty-account');
-        $account = new Account($wallet, 'available', 'USD', AccountCategory::Asset);
+        $account = new WalletAccount($wallet, 'available', 'USD', WalletAccountCategory::Asset);
 
-        self::assertSame(0, (new BalanceQueryService($connection))->account($account));
+        self::assertSame(0, (new WalletBalanceQueryService($connection))->account($account));
     }
 
     public function testSnapshotRejectsInvalidCurrency(): void
@@ -54,6 +54,6 @@ final class BalanceQueryServiceTest extends TestCase
         $connection = $this->createStub(Connection::class);
 
         $this->expectException(\InvalidArgumentException::class);
-        (new BalanceQueryService($connection))->wallet(new Wallet('vendor', 'bad-currency'), 'US');
+        (new WalletBalanceQueryService($connection))->wallet(new Wallet('vendor', 'bad-currency'), 'US');
     }
 }

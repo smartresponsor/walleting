@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Walleting\Tests\Integration;
 
-use App\Walleting\Entity\OutboxMessage;
-use App\Walleting\Outbox\OutboxMessageHandlerInterface;
-use App\Walleting\Service\OutboxDeadLetterService;
-use App\Walleting\Service\OutboxDispatcher;
-use App\Walleting\Service\OutboxService;
+use App\Walleting\Entity\WalletOutboxMessage;
+use App\Walleting\Handler\Outbox\WalletOutboxMessageHandlerInterface;
+use App\Walleting\Service\WalletOutboxDeadLetterService;
+use App\Walleting\Service\WalletOutboxDispatcher;
+use App\Walleting\Service\WalletOutboxService;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
@@ -30,32 +30,32 @@ final class PostgreSqlOutboxInspectionTest extends KernelTestCase
 
     public function testInspectionReturnsMessagePayloadAndOrderedRequeueHistory(): void
     {
-        $service = new OutboxService($this->entityManager, $this->connection);
+        $service = new WalletOutboxService($this->entityManager, $this->connection);
         $this->connection->transactional(function () use ($service): void {
             $service->enqueueOperationalDbal('posting.inspect.test', 'posting.inspect.test:one', ['scope' => 'default', 'revision' => 7]);
         });
-        $handler = new class implements OutboxMessageHandlerInterface {
+        $handler = new class implements WalletOutboxMessageHandlerInterface {
             public function supports(string $messageType): bool
             {
                 return 'posting.inspect.test' === $messageType;
             }
 
-            public function handle(OutboxMessage $message): void
+            public function handle(WalletOutboxMessage $message): void
             {
                 throw new \RuntimeException('downstream unavailable');
             }
         };
-        $dispatcher = new OutboxDispatcher($service, [$handler], maxAttempts: 1, baseDelaySeconds: 30, maxDelaySeconds: 30);
+        $dispatcher = new WalletOutboxDispatcher($service, [$handler], maxAttempts: 1, baseDelaySeconds: 30, maxDelaySeconds: 30);
         $dispatcher->dispatchBatchReport(1);
         $id = (string) $this->connection->fetchOne("SELECT id FROM outbox_message WHERE deduplication_key = 'posting.inspect.test:one'");
 
         $this->entityManager->clear();
-        (new OutboxDeadLetterService($this->entityManager))->requeue($id, 'operator-a', 'First repair');
+        (new WalletOutboxDeadLetterService($this->entityManager))->requeue($id, 'operator-a', 'First repair');
         $this->connection->executeStatement("UPDATE outbox_message SET available_at = (CURRENT_TIMESTAMP AT TIME ZONE 'UTC') - INTERVAL '1 second' WHERE id = ?", [$id]);
         $this->entityManager->clear();
         $dispatcher->dispatchBatchReport(1);
         $this->entityManager->clear();
-        (new OutboxDeadLetterService($this->entityManager))->requeue($id, 'operator-b', 'Second repair');
+        (new WalletOutboxDeadLetterService($this->entityManager))->requeue($id, 'operator-b', 'Second repair');
         $this->entityManager->clear();
 
         $detail = $service->inspect($id);
@@ -77,7 +77,7 @@ final class PostgreSqlOutboxInspectionTest extends KernelTestCase
 
     public function testInspectionRejectsUnknownMessage(): void
     {
-        $service = new OutboxService($this->entityManager, $this->connection);
+        $service = new WalletOutboxService($this->entityManager, $this->connection);
 
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('Outbox message was not found.');

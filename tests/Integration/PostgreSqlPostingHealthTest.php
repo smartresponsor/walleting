@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Walleting\Tests\Integration;
 
-use App\Walleting\Posting\PostingExecutionMetric;
-use App\Walleting\Service\DatabasePostingTelemetry;
-use App\Walleting\Service\PostingHealthService;
+use App\Walleting\Service\WalletDatabasePostingTelemetry;
+use App\Walleting\Service\WalletPostingHealthService;
+use App\Walleting\ValueObject\Posting\WalletPostingExecutionMetric;
 use Doctrine\DBAL\Connection;
 use Psr\Log\NullLogger;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
@@ -26,19 +26,19 @@ final class PostgreSqlPostingHealthTest extends KernelTestCase
 
     public function testWindowAggregationCalculatesRetryFailureP95AndContentionCounters(): void
     {
-        $telemetry = new DatabasePostingTelemetry($this->connection, new NullLogger());
+        $telemetry = new WalletDatabasePostingTelemetry($this->connection, new NullLogger());
         foreach ([
-            new PostingExecutionMetric('completed', 'credit', 1, 0, null, 100, 100, null),
-            new PostingExecutionMetric('retry', 'transfer', 1, 1, 'lock_timeout', 100, 100, 100),
-            new PostingExecutionMetric('completed', 'transfer', 2, 1, null, 100, 200, null),
-            new PostingExecutionMetric('failed', 'debit', 1, 0, null, 300, 300, null),
-            new PostingExecutionMetric('retry', 'transfer', 1, 1, 'deadlock', 100, 100, null),
-            new PostingExecutionMetric('failed', 'transfer', 2, 1, 'deadlock', 400, 400, null),
+            new WalletPostingExecutionMetric('completed', 'credit', 1, 0, null, 100, 100, null),
+            new WalletPostingExecutionMetric('retry', 'transfer', 1, 1, 'lock_timeout', 100, 100, 100),
+            new WalletPostingExecutionMetric('completed', 'transfer', 2, 1, null, 100, 200, null),
+            new WalletPostingExecutionMetric('failed', 'debit', 1, 0, null, 300, 300, null),
+            new WalletPostingExecutionMetric('retry', 'transfer', 1, 1, 'deadlock', 100, 100, null),
+            new WalletPostingExecutionMetric('failed', 'transfer', 2, 1, 'deadlock', 400, 400, null),
         ] as $metric) {
             $telemetry->record($metric);
         }
 
-        $snapshot = (new PostingHealthService($this->connection))->snapshot(3600);
+        $snapshot = (new WalletPostingHealthService($this->connection))->snapshot(3600);
 
         self::assertSame(4, $snapshot->executionCount);
         self::assertSame(2, $snapshot->completedCount);
@@ -57,7 +57,7 @@ final class PostgreSqlPostingHealthTest extends KernelTestCase
         $this->insertSample('-40 days');
         $this->insertSample('-40 days');
         $this->insertSample('now');
-        $service = new PostingHealthService($this->connection);
+        $service = new WalletPostingHealthService($this->connection);
 
         self::assertSame(1, $service->cleanup(30, 1));
         self::assertSame(1, (int) $this->connection->fetchOne("SELECT COUNT(*) FROM posting_metric_sample WHERE recorded_at < (CURRENT_TIMESTAMP AT TIME ZONE 'UTC') - INTERVAL '30 days'"));
@@ -72,7 +72,7 @@ final class PostgreSqlPostingHealthTest extends KernelTestCase
             $this->insertSample('-2 hours');
             $this->insertSample('now');
 
-            $snapshot = (new PostingHealthService($this->connection))->snapshot(3600);
+            $snapshot = (new WalletPostingHealthService($this->connection))->snapshot(3600);
 
             self::assertSame(1, $snapshot->executionCount);
             self::assertSame(1, $snapshot->completedCount);

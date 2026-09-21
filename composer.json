@@ -1,5 +1,5 @@
 {
-    "name": "smartresponsor/walleting",
+    "name": "walleting/wallet",
     "description": "Symfony-native immutable double-entry walleting component",
     "type": "library",
     "license": "proprietary",
@@ -32,7 +32,11 @@
         "friendsofphp/php-cs-fixer": "^3.95",
         "phpstan/phpstan": "^2.1",
         "phpunit/phpunit": "^12.3",
-        "symfony/phpunit-bridge": "^8.1"
+        "symfony/browser-kit": "^8.1",
+        "symfony/css-selector": "^8.1",
+        "symfony/panther": "^2.4",
+        "symfony/phpunit-bridge": "^8.1",
+        "symfony/test-pack": "^1.2"
     },
     "autoload": {"psr-4": {"App\\Walleting\\": "src/"}},
     "autoload-dev": {"psr-4": {"App\\Walleting\\Tests\\": "tests/"}},

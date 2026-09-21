@@ -4,23 +4,23 @@ declare(strict_types=1);
 
 namespace App\Walleting\Service;
 
-use App\Walleting\Balance\WalletBalanceSnapshot;
-use App\Walleting\Entity\Account;
-use App\Walleting\Entity\Funding;
-use App\Walleting\Entity\Reservation;
 use App\Walleting\Entity\Wallet;
-use App\Walleting\Entity\Withdrawal;
-use App\Walleting\Ledger\LedgerHistoryPage;
-use App\Walleting\Ledger\StatementPage;
-use App\Walleting\Ledger\WalletTransactionPage;
+use App\Walleting\Entity\WalletAccount;
+use App\Walleting\Entity\WalletFunding;
+use App\Walleting\Entity\WalletReservation;
+use App\Walleting\Entity\WalletWithdrawal;
+use App\Walleting\Snapshot\Balance\WalletBalanceSnapshot;
+use App\Walleting\ValueObject\Ledger\WalletLedgerHistoryPage;
+use App\Walleting\ValueObject\Ledger\WalletStatementPage;
+use App\Walleting\ValueObject\Ledger\WalletTransactionPage;
 use Doctrine\DBAL\Connection;
 
 final readonly class WalletingFacade
 {
     public function __construct(
-        private BalanceReadService $balanceReadService,
-        private LedgerQueryService $ledgerQueryService,
-        private StatementQueryService $statementQueryService,
+        private WalletBalanceReadService $balanceReadService,
+        private WalletLedgerQueryService $ledgerQueryService,
+        private WalletStatementQueryService $statementQueryService,
         private Connection $connection,
     ) {
     }
@@ -30,7 +30,7 @@ final readonly class WalletingFacade
         return $this->balanceReadService->walletSnapshot($wallet);
     }
 
-    public function accountHistory(Account $account, int $limit = 50, ?string $cursor = null): LedgerHistoryPage
+    public function accountHistory(WalletAccount $account, int $limit = 50, ?string $cursor = null): WalletLedgerHistoryPage
     {
         return $this->ledgerQueryService->history($account, $limit, $cursor);
     }
@@ -40,12 +40,12 @@ final readonly class WalletingFacade
         return $this->ledgerQueryService->walletTransactions($wallet, $limit, $cursor);
     }
 
-    public function accountStatement(Account $account, int $limit = 50, ?string $cursor = null, ?\DateTimeImmutable $from = null, ?\DateTimeImmutable $to = null): StatementPage
+    public function accountStatement(WalletAccount $account, int $limit = 50, ?string $cursor = null, ?\DateTimeImmutable $from = null, ?\DateTimeImmutable $to = null): WalletStatementPage
     {
         return $this->statementQueryService->statement($account, $limit, $cursor, $from, $to);
     }
 
-    public function reservation(Reservation $reservation): ReservationView
+    public function reservation(WalletReservation $reservation): WalletReservationView
     {
         $row = $this->connection->fetchAssociative(
             "SELECT COALESCE(SUM(amount_minor) FILTER (WHERE operation_type = 'capture'), 0) AS captured_minor, COALESCE(SUM(amount_minor) FILTER (WHERE operation_type = 'release'), 0) AS released_minor FROM financial_operation_link WHERE reservation_id = ?",
@@ -58,7 +58,7 @@ final readonly class WalletingFacade
             throw new \RuntimeException('Reservation settlement projection exceeds the reservation amount.');
         }
 
-        return new ReservationView(
+        return new WalletReservationView(
             $reservation->id()->toRfc4122(),
             $reservation->status()->value,
             $reservation->amountMinor(),
@@ -69,7 +69,7 @@ final readonly class WalletingFacade
         );
     }
 
-    public function funding(Funding $funding): MoneyOperationView
+    public function funding(WalletFunding $funding): WalletMoneyOperationView
     {
         return $this->operationView(
             'funding',
@@ -85,19 +85,19 @@ final readonly class WalletingFacade
         );
     }
 
-    /** @return list<MoneyOperationView> */
+    /** @return list<WalletMoneyOperationView> */
     public function fundingByWallet(Wallet $wallet, int $limit = 50): array
     {
         return $this->operationByWallet('funding', $wallet, $limit);
     }
 
-    /** @return list<MoneyOperationView> */
+    /** @return list<WalletMoneyOperationView> */
     public function withdrawalByWallet(Wallet $wallet, int $limit = 50): array
     {
         return $this->operationByWallet('withdrawal', $wallet, $limit);
     }
 
-    public function withdrawal(Withdrawal $withdrawal): MoneyOperationView
+    public function withdrawal(WalletWithdrawal $withdrawal): WalletMoneyOperationView
     {
         return $this->operationView(
             'withdrawal',
@@ -113,7 +113,7 @@ final readonly class WalletingFacade
         );
     }
 
-    /** @return list<MoneyOperationView> */
+    /** @return list<WalletMoneyOperationView> */
     private function operationByWallet(string $type, Wallet $wallet, int $limit): array
     {
         if (!in_array($type, ['funding', 'withdrawal'], true)) {
@@ -128,7 +128,7 @@ final readonly class WalletingFacade
             [$wallet->id()->toRfc4122()],
         );
 
-        return array_map(fn (array $row): MoneyOperationView => $this->operationView(
+        return array_map(fn (array $row): WalletMoneyOperationView => $this->operationView(
             $type,
             (string) $row['id'],
             (string) $row['status'],
@@ -142,8 +142,8 @@ final readonly class WalletingFacade
         ), $rows);
     }
 
-    private function operationView(string $type, string $id, string $status, int $amountMinor, string $currency, string $provider, string $providerReference, ?string $providerOperationReference, ?string $transactionId, ?string $reversalTransactionId): MoneyOperationView
+    private function operationView(string $type, string $id, string $status, int $amountMinor, string $currency, string $provider, string $providerReference, ?string $providerOperationReference, ?string $transactionId, ?string $reversalTransactionId): WalletMoneyOperationView
     {
-        return new MoneyOperationView($id, $type, $status, $amountMinor, $currency, $provider, $providerReference, $providerOperationReference, $transactionId, $reversalTransactionId);
+        return new WalletMoneyOperationView($id, $type, $status, $amountMinor, $currency, $provider, $providerReference, $providerOperationReference, $transactionId, $reversalTransactionId);
     }
 }

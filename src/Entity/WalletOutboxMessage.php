@@ -1,0 +1,224 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Walleting\Entity;
+
+use App\Walleting\Enum\WalletOutboxMessageStatus;
+use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Uid\Uuid;
+
+#[ORM\Entity]
+#[ORM\Table(name: 'outbox_message')]
+#[ORM\Index(name: 'idx_outbox_dispatchable', columns: ['status', 'available_at', 'created_at'])]
+#[ORM\UniqueConstraint(name: 'uniq_outbox_deduplication_key', columns: ['deduplication_key'])]
+class WalletOutboxMessage
+{
+    #[ORM\Id]
+    #[ORM\Column(type: 'uuid', unique: true)]
+    private Uuid $id;
+
+    #[ORM\Column(name: 'message_type', length: 191)]
+    private string $messageType;
+
+    #[ORM\Column(name: 'deduplication_key', length: 191, unique: true)]
+    private string $deduplicationKey;
+
+    #[ORM\Column(type: 'json')]
+    private array $payload;
+
+    #[ORM\Column(name: 'payload_hash', length: 64)]
+    private string $payloadHash;
+
+    #[ORM\ManyToOne(targetEntity: WalletLedgerTransaction::class)]
+    #[ORM\JoinColumn(name: 'ledger_transaction_id', nullable: true, onDelete: 'RESTRICT')]
+    private ?WalletLedgerTransaction $ledgerTransaction;
+
+    #[ORM\ManyToOne(targetEntity: WalletProviderEventEntity::class)]
+    #[ORM\JoinColumn(name: 'provider_event_id', nullable: true, onDelete: 'RESTRICT')]
+    private ?WalletProviderEventEntity $providerEvent;
+
+    #[ORM\Column(enumType: WalletOutboxMessageStatus::class)]
+    private WalletOutboxMessageStatus $status;
+
+    #[ORM\Column(name: 'attempt_count', type: 'integer')]
+    private int $attemptCount = 0;
+
+    #[ORM\Column(name: 'available_at', type: 'datetime_immutable')]
+    private \DateTimeImmutable $availableAt;
+
+    #[ORM\Column(name: 'claimed_at', type: 'datetime_immutable', nullable: true)]
+    private ?\DateTimeImmutable $claimedAt = null;
+
+    #[ORM\Column(name: 'dispatched_at', type: 'datetime_immutable', nullable: true)]
+    private ?\DateTimeImmutable $dispatchedAt = null;
+
+    #[ORM\Column(name: 'last_error', type: 'text', nullable: true)]
+    private ?string $lastError = null;
+
+    #[ORM\Column(name: 'created_at', type: 'datetime_immutable')]
+    private \DateTimeImmutable $createdAt;
+
+    public function __construct(
+        string $messageType,
+        string $deduplicationKey,
+        array $payload,
+        ?WalletLedgerTransaction $ledgerTransaction = null,
+        ?WalletProviderEventEntity $providerEvent = null,
+        ?\DateTimeImmutable $availableAt = null,
+        ?Uuid $id = null,
+    ) {
+        $messageType = trim($messageType);
+        $deduplicationKey = trim($deduplicationKey);
+        if ('' === $messageType || '' === $deduplicationKey) {
+            throw new \InvalidArgumentException('Outbox message type and deduplication key are required.');
+        }
+        if (null === $ledgerTransaction && null === $providerEvent) {
+            throw new \InvalidArgumentException('Outbox message must reference a ledger transaction or provider event.');
+        }
+
+        $this->id = $id ?? Uuid::v7();
+        $this->messageType = $messageType;
+        $this->deduplicationKey = $deduplicationKey;
+        $this->payload = $payload;
+        $this->payloadHash = hash('sha256', json_encode($this->normalize($payload), JSON_THROW_ON_ERROR));
+        $this->ledgerTransaction = $ledgerTransaction;
+        $this->providerEvent = $providerEvent;
+        $this->status = WalletOutboxMessageStatus::Pending;
+        $this->availableAt = $availableAt ?? new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
+        $this->createdAt = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
+    }
+
+    public function claim(): void
+    {
+        if (!in_array($this->status, [WalletOutboxMessageStatus::Pending, WalletOutboxMessageStatus::Failed], true)) {
+            throw new \LogicException('Only pending or failed outbox messages can be claimed.');
+        }
+        if ($this->availableAt > new \DateTimeImmutable('now', new \DateTimeZone('UTC'))) {
+            throw new \LogicException('Outbox message is not available for dispatch yet.');
+        }
+
+        $this->status = WalletOutboxMessageStatus::Claimed;
+        $this->claimedAt = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
+        ++$this->attemptCount;
+    }
+
+    public function markDispatched(): void
+    {
+        if (WalletOutboxMessageStatus::Claimed !== $this->status) {
+            throw new \LogicException('Only claimed outbox messages can be dispatched.');
+        }
+        $this->status = WalletOutboxMessageStatus::Dispatched;
+        $this->dispatchedAt = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
+        $this->lastError = null;
+    }
+
+    public function markFailed(string $error, \DateTimeImmutable $availableAt): void
+    {
+        $this->assertClaimedFailure($error);
+        $this->status = WalletOutboxMessageStatus::Failed;
+        $this->lastError = trim($error);
+        $this->availableAt = $availableAt;
+    }
+
+    public function markDead(string $error): void
+    {
+        $this->assertClaimedFailure($error);
+        $this->status = WalletOutboxMessageStatus::Dead;
+        $this->lastError = trim($error);
+    }
+
+    public function requeueDead(?\DateTimeImmutable $availableAt = null): void
+    {
+        if (WalletOutboxMessageStatus::Dead !== $this->status) {
+            throw new \LogicException('Only dead outbox messages can be requeued.');
+        }
+
+        $this->status = WalletOutboxMessageStatus::Failed;
+        $this->availableAt = $availableAt ?? new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
+        $this->dispatchedAt = null;
+    }
+
+    private function assertClaimedFailure(string $error): void
+    {
+        if (WalletOutboxMessageStatus::Claimed !== $this->status) {
+            throw new \LogicException('Only claimed outbox messages can fail.');
+        }
+        if ('' === trim($error)) {
+            throw new \InvalidArgumentException('Outbox failure error is required.');
+        }
+    }
+
+    private function normalize(array $value): array
+    {
+        ksort($value);
+        foreach ($value as &$item) {
+            if (is_array($item)) {
+                $item = $this->normalize($item);
+            }
+        }
+        unset($item);
+
+        return $value;
+    }
+
+    public function id(): Uuid
+    {
+        return $this->id;
+    }
+
+    public function messageType(): string
+    {
+        return $this->messageType;
+    }
+
+    public function deduplicationKey(): string
+    {
+        return $this->deduplicationKey;
+    }
+
+    public function payload(): array
+    {
+        return $this->payload;
+    }
+
+    public function payloadHash(): string
+    {
+        return $this->payloadHash;
+    }
+
+    public function ledgerTransaction(): ?WalletLedgerTransaction
+    {
+        return $this->ledgerTransaction;
+    }
+
+    public function providerEvent(): ?WalletProviderEventEntity
+    {
+        return $this->providerEvent;
+    }
+
+    public function status(): WalletOutboxMessageStatus
+    {
+        return $this->status;
+    }
+
+    public function attemptCount(): int
+    {
+        return $this->attemptCount;
+    }
+
+    public function availableAt(): \DateTimeImmutable
+    {
+        return $this->availableAt;
+    }
+
+    public function createdAt(): \DateTimeImmutable
+    {
+        return $this->createdAt;
+    }
+
+    public function lastError(): ?string
+    {
+        return $this->lastError;
+    }
+}

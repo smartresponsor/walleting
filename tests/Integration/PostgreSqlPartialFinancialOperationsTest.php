@@ -4,95 +4,95 @@ declare(strict_types=1);
 
 namespace App\Walleting\Tests\Integration;
 
-use App\Walleting\Entity\Account;
-use App\Walleting\Entity\FinancialOperationLink;
 use App\Walleting\Entity\Wallet;
-use App\Walleting\Enum\AccountCategory;
-use App\Walleting\Enum\ReservationStatus;
-use App\Walleting\Enum\TransactionType;
-use App\Walleting\Ledger\PostingInstruction;
-use App\Walleting\Service\FinancialOperationService;
-use App\Walleting\Service\NullPostingTelemetry;
-use App\Walleting\Service\OutboxService;
-use App\Walleting\Service\PostingDbalExecutor;
-use App\Walleting\Service\PostingRetryPolicy;
-use App\Walleting\Service\PostingService;
+use App\Walleting\Entity\WalletAccount;
+use App\Walleting\Entity\WalletFinancialOperationLink;
+use App\Walleting\Enum\WalletAccountCategory;
+use App\Walleting\Enum\WalletReservationStatus;
+use App\Walleting\Enum\WalletTransactionType;
+use App\Walleting\Policy\Posting\WalletPostingRetryPolicy;
+use App\Walleting\Service\WalletFinancialOperationService;
+use App\Walleting\Service\WalletNullPostingTelemetry;
+use App\Walleting\Service\WalletOutboxService;
+use App\Walleting\Service\WalletPostingDbalExecutor;
+use App\Walleting\Service\WalletPostingService;
+use App\Walleting\ValueObject\Ledger\WalletPostingInstruction;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 final class PostgreSqlPartialFinancialOperationsTest extends KernelTestCase
 {
     private EntityManagerInterface $entityManager;
-    private FinancialOperationService $operations;
-    private PostingService $postingService;
+    private WalletFinancialOperationService $operations;
+    private WalletPostingService $postingService;
 
     protected function setUp(): void
     {
         self::bootKernel();
         $this->entityManager = self::getContainer()->get('doctrine.orm.entity_manager');
         $connection = $this->entityManager->getConnection();
-        $outboxService = new OutboxService($this->entityManager, $connection);
-        $this->postingService = new PostingService(
+        $outboxService = new WalletOutboxService($this->entityManager, $connection);
+        $this->postingService = new WalletPostingService(
             $this->entityManager,
             $outboxService,
-            new PostingDbalExecutor($connection, $outboxService, new PostingRetryPolicy(), new NullPostingTelemetry()),
+            new WalletPostingDbalExecutor($connection, $outboxService, new WalletPostingRetryPolicy(), new WalletNullPostingTelemetry()),
         );
-        $this->operations = new FinancialOperationService($this->entityManager, $this->postingService, $outboxService);
+        $this->operations = new WalletFinancialOperationService($this->entityManager, $this->postingService, $outboxService);
         self::assertInstanceOf(\Doctrine\DBAL\Platforms\PostgreSQLPlatform::class, $connection->getDatabasePlatform());
     }
 
     public function testReservationCanBePartiallyCapturedThenReleasedToMixedSettlement(): void
     {
         $wallet = new Wallet('vendor', 'partial-reservation-wallet');
-        $reserved = new Account($wallet, 'reserved', 'USD', AccountCategory::Reserve);
-        $clearing = new Account($wallet, 'clearing', 'USD', AccountCategory::Clearing);
+        $reserved = new WalletAccount($wallet, 'reserved', 'USD', WalletAccountCategory::Reserve);
+        $clearing = new WalletAccount($wallet, 'clearing', 'USD', WalletAccountCategory::Clearing);
         foreach ([$wallet, $reserved, $clearing] as $entity) {
             $this->entityManager->persist($entity);
         }
         $this->entityManager->flush();
 
         $reservation = $this->operations->reserve($wallet, $reserved, 500, 'USD', 'partial-reserve-1', [
-            new PostingInstruction($clearing, -500),
-            new PostingInstruction($reserved, 500),
+            new WalletPostingInstruction($clearing, -500),
+            new WalletPostingInstruction($reserved, 500),
         ]);
         $this->operations->capturePartial($reservation, 200, 'partial-capture-1', [
-            new PostingInstruction($reserved, -200),
-            new PostingInstruction($clearing, 200),
+            new WalletPostingInstruction($reserved, -200),
+            new WalletPostingInstruction($clearing, 200),
         ]);
-        self::assertSame(ReservationStatus::PartiallySettled, $reservation->status());
+        self::assertSame(WalletReservationStatus::PartiallySettled, $reservation->status());
 
         $this->operations->releasePartial($reservation, 300, 'partial-release-1', [
-            new PostingInstruction($reserved, -300),
-            new PostingInstruction($clearing, 300),
+            new WalletPostingInstruction($reserved, -300),
+            new WalletPostingInstruction($clearing, 300),
         ]);
-        self::assertSame(ReservationStatus::Settled, $reservation->status());
+        self::assertSame(WalletReservationStatus::Settled, $reservation->status());
 
-        $links = $this->entityManager->getRepository(FinancialOperationLink::class)->findBy(['reservation' => $reservation], ['amountMinor' => 'ASC']);
+        $links = $this->entityManager->getRepository(WalletFinancialOperationLink::class)->findBy(['reservation' => $reservation], ['amountMinor' => 'ASC']);
         self::assertCount(2, $links);
-        self::assertSame([200, 300], array_map(static fn (FinancialOperationLink $link): int => $link->amountMinor(), $links));
+        self::assertSame([200, 300], array_map(static fn (WalletFinancialOperationLink $link): int => $link->amountMinor(), $links));
     }
 
     public function testTwoPartialRefundsCanConsumeExactlyTheSourceAmount(): void
     {
         $wallet = new Wallet('vendor', 'partial-refund-wallet');
-        $asset = new Account($wallet, 'asset', 'USD', AccountCategory::Asset);
-        $clearing = new Account($wallet, 'clearing', 'USD', AccountCategory::Clearing);
+        $asset = new WalletAccount($wallet, 'asset', 'USD', WalletAccountCategory::Asset);
+        $clearing = new WalletAccount($wallet, 'clearing', 'USD', WalletAccountCategory::Clearing);
         foreach ([$wallet, $asset, $clearing] as $entity) {
             $this->entityManager->persist($entity);
         }
         $this->entityManager->flush();
 
-        $source = $this->postingService->post(TransactionType::Credit, 'partial-refund-source', [
-            new PostingInstruction($asset, 500),
-            new PostingInstruction($clearing, -500),
+        $source = $this->postingService->post(WalletTransactionType::Credit, 'partial-refund-source', [
+            new WalletPostingInstruction($asset, 500),
+            new WalletPostingInstruction($clearing, -500),
         ]);
         $this->operations->refundPartial($source, 200, 'partial-refund-1', [
-            new PostingInstruction($asset, -200),
-            new PostingInstruction($clearing, 200),
+            new WalletPostingInstruction($asset, -200),
+            new WalletPostingInstruction($clearing, 200),
         ]);
         $this->operations->refundPartial($source, 300, 'partial-refund-2', [
-            new PostingInstruction($asset, -300),
-            new PostingInstruction($clearing, 300),
+            new WalletPostingInstruction($asset, -300),
+            new WalletPostingInstruction($clearing, 300),
         ]);
 
         $sum = (int) $this->entityManager->getConnection()->fetchOne("SELECT COALESCE(SUM(amount_minor), 0) FROM financial_operation_link WHERE source_transaction_id = ? AND operation_type = 'refund'", [$source->id()->toRfc4122()]);
@@ -101,8 +101,8 @@ final class PostgreSqlPartialFinancialOperationsTest extends KernelTestCase
         $this->expectException(\DomainException::class);
         $this->expectExceptionMessage('Refund exceeds the remaining refundable amount');
         $this->operations->refundPartial($source, 1, 'partial-refund-overflow', [
-            new PostingInstruction($asset, -1),
-            new PostingInstruction($clearing, 1),
+            new WalletPostingInstruction($asset, -1),
+            new WalletPostingInstruction($clearing, 1),
         ]);
     }
 }

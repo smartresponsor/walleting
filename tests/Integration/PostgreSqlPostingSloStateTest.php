@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Walleting\Tests\Integration;
 
-use App\Walleting\Posting\PostingHealthAssessment;
-use App\Walleting\Posting\PostingHealthStatus;
-use App\Walleting\Posting\PostingSloTrendAssessment;
-use App\Walleting\Service\OutboxService;
-use App\Walleting\Service\PostingSloStateService;
+use App\Walleting\Service\WalletOutboxService;
+use App\Walleting\Service\WalletPostingSloStateService;
+use App\Walleting\ValueObject\Posting\WalletPostingHealthAssessment;
+use App\Walleting\ValueObject\Posting\WalletPostingHealthStatus;
+use App\Walleting\ValueObject\Posting\WalletPostingSloTrendAssessment;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
@@ -31,36 +31,36 @@ final class PostgreSqlPostingSloStateTest extends KernelTestCase
 
     public function testBreachAndRecoveryRequireConsecutiveEvaluationsBeforePersistedStateChanges(): void
     {
-        $service = new PostingSloStateService($this->connection, new OutboxService($this->entityManager, $this->connection));
+        $service = new WalletPostingSloStateService($this->connection, new WalletOutboxService($this->entityManager, $this->connection));
         $scope = 'integration-'.Uuid::v7();
-        $critical = $this->assessment(PostingHealthStatus::Critical, ['sustained_burn_rate']);
-        $healthy = $this->assessment(PostingHealthStatus::Healthy, []);
+        $critical = $this->assessment(WalletPostingHealthStatus::Critical, ['sustained_burn_rate']);
+        $healthy = $this->assessment(WalletPostingHealthStatus::Healthy, []);
 
         $firstBreach = $service->apply($scope, $critical, 2, 3);
-        self::assertSame(PostingHealthStatus::Healthy, $firstBreach->currentStatus);
-        self::assertSame(PostingHealthStatus::Critical, $firstBreach->pendingStatus);
+        self::assertSame(WalletPostingHealthStatus::Healthy, $firstBreach->currentStatus);
+        self::assertSame(WalletPostingHealthStatus::Critical, $firstBreach->pendingStatus);
         self::assertSame(1, $firstBreach->pendingCount);
         self::assertSame(2, $firstBreach->requiredCount);
         self::assertFalse($firstBreach->changed);
         self::assertSame(0, (int) $this->connection->fetchOne("SELECT COUNT(*) FROM outbox_message WHERE message_type = 'posting.slo.state.changed'"));
 
         $secondBreach = $service->apply($scope, $critical, 2, 3);
-        self::assertSame(PostingHealthStatus::Critical, $secondBreach->currentStatus);
+        self::assertSame(WalletPostingHealthStatus::Critical, $secondBreach->currentStatus);
         self::assertNull($secondBreach->pendingStatus);
         self::assertTrue($secondBreach->changed);
 
         $firstRecovery = $service->apply($scope, $healthy, 2, 3);
-        self::assertSame(PostingHealthStatus::Critical, $firstRecovery->currentStatus);
-        self::assertSame(PostingHealthStatus::Healthy, $firstRecovery->pendingStatus);
+        self::assertSame(WalletPostingHealthStatus::Critical, $firstRecovery->currentStatus);
+        self::assertSame(WalletPostingHealthStatus::Healthy, $firstRecovery->pendingStatus);
         self::assertSame(1, $firstRecovery->pendingCount);
         self::assertSame(3, $firstRecovery->requiredCount);
 
         $secondRecovery = $service->apply($scope, $healthy, 2, 3);
-        self::assertSame(PostingHealthStatus::Critical, $secondRecovery->currentStatus);
+        self::assertSame(WalletPostingHealthStatus::Critical, $secondRecovery->currentStatus);
         self::assertSame(2, $secondRecovery->pendingCount);
 
         $thirdRecovery = $service->apply($scope, $healthy, 2, 3);
-        self::assertSame(PostingHealthStatus::Healthy, $thirdRecovery->currentStatus);
+        self::assertSame(WalletPostingHealthStatus::Healthy, $thirdRecovery->currentStatus);
         self::assertNull($thirdRecovery->pendingStatus);
         self::assertTrue($thirdRecovery->changed);
 
@@ -83,25 +83,25 @@ final class PostgreSqlPostingSloStateTest extends KernelTestCase
 
     public function testDifferentObservedTargetResetsPendingSequence(): void
     {
-        $service = new PostingSloStateService($this->connection, new OutboxService($this->entityManager, $this->connection));
+        $service = new WalletPostingSloStateService($this->connection, new WalletOutboxService($this->entityManager, $this->connection));
         $scope = 'reset-'.Uuid::v7();
 
-        $critical = $service->apply($scope, $this->assessment(PostingHealthStatus::Critical, ['sustained_critical']), 3, 3);
+        $critical = $service->apply($scope, $this->assessment(WalletPostingHealthStatus::Critical, ['sustained_critical']), 3, 3);
         self::assertSame(1, $critical->pendingCount);
-        self::assertSame(PostingHealthStatus::Critical, $critical->pendingStatus);
+        self::assertSame(WalletPostingHealthStatus::Critical, $critical->pendingStatus);
 
-        $degraded = $service->apply($scope, $this->assessment(PostingHealthStatus::Degraded, ['short_window_spike']), 3, 3);
+        $degraded = $service->apply($scope, $this->assessment(WalletPostingHealthStatus::Degraded, ['short_window_spike']), 3, 3);
         self::assertSame(1, $degraded->pendingCount);
-        self::assertSame(PostingHealthStatus::Degraded, $degraded->pendingStatus);
-        self::assertSame(PostingHealthStatus::Healthy, $degraded->currentStatus);
+        self::assertSame(WalletPostingHealthStatus::Degraded, $degraded->pendingStatus);
+        self::assertSame(WalletPostingHealthStatus::Healthy, $degraded->currentStatus);
     }
 
     /** @param list<string> $reasons */
-    private function assessment(PostingHealthStatus $status, array $reasons): PostingSloTrendAssessment
+    private function assessment(WalletPostingHealthStatus $status, array $reasons): WalletPostingSloTrendAssessment
     {
-        $window = new PostingHealthAssessment($status, $reasons);
+        $window = new WalletPostingHealthAssessment($status, $reasons);
 
-        return new PostingSloTrendAssessment(
+        return new WalletPostingSloTrendAssessment(
             $status,
             $window,
             $window,

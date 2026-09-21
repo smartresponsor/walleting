@@ -4,31 +4,31 @@ declare(strict_types=1);
 
 namespace App\Walleting\Tests\Entity;
 
-use App\Walleting\Entity\InboxReceipt;
-use App\Walleting\Enum\InboxReceiptStatus;
-use App\Walleting\Message\OutboxEvent;
+use App\Walleting\Entity\WalletInboxReceipt;
+use App\Walleting\Enum\WalletInboxReceiptStatus;
+use App\Walleting\Event\Outbox\WalletOutboxEvent;
 use PHPUnit\Framework\TestCase;
 
 final class InboxReceiptTest extends TestCase
 {
     public function testReceiptUsesCanonicalPayloadHashAndProcessedLifecycle(): void
     {
-        $first = new InboxReceipt($this->event(['b' => 2, 'a' => ['y' => 2, 'x' => 1]]));
-        $second = new InboxReceipt($this->event(['a' => ['x' => 1, 'y' => 2], 'b' => 2]));
+        $first = new WalletInboxReceipt($this->event(['b' => 2, 'a' => ['y' => 2, 'x' => 1]]));
+        $second = new WalletInboxReceipt($this->event(['a' => ['x' => 1, 'y' => 2], 'b' => 2]));
 
         self::assertSame($first->payloadHash(), $second->payloadHash());
-        self::assertSame(InboxReceiptStatus::Processing, $first->status());
+        self::assertSame(WalletInboxReceiptStatus::Processing, $first->status());
         self::assertFalse($first->isProcessed());
 
         $first->markProcessed();
-        self::assertSame(InboxReceiptStatus::Processed, $first->status());
+        self::assertSame(WalletInboxReceiptStatus::Processed, $first->status());
         self::assertTrue($first->isProcessed());
         self::assertInstanceOf(\DateTimeImmutable::class, $first->processedAt());
     }
 
     public function testSameEventAssertionRejectsReboundMessageIdentity(): void
     {
-        $receipt = new InboxReceipt($this->event(['amount' => 100]));
+        $receipt = new WalletInboxReceipt($this->event(['amount' => 100]));
 
         $this->expectException(\DomainException::class);
         $this->expectExceptionMessage('Inbox receipt identity is already bound to different event content.');
@@ -38,12 +38,12 @@ final class InboxReceiptTest extends TestCase
     public function testReceiptRequiresMessageIdentity(): void
     {
         $this->expectException(\InvalidArgumentException::class);
-        new InboxReceipt(new OutboxEvent('', 'wallet.event', 'dedup-1', [], null, null));
+        new WalletInboxReceipt(new WalletOutboxEvent('', 'wallet.event', 'dedup-1', [], null, null));
     }
 
-    private function event(array $payload): OutboxEvent
+    private function event(array $payload): WalletOutboxEvent
     {
-        return new OutboxEvent(
+        return new WalletOutboxEvent(
             messageId: 'message-1',
             type: 'wallet.funding.succeeded',
             deduplicationKey: 'funding:1',
