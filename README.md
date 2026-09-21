@@ -55,11 +55,12 @@ The release candidate is expected to pass all of these checks:
 
 ```bash
 composer validate --no-interaction --strict --check-lock
+composer validate:prod
 composer quality
 composer test:integration
 ```
 
-`composer quality` is the aggregate non-destructive repository quality gate. It runs PHP-CS-Fixer in check mode, PHPStan, Symfony/Doctrine linting, and the PHPUnit suite. `composer test:integration` starts an ephemeral PostgreSQL 16 container, applies the complete migration chain, and runs the PostgreSQL integration suite. Do not run multiple integration harnesses concurrently because they share the same Compose project.
+`composer validate:prod` validates the path-independent production manifest required for packaged/container builds. `composer quality` is the aggregate non-destructive repository quality gate. It runs PHP-CS-Fixer in check mode, PHPStan, Symfony/Doctrine linting, and the PHPUnit suite. `composer test:integration` starts an ephemeral PostgreSQL 16 container, applies the complete migration chain, and runs the PostgreSQL integration suite. Do not run multiple integration harnesses concurrently because they share the same Compose project.
 
 ## Integration boundary
 

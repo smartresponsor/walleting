@@ -142,11 +142,11 @@ final class PostgreSqlConcurrencyTest extends KernelTestCase
             'owner_type' => 'concurrency',
             'owner_id' => Uuid::v7()->toRfc4122(),
             'status' => 'active',
-            'object_uuid' => '\\x'.str_replace('-', '', $walletId),
-            'object_slug' => 'wallet:'.$walletId,
-            'object_first_title' => 'concurrency',
-            'object_created_at' => $now,
-            'object_status' => 'active',
+            'uuid' => '\\x'.str_replace('-', '', $walletId),
+            'slug' => 'wallet:'.$walletId,
+            'first_title' => 'concurrency',
+            'created_at' => $now,
+            'status' => 'active',
         ]);
         $this->connection->insert('account', [
             'id' => $assetAccount,
@@ -155,11 +155,11 @@ final class PostgreSqlConcurrencyTest extends KernelTestCase
             'currency' => 'USD',
             'category' => 'asset',
             'allow_negative' => false,
-            'object_uuid' => '\\x'.str_replace('-', '', $assetAccount),
-            'object_slug' => 'account:'.$assetAccount,
-            'object_first_title' => 'asset-'.substr($assetAccount, 0, 8),
-            'object_created_at' => $now,
-            'object_status' => 'active',
+            'uuid' => '\\x'.str_replace('-', '', $assetAccount),
+            'slug' => 'account:'.$assetAccount,
+            'first_title' => 'asset-'.substr($assetAccount, 0, 8),
+            'created_at' => $now,
+            'status' => 'active',
         ], ['allow_negative' => ParameterType::BOOLEAN]);
         $this->connection->insert('account', [
             'id' => $clearingAccount,
@@ -168,11 +168,11 @@ final class PostgreSqlConcurrencyTest extends KernelTestCase
             'currency' => 'USD',
             'category' => 'clearing',
             'allow_negative' => true,
-            'object_uuid' => '\\x'.str_replace('-', '', $clearingAccount),
-            'object_slug' => 'account:'.$clearingAccount,
-            'object_first_title' => 'clearing-'.substr($clearingAccount, 0, 8),
-            'object_created_at' => $now,
-            'object_status' => 'active',
+            'uuid' => '\\x'.str_replace('-', '', $clearingAccount),
+            'slug' => 'account:'.$clearingAccount,
+            'first_title' => 'clearing-'.substr($clearingAccount, 0, 8),
+            'created_at' => $now,
+            'status' => 'active',
         ], ['allow_negative' => ParameterType::BOOLEAN]);
 
         return [$walletId, $assetAccount, $clearingAccount];

@@ -2,7 +2,7 @@
 
 ## Supported topology
 
-Walleting 1.0 is supported inside the SmartResponsor workspace topology where `Walleting` and `Objecting` are sibling repositories. Composer currently resolves `objecting/object` from `../Objecting` through a path repository. A standalone installation without that sibling repository is not a supported 1.0 deployment topology.
+Walleting development uses the SmartResponsor sibling-workspace topology and Composer `path` repositories with symlinks. Production/container builds use `composer.prod.json`, which resolves SmartResponsor dependencies as packaged VCS dependencies and contains no sibling filesystem links.
 
 Runtime requirements:
 
@@ -22,15 +22,17 @@ Do not commit production values for these variables to the Walleting repository.
 
 ## Fresh installation
 
-From the supported sibling-repository workspace:
+For a production/container build, select the production manifest before installing dependencies:
 
 ```bash
-composer install --no-dev --prefer-dist --optimize-autoloader --no-interaction
+COMPOSER=composer.prod.json composer install --no-dev --prefer-dist --optimize-autoloader --no-interaction
 APP_ENV=prod APP_DEBUG=0 php bin/console cache:clear
 APP_ENV=prod APP_DEBUG=0 php bin/console doctrine:migrations:migrate --no-interaction
 APP_ENV=prod APP_DEBUG=0 php bin/console doctrine:migrations:up-to-date
 APP_ENV=prod APP_DEBUG=0 php bin/console walleting:production:check
 ```
+
+On PowerShell, set `$env:COMPOSER = 'composer.prod.json'` for the install command and remove the variable afterwards. Development installs continue to use the root `composer.json` sibling-path topology.
 
 `composer test:integration` is the canonical clean-database installation proof in CI/development: it creates an ephemeral PostgreSQL 16 database and applies the full migration chain from zero before running the integration suite.
 

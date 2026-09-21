@@ -64,11 +64,12 @@ final class PostgreSqlPostingSloStateTest extends KernelTestCase
         self::assertNull($thirdRecovery->pendingStatus);
         self::assertTrue($thirdRecovery->changed);
 
-        $row = $this->connection->fetchAssociative('SELECT status, pending_status, pending_count, reasons FROM posting_slo_state WHERE scope = ?', [$scope]);
+        $row = $this->connection->fetchAssociative('SELECT status, pending_status, pending_count, revision, reasons FROM posting_slo_state WHERE scope = ?', [$scope]);
         self::assertIsArray($row);
         self::assertSame('healthy', $row['status']);
         self::assertNull($row['pending_status']);
         self::assertSame(0, (int) $row['pending_count']);
+        self::assertSame(2, (int) $row['revision']);
         self::assertSame([], json_decode((string) $row['reasons'], true, 512, JSON_THROW_ON_ERROR));
         self::assertSame(2, (int) $this->connection->fetchOne("SELECT COUNT(*) FROM outbox_message WHERE message_type = 'posting.slo.state.changed'"));
         $alerts = $this->connection->fetchAllAssociative("SELECT deduplication_key, ledger_transaction_id, provider_event_id, payload FROM outbox_message WHERE message_type = 'posting.slo.state.changed' ORDER BY created_at, id");

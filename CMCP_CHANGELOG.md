@@ -257,3 +257,102 @@ Required local closure:
 ### Growth workstream
 
 - Higher-throughput ledger engines, programmable money-flow DSLs, richer provider adapters, finance-facing reconciliation UX and deeper analytics/observability remain post-RC maturity work.
+
+## 2026-09-14 — RC packaging and integration-harness pass
+
+### Reconnaissance baseline
+
+- Target scope remains `Walleting` only; sibling repositories are read-only contract sources.
+- Read Walleting README, all repository Markdown documentation, Composer/runtime configuration, integration harness, production readiness command, source inventory and current Git state.
+- Read mandatory Objecting, Cruding, Viewing and Interfacing package contracts plus relevant Canonization textual rules (Canon008, Canon019, Canon021 through Canon029) and the Gating repository contract.
+- Current ledger-product baseline remains immutable double-entry posting, write atomicity, idempotency, auditable history, balance locking and reconciliation; provider breadth, programmable flow authoring and richer finance UX remain growth work.
+- Pre-change gates: `composer validate --no-interaction --strict --check-lock` green; `composer quality` green with 115 tests / 344 assertions; `composer test:integration` reached the latest 26-migration schema and again returned no final exit code after prod-cache clear.
+- Repository started dirty only because an untracked `.gating/` tree is present; it contains copied Gating runtime source and is not treated as Walleting product code.
+
+### Target-to-canon mapping
+
+- Canon019: keep role-first Symfony structure; no Domain/Application/Infrastructure or Port/Adapter/Adaptor roots.
+- Canon021: Walleting owns financial operations only; generic CRUD routing/controllers stay in Cruding.
+- Canon022/023: the development manifest has the standalone platform baseline and sibling `path` repositories with `symlink: true`.
+- Canon024: the pre-change repository lacked `composer.prod.json`; this is the concrete RC-critical packaging defect selected for closure.
+- Canon025/026/027: dual standalone/bundle surfaces, PHP 8.4+/Symfony 8.1+, and PostgreSQL primary persistence are present and preserved.
+- Canon028: Walleting currently declares only its PostgreSQL data role; no speculative SQLite infra persistence is introduced without an owned infra-data requirement.
+- Canon029: PHP-CS-Fixer/PHPStan dependencies, configs and scripts are present and green.
+
+### RC-critical workstream
+
+- Add a path-independent `composer.prod.json`, expose a reproducible production-manifest validation script, align release/production documentation, then verify the complete acceptance path.
+- Separately localize the integration-harness non-termination; do not alter ledger semantics unless a concrete defect is proven.
+
+### Growth workstream (non-blocking)
+
+- Post-RC: higher-throughput ledger engines, richer reconciliation/operator UX, programmable money-flow composition, expanded provider rails, historical balance/version queries and deeper finance observability.
+
+### Material implementation started
+
+- Added path-independent `composer.prod.json` using packaged VCS repositories rather than sibling `path` links.
+- Added `composer validate:prod` and included it in documented RC acceptance.
+- Updated production installation guidance to select `composer.prod.json` explicitly while keeping sibling path repositories development-only.
+
+### What we have / what remains
+
+Что имеем? Canon024 now has a concrete production manifest instead of a documented-but-missing requirement, while the development topology remains unchanged.
+
+Что осталось до RC? Validate the new manifest, re-run quality/Gating, diagnose the integration harness to a factual outcome, reconcile the untracked `.gating/` tooling tree, then inspect/stage/commit/push only the bounded Walleting changes.
+
+## 2026-09-20 — RC dependency-activation boundary pass
+
+### Reconnaissance baseline
+
+- Read Walleting `README.md`, `composer.json`, `CMCP_CHANGELOG.md`, all current repository Markdown docs under `docs/`, standalone service/bundle configuration, and the active Composer/gate surfaces relevant to RC acceptance.
+- Read mandatory dependency contracts from Objecting, Cruding, Viewing and Interfacing, including their package manifests and public responsibility boundaries.
+- Read Canonization normative architecture text and applicable rules: Canon008, Canon019, Canon021, Canon022, Canon023, Canon024, Canon025, Canon026, Canon027, Canon028, Canon029 and Canon032. Gating remains the executable enforcement companion, not the normative source.
+- Code Memory is not explicitly declared by this repository; the available memory planner resolves Walleting repo-local scope plus read-only global navigation.
+- The current worktree was already materially dirty before this pass; existing ledger/entity/test/migration/package changes are treated as baseline and are not attributed to this pass.
+- External maturity baseline checked against current ledger/wallet practices and mature/open implementations: immutable double entry, integer money, database-enforced invariants, concurrency-safe posting, idempotency, reconciliation and auditable correction/reversal remain RC expectations; programmable transaction DSLs, wider provider rails, richer finance UX and broader multi-asset abstractions remain growth work.
+
+### Target-to-canon mapping
+
+- Canon008: Walleting production PHP imports Objecting types; `objecting/object` is a direct runtime dependency. No production PHP imports were found for Cruding, Viewing, Interfacing, Collectioning or Tabling.
+- Canon019: keep technical-role topology and do not introduce Domain/Application/Infrastructure or Port/Adapter/Adaptor roots.
+- Canon021: Walleting continues to own no generic CRUD engine; generic CRUD remains in Cruding.
+- Canon022: standalone dependency baseline remains declared directly in `composer.json`; dependency presence does not itself require every foreign Symfony bundle to be enabled in Walleting standalone runtime.
+- Canon023/024: development sibling path repositories remain symlinked; `composer.prod.json` remains the path-independent production manifest.
+- Canon025/032: Walleting must remain standalone-bootable and its own `WalletingBundle` must remain registered.
+- Canon026/027/028/029: PHP/Symfony floor, PostgreSQL data role, explicit storage-role scope, and standard PHP quality tooling remain unchanged.
+
+### RC-critical workstream
+
+- Pre-change `composer validate --no-interaction --strict --check-lock`: green.
+- Pre-change `composer quality`: failed at Symfony container lint because Walleting enabled `CrudingBundle` even though Walleting has no Cruding production references. Cruding's active resolver definition loses its explicit iterable wiring inside the dependency bundle, producing an autowiring failure for `CrudBulkMutationHandlerResolver::$handlers`.
+- Selected bounded fix: keep Canon022 package dependencies but stop activating unused sibling application bundles in Walleting standalone mode. Preserve Objecting bundle activation because Walleting directly consumes Objecting entity/system-field primitives and mapping.
+- No ledger posting semantics, balances, migrations, provider flows, reconciliation algorithms or sibling repositories are modified by this fix.
+
+### Growth workstream (non-blocking)
+
+- Post-RC: programmable posting DSLs, higher-throughput ledger execution, richer reconciliation/operator UX, expanded provider rails, historical balance/version query ergonomics, and deeper observability.
+
+### What we have / what remains
+
+Что имеем? The RC failure is localized to standalone dependency activation rather than Walleting ledger logic, and the fix stays inside Walleting's runtime-composition boundary while preserving the canonical Composer dependency baseline.
+
+Что осталось до RC? Re-run container/quality acceptance after the bundle activation fix, validate the production manifest, execute available Gating and schema/integration checks, repair any Walleting-owned failure, then inspect the final diff and Git state.
+
+### 2026-09-20/21 verification and hardening closure
+
+- Full local PostgreSQL integration became observable through the existing bounded `bin/bootstrap-local-integration.ps1` runner. The first factual run migrated a fresh isolated database through 28 migrations and passed the production-readiness JSON smoke, then exposed two integration errors caused by `posting_slo_state.revision` being NOT NULL while initial SLO-state insertion omitted it.
+- `PostingSloStateService` now initializes `revision = 0`; the PostgreSQL SLO-state regression test asserts revision 2 after the tested breach/recovery lifecycle.
+- The repaired integration run completed with exit code 0: 28 migrations / 288 SQL queries, production readiness all `ok:true`, and 53 integration tests / 491 assertions green.
+- Canon011 was closed by making the posting telemetry catch explicitly best-effort rather than an empty catch.
+- Canon039 was materialized with the canonical `phpunit.xml.dist` filename plus persistent branch/path coverage execution. Coverage evidence now exists at `var/coverage/summary.txt`: 45.31% lines, 38.22% methods, 64.91% branches and 0.95% paths.
+- Canon043 was closed: every locally linked first-party package uses exact `dev-master`, every sibling path repository pins `options.versions[package] = dev-master`, and Composer regenerated the lock through a package-scoped update rather than manual edits.
+- Post-update `composer validate --no-interaction --strict --check-lock`, `composer quality`, `composer validate:prod`, and `composer schema:parity` are green. Quality remains 115 tests / 344 assertions.
+- After the Canon043 Composer lock/vendor refresh, the complete isolated PostgreSQL integration harness was run again and remained green: exit code 0, 28 migrations / 288 SQL queries, production readiness all `ok:true`, and 53 integration tests / 491 assertions.
+- Executable Gating improved from 9 failures to 6 after the bounded fixes. Canon011, Canon019, Canon021-027, Canon029-030, Canon032-033, Canon035-039, Canon043-046 and the generic safety checks pass in the observed scan.
+- Remaining blocking structural/tooling findings are intentionally not disguised as closed: Canon001 role-first placement (32 subject-first paths), Canon006 role/suffix placement, Canon018 package/subject identity, Canon020 handler placement, Canon041 behavioral/browser tooling, and the generic typed-layer finding for Event-suffixed types. Canon031/034/040/042 were warnings in the pre-coverage scan; Canon040 now has the required generated coverage artifact but requires a subsequent Gating scan for refreshed status.
+- Canon001/006/018/020 are a cross-tree namespace/package migration, not a ledger bugfix tail. Canon018 in particular identifies the historical package name `smartresponsor/walleting` as inconsistent with the canonical `<component-token>/<subject-token>` identity model and therefore requires an explicit package-identity migration rather than mass renaming by guess.
+- Canon041 requires Symfony Test Pack, Panther and repository-local Playwright tooling. That UI/browser test stack is a separate standalone-application acceptance workstream and is not fabricated inside the financial-ledger hardening pass.
+
+Что имеем? Walleting's financial/runtime acceptance path is materially stronger and reproducible: package topology, production manifest, schema parity, unit/static quality, coverage instrumentation and a clean-database PostgreSQL integration run are all real rather than inferred.
+
+Что осталось до RC? Complete the explicit canonical topology/package-identity migration for Canon001/006/018/020, add the Canon041 browser/UI tooling contract and refresh Gating/coverage evidence. These are now the known RC blockers; the ledger correctness/integration blocker found in this pass is closed.

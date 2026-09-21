@@ -96,6 +96,8 @@ final readonly class PostingDbalExecutor implements PostingExecutorInterface
         try {
             $this->telemetry->record($metric);
         } catch (\Throwable) {
+            // Posting telemetry is explicitly best-effort and must never fail the financial write path.
+            return;
         }
     }
 

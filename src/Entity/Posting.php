@@ -11,6 +11,8 @@ use Symfony\Component\Uid\Uuid;
 #[ORM\Table(name: 'posting')]
 #[ORM\Index(name: 'idx_posting_transaction', columns: ['transaction_id'])]
 #[ORM\Index(name: 'idx_posting_account', columns: ['account_id'])]
+#[ORM\Index(name: 'idx_posting_transaction_account', columns: ['transaction_id', 'account_id'])]
+#[ORM\Index(name: 'idx_posting_account_transaction', columns: ['account_id', 'transaction_id'])]
 #[ORM\UniqueConstraint(name: 'uniq_posting_transaction_sequence', columns: ['transaction_id', 'sequence'])]
 class Posting
 {

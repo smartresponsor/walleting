@@ -236,11 +236,11 @@ final class PostgreSqlPostingServiceTest extends KernelTestCase
             'owner_type' => 'posting-service-concurrency',
             'owner_id' => Uuid::v7()->toRfc4122(),
             'status' => 'active',
-            'object_uuid' => '\\x'.str_replace('-', '', $walletId),
-            'object_slug' => 'wallet:'.$walletId,
-            'object_first_title' => 'posting-service-concurrency',
-            'object_created_at' => $now,
-            'object_status' => 'active',
+            'uuid' => '\\x'.str_replace('-', '', $walletId),
+            'slug' => 'wallet:'.$walletId,
+            'first_title' => 'posting-service-concurrency',
+            'created_at' => $now,
+            'status' => 'active',
         ]);
         foreach ([
             [$accountAId, 'asset-a', 'asset', false],
@@ -254,11 +254,11 @@ final class PostgreSqlPostingServiceTest extends KernelTestCase
                 'currency' => 'USD',
                 'category' => $category,
                 'allow_negative' => $allowNegative,
-                'object_uuid' => '\\x'.str_replace('-', '', (string) $id),
-                'object_slug' => 'account:'.$id,
-                'object_first_title' => $code,
-                'object_created_at' => $now,
-                'object_status' => 'active',
+                'uuid' => '\\x'.str_replace('-', '', (string) $id),
+                'slug' => 'account:'.$id,
+                'first_title' => $code,
+                'created_at' => $now,
+                'status' => 'active',
             ], ['allow_negative' => ParameterType::BOOLEAN]);
         }
 
@@ -311,11 +311,11 @@ final class PostgreSqlPostingServiceTest extends KernelTestCase
             'owner_type' => 'posting-service-integration',
             'owner_id' => Uuid::v7()->toRfc4122(),
             'status' => 'active',
-            'object_uuid' => '\\x'.str_replace('-', '', $walletId),
-            'object_slug' => 'wallet:'.$walletId,
-            'object_first_title' => 'posting-service-integration',
-            'object_created_at' => $now,
-            'object_status' => 'active',
+            'uuid' => '\\x'.str_replace('-', '', $walletId),
+            'slug' => 'wallet:'.$walletId,
+            'first_title' => 'posting-service-integration',
+            'created_at' => $now,
+            'status' => 'active',
         ]);
         $this->connection->insert('account', [
             'id' => $assetId,
@@ -324,11 +324,11 @@ final class PostgreSqlPostingServiceTest extends KernelTestCase
             'currency' => 'USD',
             'category' => 'asset',
             'allow_negative' => false,
-            'object_uuid' => '\\x'.str_replace('-', '', $assetId),
-            'object_slug' => 'account:'.$assetId,
-            'object_first_title' => 'cash',
-            'object_created_at' => $now,
-            'object_status' => 'active',
+            'uuid' => '\\x'.str_replace('-', '', $assetId),
+            'slug' => 'account:'.$assetId,
+            'first_title' => 'cash',
+            'created_at' => $now,
+            'status' => 'active',
         ], ['allow_negative' => ParameterType::BOOLEAN]);
         $this->connection->insert('account', [
             'id' => $clearingId,
@@ -337,11 +337,11 @@ final class PostgreSqlPostingServiceTest extends KernelTestCase
             'currency' => 'USD',
             'category' => 'clearing',
             'allow_negative' => true,
-            'object_uuid' => '\\x'.str_replace('-', '', $clearingId),
-            'object_slug' => 'account:'.$clearingId,
-            'object_first_title' => 'clearing',
-            'object_created_at' => $now,
-            'object_status' => 'active',
+            'uuid' => '\\x'.str_replace('-', '', $clearingId),
+            'slug' => 'account:'.$clearingId,
+            'first_title' => 'clearing',
+            'created_at' => $now,
+            'status' => 'active',
         ], ['allow_negative' => ParameterType::BOOLEAN]);
 
         return [$assetId, $clearingId];

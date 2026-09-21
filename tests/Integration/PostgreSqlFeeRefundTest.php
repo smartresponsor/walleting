@@ -86,7 +86,7 @@ final class PostgreSqlFeeRefundTest extends KernelTestCase
             'result_transaction_id' => $refund->id()->toRfc4122(),
             'reservation_id' => null,
             'amount_minor' => 900,
-            'object_created_at' => (new \DateTimeImmutable())->format('Y-m-d H:i:s'),
+            'created_at' => (new \DateTimeImmutable())->format('Y-m-d H:i:s'),
         ]);
     }
 

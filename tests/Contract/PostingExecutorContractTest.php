@@ -121,11 +121,11 @@ abstract class PostingExecutorContractTest extends KernelTestCase
             'owner_type' => 'posting-executor-contract',
             'owner_id' => Uuid::v7()->toRfc4122(),
             'status' => 'active',
-            'object_uuid' => '\\x'.str_replace('-', '', $walletId),
-            'object_slug' => 'wallet:'.$walletId,
-            'object_first_title' => 'posting-executor-contract',
-            'object_created_at' => $now,
-            'object_status' => 'active',
+            'uuid' => '\\x'.str_replace('-', '', $walletId),
+            'slug' => 'wallet:'.$walletId,
+            'first_title' => 'posting-executor-contract',
+            'created_at' => $now,
+            'status' => 'active',
         ]);
         foreach ([
             [$assetId, 'asset', 'asset', false],
@@ -139,11 +139,11 @@ abstract class PostingExecutorContractTest extends KernelTestCase
                 'currency' => 'USD',
                 'category' => $category,
                 'allow_negative' => $allowNegative,
-                'object_uuid' => '\\x'.str_replace('-', '', (string) $id),
-                'object_slug' => 'account:'.$id,
-                'object_first_title' => $code.'-'.substr((string) $id, 0, 8),
-                'object_created_at' => $now,
-                'object_status' => 'active',
+                'uuid' => '\\x'.str_replace('-', '', (string) $id),
+                'slug' => 'account:'.$id,
+                'first_title' => $code.'-'.substr((string) $id, 0, 8),
+                'created_at' => $now,
+                'status' => 'active',
             ], ['allow_negative' => ParameterType::BOOLEAN]);
         }
 

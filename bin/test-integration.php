@@ -50,7 +50,6 @@ $runProcess = static function (array $command, array $environment, int $attempts
     }
 
     $environment['SYMFONY_DOTENV_VARS'] = '';
-
     $previousEnvironment = [];
     foreach ($environment as $name => $value) {
         $previousEnvironment[$name] = getenv($name);
@@ -58,26 +57,12 @@ $runProcess = static function (array $command, array $environment, int $attempts
         $_ENV[$name] = $_SERVER[$name] = $value;
     }
 
+    $escapedCommand = implode(' ', array_map(static fn (string $argument): string => escapeshellarg($argument), $command));
     $lastExitCode = 0;
     try {
         for ($attempt = 1; $attempt <= $attempts; ++$attempt) {
-            $process = proc_open(
-                $command,
-                [
-                    0 => ['file', 'php://stdin', 'r'],
-                    1 => ['file', 'php://stdout', 'w'],
-                    2 => ['file', 'php://stderr', 'w'],
-                ],
-                $pipes,
-                $root,
-                null,
-                ['bypass_shell' => true],
-            );
-            if (!is_resource($process)) {
-                throw new RuntimeException('Could not start integration child process.');
-            }
-
-            $lastExitCode = proc_close($process);
+            fwrite(STDOUT, sprintf("Running integration stage: %s\n", implode(' ', $command)));
+            passthru($escapedCommand, $lastExitCode);
             if (0 === $lastExitCode) {
                 return;
             }
@@ -101,7 +86,7 @@ $runProcess = static function (array $command, array $environment, int $attempts
         }
     }
 
-    throw new RuntimeException(sprintf('Integration child process failed after %d attempts with exit code %d.', $attempts, $lastExitCode));
+    throw new RuntimeException(sprintf('Integration child process failed after %d attempts with exit code %d: %s', $attempts, $lastExitCode, implode(' ', $command)));
 };
 
 $waitForPostgreSql = static function (int $port, int $timeoutSeconds = 60, int $requiredConsecutiveSuccesses = 3): void {
@@ -172,6 +157,23 @@ $withDatabaseName = static function (string $url, string $database): string {
     return $matches[1].$database.($matches[2] ?? '');
 };
 
+$resetIntegrationDatabase = static function (string $databaseUrl): void {
+    $params = (new Doctrine\DBAL\Tools\DsnParser(['postgresql' => 'pdo_pgsql', 'postgres' => 'pdo_pgsql']))->parse($databaseUrl);
+    $connection = Doctrine\DBAL\DriverManager::getConnection($params);
+    try {
+        $tables = $connection->fetchFirstColumn("SELECT tablename FROM pg_tables WHERE schemaname = 'public' AND tablename <> 'doctrine_migration_versions' ORDER BY tablename");
+        if ([] === $tables) {
+            return;
+        }
+
+        $platform = $connection->getDatabasePlatform();
+        $quotedTables = array_map(static fn (string $table): string => $platform->quoteIdentifier($table), $tables);
+        $connection->executeStatement('TRUNCATE TABLE '.implode(', ', $quotedTables).' RESTART IDENTITY CASCADE');
+    } finally {
+        $connection->close();
+    }
+};
+
 try {
     if ($useDocker) {
         $runWithRetry('docker compose -f compose.test.yaml up -d --wait database-test');
@@ -200,8 +202,10 @@ try {
         'APP_SECRET' => 'walleting-integration-production-smoke',
         'MESSENGER_TRANSPORT_DSN' => 'doctrine://default?queue_name=walleting_outbox_events',
     ];
-    $runProcess([PHP_BINARY, '-d', 'variables_order=EGPCS', 'bin/console', 'cache:clear', '--no-debug'], $productionEnvironment);
+    $runProcess([PHP_BINARY, '-d', 'variables_order=EGPCS', 'bin/console', 'cache:clear', '--no-debug', '--no-warmup'], $productionEnvironment);
     $runProcess([PHP_BINARY, '-d', 'variables_order=EGPCS', 'bin/console', 'walleting:production:check', '--json', '--no-debug'], $productionEnvironment);
+
+    $resetIntegrationDatabase($productionSmokeDatabaseUrl);
 
     $runProcess([PHP_BINARY, '-d', 'variables_order=EGPCS', 'vendor/bin/phpunit', '-c', 'phpunit.integration.xml'], $testEnvironment);
 } finally {

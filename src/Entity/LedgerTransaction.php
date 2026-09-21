@@ -13,6 +13,7 @@ use Symfony\Component\Uid\Uuid;
 
 #[ORM\Entity]
 #[ORM\Table(name: 'ledger_transaction')]
+#[ORM\Index(name: 'idx_ledger_transaction_posted_chronology', columns: ['posted_at', 'id'], options: ['where' => "((status)::text = 'posted'::text)"])]
 #[ORM\UniqueConstraint(name: 'uniq_ledger_transaction_idempotency_key', columns: ['idempotency_key'])]
 class LedgerTransaction
 {
