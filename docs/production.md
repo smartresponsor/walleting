@@ -2,7 +2,7 @@
 
 ## Supported topology
 
-Walleting development uses the SmartResponsor sibling-workspace topology and Composer `path` repositories with symlinks. Production/container builds use `composer.prod.json`, which resolves SmartResponsor dependencies as packaged VCS dependencies and contains no sibling filesystem links.
+Walleting development uses the platform sibling-workspace topology and Composer `path` repositories with symlinks. Production/container builds use `composer.prod.json`, which resolves first-party component dependencies as packaged VCS dependencies and contains no sibling filesystem links.
 
 Runtime requirements:
 

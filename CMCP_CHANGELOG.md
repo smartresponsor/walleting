@@ -377,3 +377,60 @@ Required local closure:
 Что имеем? All previously identified RC hard blockers are closed, the canonical identity/topology migration is executable and verified, and the ledger/runtime acceptance remains green after the migration.
 
 Что осталось до RC? Only warning-level PHPDoc and PHP coverage debt remains. Treat that as a separate quality-growth workstream unless release policy is changed to promote warnings to hard blockers; otherwise the RC implementation itself is ready for bounded commit/push.
+
+## 2026-09-29 — engine-20260929093249-walleting-a5b999 static-quality remediation
+
+### Reconnaissance baseline
+
+- Console MCP resolved the authoritative workspace to `D:\\PhpstormProjects\\www\\Walleting`, branch `task/walleting-ledger-foundation`, head `0dfbb4e1d17484a74fd4d4bbcdef81c73d70c59f`; the branch was already dirty and three commits ahead of upstream before this pass.
+- Existing dirty work includes Composer/Gating integration changes, outbox persistence/schema work, PostgreSQL integration tests, `PRODUCT_CAPABILITY_AUDIT.adoc`, a migration, and generated/local `.console-mcp/` and `.gating/` surfaces. This pass preserves unrelated work and performs no reset/stash/clean.
+- Consumed the supplied CanonScanning evidence instead of duplicating it: Inspecting reported 25 medium advisory design/complexity findings and no autofixable findings; the supplied code-style report was RED only for `migrations/Version20260923102500.php`.
+- Read Walleting README/Composer/product docs and outbox implementation surfaces; read mandatory Objecting, Cruding, Viewing, Interfacing, Gating and Canonization contracts, including applicable Canon018, Canon021, Canon022, Canon043, Canon052, Canon053 and Canon054 textual rules.
+- Market baseline: mature ledger systems converge on immutable double-entry accounting, atomic writes, idempotency, auditable balances, reconciliation, and explicit operational correctness. Programmable money-flow DSLs, wider provider/connectivity breadth, and richer finance UX remain growth work rather than RC blockers.
+
+### Target-to-canon mapping
+
+- Canon018: `walleting/wallet` maps to `App\\Walleting\\ => src/`; preserve the Symfony-oriented technical-role tree and do not introduce `src/Domain/` or Port/Adapter/Adaptor taxonomies.
+- Canon021: Walleting owns financial operations; generic application CRUD remains in Cruding.
+- Canon022/043/053: keep declared first-party dependency identity and allowed sibling development symlinks bounded to canonical helper/foundation exceptions; do not infer runtime coupling merely from neighboring repositories.
+- Canon052: Gating is a development verification dependency; consumer `.gating/` is artifact state, not a copied policy/runtime source.
+- Canon054 + the active migration/service contract: current outbox physical identifiers converge on `wallet_outbox_message`, `wallet_outbox_requeue_audit`, and `wallet_outbox_message_id`.
+
+### RC-critical workstream
+
+- Repair the supplied RED PHP-CS-Fixer failure in the new migration.
+- Repair proven adjacent schema-token drift where Entity/production-check/tests had been mechanically changed to `wallet_wallet_outbox_message*` while the migration and `WalletOutboxService` use the canonical single-prefix `wallet_outbox_message*` contract.
+- Re-run deterministic style/static/unit/schema/Gating checks, then re-run Inspecting only after mutation because the supplied Inspecting evidence fingerprint is now stale.
+
+### Growth workstream (non-blocking)
+
+- Address advisory Inspecting complexity/public-API findings by bounded refactoring only when a dedicated workstream can preserve financial semantics with focused regression coverage.
+- Consider programmable posting composition, richer reconciliation/operator UX, broader provider rails, and deeper observability after RC correctness remains green.
+
+### Material remediation started
+
+- Normalized every current `wallet_wallet_outbox*` occurrence back to the single-prefix `wallet_outbox*` persistence contract across the affected Entity, production check, contract test, concurrency test, and dead-letter/requeue integration test surfaces.
+- No sibling repository was modified.
+
+Что имеем? The RED static-quality front is localized and the adjacent double-prefix schema drift has been corrected to the migration/service contract.
+
+Что осталось до RC? Apply the repository formatter to the migration, run deterministic gates, refresh Inspecting after mutation, inspect final Git state, and integrate only coherent Walleting-owned changes.
+
+### Verification and closure
+
+- The original code-style RED is closed: `composer cs:fix` repaired only `migrations/Version20260923102500.php`; repeated `composer cs:check` is GREEN across 198 files.
+- Clearing the Symfony test cache proved the earlier `wallet_wallet_outbox*` schema diff was stale-cache evidence. Current metadata, migration, DBAL runtime and tests consistently use `wallet_outbox_message`, `wallet_outbox_requeue_audit` and `wallet_outbox_message_id`.
+- Objecting's active `ObjectIdentityDoctrineMetadataListener` and mapping contract require deterministic `uniq_<table>_uuid` / `uniq_<table>_slug` constraints. Added forward migration `Version20260929094320` to rename the six historical hash-derived Wallet/Account/PaymentInstrument identity indexes to those semantic names.
+- Canon055 was the only executable Gating failure after restoring the locked `gating/gate` dev dependency into `vendor/`. `docs/production.md` now uses neutral platform/component terminology instead of promoting a consumer alias into shared-platform identity.
+- `composer validate --no-interaction --strict --check-lock`: GREEN.
+- `composer validate:prod`: GREEN.
+- `composer quality`: GREEN; PHP-CS-Fixer, PHPStan, Symfony container lint, Doctrine mapping, PHPUnit 115 tests / 344 assertions, and Gating all pass. Gating: 0 failed, 0 warning, 2 profile-related skips.
+- `composer schema:parity`: GREEN; migrations are up to date and Doctrine schema parity is synchronized.
+- Repository-owned `bin/bootstrap-local-integration.ps1`: GREEN with exit code 0 on a run-scoped PostgreSQL database; 30 migrations / 297 SQL queries, production readiness JSON all `ok:true`, and 53 integration tests / 491 assertions. The isolated database was dropped by the runner.
+- A direct asynchronous `test:integration` attempt disappeared during PHPUnit without an exit code after successfully applying migration 30/30 and passing production readiness; it is superseded by the completed bounded runner above and is not classified as a code failure.
+- Post-mutation Inspecting refresh was attempted as required. The normal call exceeded the Console-MCP transport window; a bounded 30-second retry returned `INSPECTING_FAILED` without findings or report output. The supplied pre-mutation 25 medium advisory findings therefore remain the latest substantive Inspecting baseline; no new Inspecting GREEN is claimed.
+- No browser/mobile/user-visible UI surface changed, so behavioral screenshot evidence is not applicable.
+
+Что имеем? The actionable RED backlog is closed and all deterministic Walleting acceptance gates, including clean-database PostgreSQL integration and schema parity, are GREEN.
+
+Что осталось до RC? Git integration remains. Inspecting refresh is NOT_VERIFIED because the verifier failed to produce a post-mutation report; this is recorded as a verifier/runtime limitation rather than a repository RED.
