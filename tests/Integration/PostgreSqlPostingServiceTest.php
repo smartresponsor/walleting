@@ -61,12 +61,12 @@ final class PostgreSqlPostingServiceTest extends KernelTestCase
         self::assertSame(2, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM posting WHERE transaction_id = ?', [$transaction->id()->toRfc4122()]));
         self::assertSame(1250, (int) $this->connection->fetchOne('SELECT balance_minor FROM account_balance WHERE account_id = ?', [$assetId]));
         self::assertSame(-1250, (int) $this->connection->fetchOne('SELECT balance_minor FROM account_balance WHERE account_id = ?', [$clearingId]));
-        self::assertSame(1, (int) $this->connection->fetchOne("SELECT COUNT(*) FROM outbox_message WHERE ledger_transaction_id = ? AND message_type = 'ledger.transaction.posted'", [$transaction->id()->toRfc4122()]));
+        self::assertSame(1, (int) $this->connection->fetchOne("SELECT COUNT(*) FROM wallet_outbox_message WHERE ledger_transaction_id = ? AND message_type = 'ledger.transaction.posted'", [$transaction->id()->toRfc4122()]));
 
         $replayed = $service->credit($key, $instructions, ['operation' => 'integration_credit']);
         self::assertSame($transaction->id()->toRfc4122(), $replayed->id()->toRfc4122());
         self::assertSame(1, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM ledger_transaction WHERE idempotency_key = ?', [$key]));
-        self::assertSame(1, (int) $this->connection->fetchOne("SELECT COUNT(*) FROM outbox_message WHERE ledger_transaction_id = ? AND message_type = 'ledger.transaction.posted'", [$transaction->id()->toRfc4122()]));
+        self::assertSame(1, (int) $this->connection->fetchOne("SELECT COUNT(*) FROM wallet_outbox_message WHERE ledger_transaction_id = ? AND message_type = 'ledger.transaction.posted'", [$transaction->id()->toRfc4122()]));
         self::assertSame(1, (int) $this->connection->fetchOne("SELECT COUNT(*) FROM posting_metric_sample WHERE event = 'completed'"));
         self::assertSame(0, (int) $this->connection->fetchOne("SELECT COUNT(*) FROM posting_metric_sample WHERE event = 'failed'"));
     }
@@ -107,7 +107,7 @@ final class PostgreSqlPostingServiceTest extends KernelTestCase
         self::assertSame(900, (int) $this->connection->fetchOne('SELECT balance_minor FROM account_balance WHERE account_id = ?', [$accountBId]));
         self::assertSame(-2000, (int) $this->connection->fetchOne('SELECT balance_minor FROM account_balance WHERE account_id = ?', [$clearingId]));
         self::assertSame(2, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM ledger_transaction WHERE idempotency_key IN (?, ?)', [$keyA, $keyB]));
-        self::assertSame(2, (int) $this->connection->fetchOne("SELECT COUNT(*) FROM outbox_message WHERE message_type = 'ledger.transaction.posted' AND ledger_transaction_id IN (SELECT id FROM ledger_transaction WHERE idempotency_key IN (?, ?))", [$keyA, $keyB]));
+        self::assertSame(2, (int) $this->connection->fetchOne("SELECT COUNT(*) FROM wallet_outbox_message WHERE message_type = 'ledger.transaction.posted' AND ledger_transaction_id IN (SELECT id FROM ledger_transaction WHERE idempotency_key IN (?, ?))", [$keyA, $keyB]));
     }
 
     public function testTransientLockTimeoutIsRetriedAfterCompetingLockReleases(): void

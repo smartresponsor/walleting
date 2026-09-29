@@ -25,7 +25,7 @@ final class PostgreSqlPostingSloStateTest extends KernelTestCase
         $this->connection = self::getContainer()->get('doctrine.dbal.default_connection');
         $this->entityManager = self::getContainer()->get('doctrine.orm.entity_manager');
         self::assertInstanceOf(\Doctrine\DBAL\Platforms\PostgreSQLPlatform::class, $this->connection->getDatabasePlatform());
-        $this->connection->executeStatement("DELETE FROM outbox_message WHERE message_type = 'posting.slo.state.changed'");
+        $this->connection->executeStatement("DELETE FROM wallet_outbox_message WHERE message_type = 'posting.slo.state.changed'");
         $this->connection->executeStatement('DELETE FROM posting_slo_state');
     }
 
@@ -42,7 +42,7 @@ final class PostgreSqlPostingSloStateTest extends KernelTestCase
         self::assertSame(1, $firstBreach->pendingCount);
         self::assertSame(2, $firstBreach->requiredCount);
         self::assertFalse($firstBreach->changed);
-        self::assertSame(0, (int) $this->connection->fetchOne("SELECT COUNT(*) FROM outbox_message WHERE message_type = 'posting.slo.state.changed'"));
+        self::assertSame(0, (int) $this->connection->fetchOne("SELECT COUNT(*) FROM wallet_outbox_message WHERE message_type = 'posting.slo.state.changed'"));
 
         $secondBreach = $service->apply($scope, $critical, 2, 3);
         self::assertSame(WalletPostingHealthStatus::Critical, $secondBreach->currentStatus);
@@ -71,8 +71,8 @@ final class PostgreSqlPostingSloStateTest extends KernelTestCase
         self::assertSame(0, (int) $row['pending_count']);
         self::assertSame(2, (int) $row['revision']);
         self::assertSame([], json_decode((string) $row['reasons'], true, 512, JSON_THROW_ON_ERROR));
-        self::assertSame(2, (int) $this->connection->fetchOne("SELECT COUNT(*) FROM outbox_message WHERE message_type = 'posting.slo.state.changed'"));
-        $alerts = $this->connection->fetchAllAssociative("SELECT deduplication_key, ledger_transaction_id, provider_event_id, payload FROM outbox_message WHERE message_type = 'posting.slo.state.changed' ORDER BY created_at, id");
+        self::assertSame(2, (int) $this->connection->fetchOne("SELECT COUNT(*) FROM wallet_outbox_message WHERE message_type = 'posting.slo.state.changed'"));
+        $alerts = $this->connection->fetchAllAssociative("SELECT deduplication_key, ledger_transaction_id, provider_event_id, payload FROM wallet_outbox_message WHERE message_type = 'posting.slo.state.changed' ORDER BY created_at, id");
         self::assertNull($alerts[0]['ledger_transaction_id']);
         self::assertNull($alerts[0]['provider_event_id']);
         self::assertSame('posting.slo.state.changed:'.$scope.':1', $alerts[0]['deduplication_key']);

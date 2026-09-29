@@ -44,7 +44,7 @@ abstract class PostingExecutorContractTest extends KernelTestCase
 
         self::assertSame(1, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM ledger_transaction WHERE id = ? AND idempotency_key = ? AND request_hash = ?', [$transactionId, $key, $request->hash()]));
         self::assertSame(2, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM posting WHERE transaction_id = ?', [$transactionId]));
-        self::assertSame(1, (int) $this->connection->fetchOne("SELECT COUNT(*) FROM outbox_message WHERE ledger_transaction_id = ? AND message_type = 'ledger.transaction.posted'", [$transactionId]));
+        self::assertSame(1, (int) $this->connection->fetchOne("SELECT COUNT(*) FROM wallet_outbox_message WHERE ledger_transaction_id = ? AND message_type = 'ledger.transaction.posted'", [$transactionId]));
     }
 
     public function testPostingSequenceMatchesCanonicalRequestOrder(): void
@@ -84,7 +84,7 @@ abstract class PostingExecutorContractTest extends KernelTestCase
         } catch (UniqueConstraintViolationException) {
             self::assertSame(1, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM ledger_transaction WHERE idempotency_key = ?', [$key]));
             self::assertSame(2, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM posting WHERE transaction_id = ?', [$transactionId]));
-            self::assertSame(1, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM outbox_message WHERE ledger_transaction_id = ?', [$transactionId]));
+            self::assertSame(1, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM wallet_outbox_message WHERE ledger_transaction_id = ?', [$transactionId]));
         }
     }
 
@@ -103,7 +103,7 @@ abstract class PostingExecutorContractTest extends KernelTestCase
         } catch (\Throwable $exception) {
             self::assertStringContainsString('insufficient available balance', strtolower($exception->getMessage()));
             self::assertSame(0, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM ledger_transaction WHERE idempotency_key = ?', [$key]));
-            self::assertSame(0, (int) $this->connection->fetchOne("SELECT COUNT(*) FROM outbox_message WHERE payload ->> 'idempotency_key' = ?", [$key]));
+            self::assertSame(0, (int) $this->connection->fetchOne("SELECT COUNT(*) FROM wallet_outbox_message WHERE payload ->> 'idempotency_key' = ?", [$key]));
         }
     }
 

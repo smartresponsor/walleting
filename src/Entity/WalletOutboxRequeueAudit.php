@@ -8,8 +8,8 @@ use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Uid\Uuid;
 
 #[ORM\Entity]
-#[ORM\Table(name: 'outbox_requeue_audit')]
-#[ORM\Index(name: 'idx_outbox_requeue_message_created', columns: ['outbox_message_id', 'created_at'])]
+#[ORM\Table(name: 'wallet_outbox_requeue_audit')]
+#[ORM\Index(name: 'idx_outbox_requeue_message_created', columns: ['wallet_outbox_message_id', 'created_at'])]
 final class WalletOutboxRequeueAudit
 {
     #[ORM\Id]
@@ -17,7 +17,7 @@ final class WalletOutboxRequeueAudit
     private Uuid $id;
 
     #[ORM\ManyToOne(targetEntity: WalletOutboxMessage::class)]
-    #[ORM\JoinColumn(name: 'outbox_message_id', nullable: false, onDelete: 'RESTRICT')]
+    #[ORM\JoinColumn(name: 'wallet_outbox_message_id', nullable: false, onDelete: 'RESTRICT')]
     private WalletOutboxMessage $outboxMessage;
 
     #[ORM\Column(name: 'attempt_count')]

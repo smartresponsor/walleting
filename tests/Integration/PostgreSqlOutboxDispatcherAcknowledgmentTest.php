@@ -24,8 +24,8 @@ final class PostgreSqlOutboxDispatcherAcknowledgmentTest extends KernelTestCase
         $this->connection = self::getContainer()->get('doctrine.dbal.default_connection');
         $this->entityManager = self::getContainer()->get('doctrine.orm.entity_manager');
         self::assertInstanceOf(\Doctrine\DBAL\Platforms\PostgreSQLPlatform::class, $this->connection->getDatabasePlatform());
-        $this->connection->executeStatement('DELETE FROM outbox_requeue_audit');
-        $this->connection->executeStatement('DELETE FROM outbox_message');
+        $this->connection->executeStatement('DELETE FROM wallet_outbox_requeue_audit');
+        $this->connection->executeStatement('DELETE FROM wallet_outbox_message');
     }
 
     public function testSuccessfulHandlerAcknowledgesOnlyAfterHandleReturns(): void
@@ -55,9 +55,9 @@ final class PostgreSqlOutboxDispatcherAcknowledgmentTest extends KernelTestCase
         self::assertSame(WalletOutboxMessageStatus::Claimed, $handledStatus);
         self::assertSame(1, $report->dispatched);
         self::assertSame(0, $report->retryScheduled);
-        self::assertSame('dispatched', (string) $this->connection->fetchOne("SELECT status FROM outbox_message WHERE deduplication_key = 'posting.dispatch.ack.test:success'"));
-        self::assertSame(1, (int) $this->connection->fetchOne("SELECT attempt_count FROM outbox_message WHERE deduplication_key = 'posting.dispatch.ack.test:success'"));
-        self::assertNull($this->connection->fetchOne("SELECT last_error FROM outbox_message WHERE deduplication_key = 'posting.dispatch.ack.test:success'"));
+        self::assertSame('dispatched', (string) $this->connection->fetchOne("SELECT status FROM wallet_outbox_message WHERE deduplication_key = 'posting.dispatch.ack.test:success'"));
+        self::assertSame(1, (int) $this->connection->fetchOne("SELECT attempt_count FROM wallet_outbox_message WHERE deduplication_key = 'posting.dispatch.ack.test:success'"));
+        self::assertNull($this->connection->fetchOne("SELECT last_error FROM wallet_outbox_message WHERE deduplication_key = 'posting.dispatch.ack.test:success'"));
     }
 
     public function testHandlerFailureLeavesMessageRetryableAndNeverMarksItDispatched(): void
@@ -83,7 +83,7 @@ final class PostgreSqlOutboxDispatcherAcknowledgmentTest extends KernelTestCase
         self::assertSame(0, $report->dispatched);
         self::assertSame(1, $report->retryScheduled);
         self::assertSame(0, $report->dead);
-        $row = $this->connection->fetchAssociative("SELECT status, attempt_count, last_error, dispatched_at, available_at FROM outbox_message WHERE deduplication_key = 'posting.dispatch.ack.test:failure'");
+        $row = $this->connection->fetchAssociative("SELECT status, attempt_count, last_error, dispatched_at, available_at FROM wallet_outbox_message WHERE deduplication_key = 'posting.dispatch.ack.test:failure'");
         self::assertIsArray($row);
         self::assertSame('failed', $row['status']);
         self::assertSame(1, (int) $row['attempt_count']);
@@ -116,7 +116,7 @@ final class PostgreSqlOutboxDispatcherAcknowledgmentTest extends KernelTestCase
             self::assertSame(1, $report->retryScheduled, sprintf('Attempt %d must schedule a retry.', $index + 1));
             self::assertSame(0, $report->dead);
 
-            $row = $this->connection->fetchAssociative("SELECT status, attempt_count, available_at, dispatched_at FROM outbox_message WHERE deduplication_key = 'posting.dispatch.ack.test:exhaustion'");
+            $row = $this->connection->fetchAssociative("SELECT status, attempt_count, available_at, dispatched_at FROM wallet_outbox_message WHERE deduplication_key = 'posting.dispatch.ack.test:exhaustion'");
             self::assertIsArray($row);
             self::assertSame('failed', $row['status']);
             self::assertSame($index + 1, (int) $row['attempt_count']);
@@ -125,14 +125,14 @@ final class PostgreSqlOutboxDispatcherAcknowledgmentTest extends KernelTestCase
             self::assertGreaterThanOrEqual($before->modify(sprintf('+%d seconds', $expectedDelay - 1))->getTimestamp(), $availableAt->getTimestamp());
             self::assertLessThanOrEqual($before->modify(sprintf('+%d seconds', $expectedDelay + 2))->getTimestamp(), $availableAt->getTimestamp());
 
-            $this->connection->executeStatement("UPDATE outbox_message SET available_at = (CURRENT_TIMESTAMP AT TIME ZONE 'UTC') - INTERVAL '1 second' WHERE deduplication_key = 'posting.dispatch.ack.test:exhaustion'");
+            $this->connection->executeStatement("UPDATE wallet_outbox_message SET available_at = (CURRENT_TIMESTAMP AT TIME ZONE 'UTC') - INTERVAL '1 second' WHERE deduplication_key = 'posting.dispatch.ack.test:exhaustion'");
             $this->entityManager->clear();
         }
 
         $terminal = $dispatcher->dispatchBatchReport(1);
         self::assertSame(0, $terminal->retryScheduled);
         self::assertSame(1, $terminal->dead);
-        $row = $this->connection->fetchAssociative("SELECT status, attempt_count, last_error, dispatched_at FROM outbox_message WHERE deduplication_key = 'posting.dispatch.ack.test:exhaustion'");
+        $row = $this->connection->fetchAssociative("SELECT status, attempt_count, last_error, dispatched_at FROM wallet_outbox_message WHERE deduplication_key = 'posting.dispatch.ack.test:exhaustion'");
         self::assertIsArray($row);
         self::assertSame('dead', $row['status']);
         self::assertSame(8, (int) $row['attempt_count']);
@@ -166,10 +166,10 @@ final class PostgreSqlOutboxDispatcherAcknowledgmentTest extends KernelTestCase
             $before = new \DateTimeImmutable();
             $report = $dispatcher->dispatchBatchReport(1);
             self::assertSame(1, $report->retryScheduled);
-            $availableAt = new \DateTimeImmutable((string) $this->connection->fetchOne("SELECT available_at FROM outbox_message WHERE deduplication_key = 'posting.dispatch.ack.test:backoff-cap'"));
+            $availableAt = new \DateTimeImmutable((string) $this->connection->fetchOne("SELECT available_at FROM wallet_outbox_message WHERE deduplication_key = 'posting.dispatch.ack.test:backoff-cap'"));
             self::assertGreaterThanOrEqual($before->modify(sprintf('+%d seconds', $expectedDelay - 1))->getTimestamp(), $availableAt->getTimestamp(), sprintf('Attempt %d must respect bounded backoff.', $index + 1));
             self::assertLessThanOrEqual($before->modify(sprintf('+%d seconds', $expectedDelay + 2))->getTimestamp(), $availableAt->getTimestamp());
-            $this->connection->executeStatement("UPDATE outbox_message SET available_at = (CURRENT_TIMESTAMP AT TIME ZONE 'UTC') - INTERVAL '1 second' WHERE deduplication_key = 'posting.dispatch.ack.test:backoff-cap'");
+            $this->connection->executeStatement("UPDATE wallet_outbox_message SET available_at = (CURRENT_TIMESTAMP AT TIME ZONE 'UTC') - INTERVAL '1 second' WHERE deduplication_key = 'posting.dispatch.ack.test:backoff-cap'");
             $this->entityManager->clear();
         }
     }

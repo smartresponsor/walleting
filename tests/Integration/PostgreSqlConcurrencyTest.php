@@ -21,8 +21,8 @@ final class PostgreSqlConcurrencyTest extends KernelTestCase
         self::bootKernel();
         $this->connection = self::getContainer()->get('doctrine.dbal.default_connection');
         self::assertInstanceOf(\Doctrine\DBAL\Platforms\PostgreSQLPlatform::class, $this->connection->getDatabasePlatform());
-        $this->connection->executeStatement('DELETE FROM outbox_requeue_audit');
-        $this->connection->executeStatement('DELETE FROM outbox_message');
+        $this->connection->executeStatement('DELETE FROM wallet_outbox_requeue_audit');
+        $this->connection->executeStatement('DELETE FROM wallet_outbox_message');
     }
 
     public function testConcurrentSpendSerializesOnAccountBalanceAndRejectsRetryAfterWinnerCommits(): void
@@ -82,11 +82,11 @@ final class PostgreSqlConcurrencyTest extends KernelTestCase
 
         try {
             $workerA->beginTransaction();
-            self::assertSame($firstId, (string) $workerA->fetchOne("SELECT id FROM outbox_message WHERE status = 'pending' ORDER BY created_at, id FOR UPDATE LIMIT 1"));
+            self::assertSame($firstId, (string) $workerA->fetchOne("SELECT id FROM wallet_outbox_message WHERE status = 'pending' ORDER BY created_at, id FOR UPDATE LIMIT 1"));
 
             $workerB->beginTransaction();
             $claimed = $workerB->fetchFirstColumn(
-                "SELECT id FROM outbox_message WHERE status IN ('pending', 'failed') AND available_at <= (CURRENT_TIMESTAMP AT TIME ZONE 'UTC') ORDER BY created_at, id FOR UPDATE SKIP LOCKED LIMIT 10",
+                "SELECT id FROM wallet_outbox_message WHERE status IN ('pending', 'failed') AND available_at <= (CURRENT_TIMESTAMP AT TIME ZONE 'UTC') ORDER BY created_at, id FOR UPDATE SKIP LOCKED LIMIT 10",
             );
 
             self::assertContains($secondId, array_map('strval', $claimed));
@@ -111,16 +111,16 @@ final class PostgreSqlConcurrencyTest extends KernelTestCase
 
         try {
             $locker->beginTransaction();
-            self::assertSame($firstId, (string) $locker->fetchOne('SELECT id FROM outbox_message WHERE id = ? FOR UPDATE', [$firstId]));
+            self::assertSame($firstId, (string) $locker->fetchOne('SELECT id FROM wallet_outbox_message WHERE id = ? FOR UPDATE', [$firstId]));
 
             self::assertSame(1, $outboxService->recoverStaleClaims(1, 10));
-            self::assertSame('claimed', (string) $this->connection->fetchOne('SELECT status FROM outbox_message WHERE id = ?', [$firstId]));
-            self::assertSame('failed', (string) $this->connection->fetchOne('SELECT status FROM outbox_message WHERE id = ?', [$secondId]));
+            self::assertSame('claimed', (string) $this->connection->fetchOne('SELECT status FROM wallet_outbox_message WHERE id = ?', [$firstId]));
+            self::assertSame('failed', (string) $this->connection->fetchOne('SELECT status FROM wallet_outbox_message WHERE id = ?', [$secondId]));
 
             $locker->commit();
             self::assertSame(1, $outboxService->recoverStaleClaims(1, 10));
-            self::assertSame('failed', (string) $this->connection->fetchOne('SELECT status FROM outbox_message WHERE id = ?', [$firstId]));
-            self::assertSame('Claim lease expired before acknowledgement.', (string) $this->connection->fetchOne('SELECT last_error FROM outbox_message WHERE id = ?', [$firstId]));
+            self::assertSame('failed', (string) $this->connection->fetchOne('SELECT status FROM wallet_outbox_message WHERE id = ?', [$firstId]));
+            self::assertSame('Claim lease expired before acknowledgement.', (string) $this->connection->fetchOne('SELECT last_error FROM wallet_outbox_message WHERE id = ?', [$firstId]));
         } finally {
             if ($locker->isTransactionActive()) {
                 $locker->rollBack();
@@ -262,7 +262,7 @@ final class PostgreSqlConcurrencyTest extends KernelTestCase
         int $attemptCount,
     ): void {
         $payload = ['id' => $id];
-        $this->connection->insert('outbox_message', [
+        $this->connection->insert('wallet_outbox_message', [
             'id' => $id,
             'ledger_transaction_id' => $transactionId,
             'provider_event_id' => null,

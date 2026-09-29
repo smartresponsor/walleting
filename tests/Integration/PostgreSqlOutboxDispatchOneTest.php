@@ -23,8 +23,8 @@ final class PostgreSqlOutboxDispatchOneTest extends KernelTestCase
         $this->connection = self::getContainer()->get('doctrine.dbal.default_connection');
         $this->entityManager = self::getContainer()->get('doctrine.orm.entity_manager');
         self::assertInstanceOf(\Doctrine\DBAL\Platforms\PostgreSQLPlatform::class, $this->connection->getDatabasePlatform());
-        $this->connection->executeStatement('DELETE FROM outbox_requeue_audit');
-        $this->connection->executeStatement('DELETE FROM outbox_message');
+        $this->connection->executeStatement('DELETE FROM wallet_outbox_requeue_audit');
+        $this->connection->executeStatement('DELETE FROM wallet_outbox_message');
     }
 
     public function testSelectedDispatchDoesNotClaimOtherDispatchableMessages(): void
@@ -32,8 +32,8 @@ final class PostgreSqlOutboxDispatchOneTest extends KernelTestCase
         $service = new WalletOutboxService($this->entityManager, $this->connection);
         $this->enqueue($service, 'first');
         $this->enqueue($service, 'selected');
-        $firstId = (string) $this->connection->fetchOne("SELECT id FROM outbox_message WHERE deduplication_key = 'posting.dispatch.one:first'");
-        $selectedId = (string) $this->connection->fetchOne("SELECT id FROM outbox_message WHERE deduplication_key = 'posting.dispatch.one:selected'");
+        $firstId = (string) $this->connection->fetchOne("SELECT id FROM wallet_outbox_message WHERE deduplication_key = 'posting.dispatch.one:first'");
+        $selectedId = (string) $this->connection->fetchOne("SELECT id FROM wallet_outbox_message WHERE deduplication_key = 'posting.dispatch.one:selected'");
         $handledIds = [];
         $handler = new class($handledIds) implements WalletOutboxMessageHandlerInterface {
             public function __construct(private array &$handledIds)
@@ -57,17 +57,17 @@ final class PostgreSqlOutboxDispatchOneTest extends KernelTestCase
         self::assertSame(1, $report->claimed);
         self::assertSame(1, $report->dispatched);
         self::assertSame([$selectedId], $handledIds);
-        self::assertSame('dispatched', (string) $this->connection->fetchOne('SELECT status FROM outbox_message WHERE id = ?', [$selectedId]));
-        self::assertSame(1, (int) $this->connection->fetchOne('SELECT attempt_count FROM outbox_message WHERE id = ?', [$selectedId]));
-        self::assertSame('pending', (string) $this->connection->fetchOne('SELECT status FROM outbox_message WHERE id = ?', [$firstId]));
-        self::assertSame(0, (int) $this->connection->fetchOne('SELECT attempt_count FROM outbox_message WHERE id = ?', [$firstId]));
+        self::assertSame('dispatched', (string) $this->connection->fetchOne('SELECT status FROM wallet_outbox_message WHERE id = ?', [$selectedId]));
+        self::assertSame(1, (int) $this->connection->fetchOne('SELECT attempt_count FROM wallet_outbox_message WHERE id = ?', [$selectedId]));
+        self::assertSame('pending', (string) $this->connection->fetchOne('SELECT status FROM wallet_outbox_message WHERE id = ?', [$firstId]));
+        self::assertSame(0, (int) $this->connection->fetchOne('SELECT attempt_count FROM wallet_outbox_message WHERE id = ?', [$firstId]));
     }
 
     public function testSelectedDispatchUsesNormalFailureAndRetrySemantics(): void
     {
         $service = new WalletOutboxService($this->entityManager, $this->connection);
         $this->enqueue($service, 'failure');
-        $id = (string) $this->connection->fetchOne("SELECT id FROM outbox_message WHERE deduplication_key = 'posting.dispatch.one:failure'");
+        $id = (string) $this->connection->fetchOne("SELECT id FROM wallet_outbox_message WHERE deduplication_key = 'posting.dispatch.one:failure'");
         $handler = new class implements WalletOutboxMessageHandlerInterface {
             public function supports(string $messageType): bool
             {
@@ -86,16 +86,16 @@ final class PostgreSqlOutboxDispatchOneTest extends KernelTestCase
         self::assertSame(1, $report->claimed);
         self::assertSame(0, $report->dispatched);
         self::assertSame(1, $report->retryScheduled);
-        self::assertSame('failed', (string) $this->connection->fetchOne('SELECT status FROM outbox_message WHERE id = ?', [$id]));
-        self::assertSame(1, (int) $this->connection->fetchOne('SELECT attempt_count FROM outbox_message WHERE id = ?', [$id]));
-        self::assertSame('selected delivery failed', (string) $this->connection->fetchOne('SELECT last_error FROM outbox_message WHERE id = ?', [$id]));
+        self::assertSame('failed', (string) $this->connection->fetchOne('SELECT status FROM wallet_outbox_message WHERE id = ?', [$id]));
+        self::assertSame(1, (int) $this->connection->fetchOne('SELECT attempt_count FROM wallet_outbox_message WHERE id = ?', [$id]));
+        self::assertSame('selected delivery failed', (string) $this->connection->fetchOne('SELECT last_error FROM wallet_outbox_message WHERE id = ?', [$id]));
     }
 
     public function testNonDispatchableSelectedMessageIsRejectedWithoutMutation(): void
     {
         $service = new WalletOutboxService($this->entityManager, $this->connection);
         $this->enqueue($service, 'future', new \DateTimeImmutable('+1 hour'));
-        $id = (string) $this->connection->fetchOne("SELECT id FROM outbox_message WHERE deduplication_key = 'posting.dispatch.one:future'");
+        $id = (string) $this->connection->fetchOne("SELECT id FROM wallet_outbox_message WHERE deduplication_key = 'posting.dispatch.one:future'");
         $dispatcher = new WalletOutboxDispatcher($service, []);
 
         try {
@@ -104,8 +104,8 @@ final class PostgreSqlOutboxDispatchOneTest extends KernelTestCase
         } catch (\RuntimeException $exception) {
             self::assertSame('Outbox message is not dispatchable.', $exception->getMessage());
         }
-        self::assertSame('pending', (string) $this->connection->fetchOne('SELECT status FROM outbox_message WHERE id = ?', [$id]));
-        self::assertSame(0, (int) $this->connection->fetchOne('SELECT attempt_count FROM outbox_message WHERE id = ?', [$id]));
+        self::assertSame('pending', (string) $this->connection->fetchOne('SELECT status FROM wallet_outbox_message WHERE id = ?', [$id]));
+        self::assertSame(0, (int) $this->connection->fetchOne('SELECT attempt_count FROM wallet_outbox_message WHERE id = ?', [$id]));
     }
 
     private function enqueue(WalletOutboxService $service, string $suffix, ?\DateTimeImmutable $availableAt = null): void
@@ -114,7 +114,7 @@ final class PostgreSqlOutboxDispatchOneTest extends KernelTestCase
             $service->enqueueOperationalDbal('posting.dispatch.one.test', 'posting.dispatch.one:'.$suffix, ['suffix' => $suffix]);
             if (null !== $availableAt) {
                 $this->connection->executeStatement(
-                    'UPDATE outbox_message SET available_at = ? WHERE deduplication_key = ?',
+                    'UPDATE wallet_outbox_message SET available_at = ? WHERE deduplication_key = ?',
                     [$availableAt->format('Y-m-d H:i:s'), 'posting.dispatch.one:'.$suffix],
                 );
             }

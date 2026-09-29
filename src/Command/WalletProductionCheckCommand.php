@@ -26,7 +26,7 @@ final class WalletProductionCheckCommand extends Command
         'funding',
         'withdrawal',
         'provider_event',
-        'outbox_message',
+        'wallet_outbox_message',
         'inbox_receipt',
     ];
 

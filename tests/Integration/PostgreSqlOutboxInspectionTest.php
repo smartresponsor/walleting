@@ -24,8 +24,8 @@ final class PostgreSqlOutboxInspectionTest extends KernelTestCase
         $this->connection = self::getContainer()->get('doctrine.dbal.default_connection');
         $this->entityManager = self::getContainer()->get('doctrine.orm.entity_manager');
         self::assertInstanceOf(\Doctrine\DBAL\Platforms\PostgreSQLPlatform::class, $this->connection->getDatabasePlatform());
-        $this->connection->executeStatement('DELETE FROM outbox_requeue_audit');
-        $this->connection->executeStatement('DELETE FROM outbox_message');
+        $this->connection->executeStatement('DELETE FROM wallet_outbox_requeue_audit');
+        $this->connection->executeStatement('DELETE FROM wallet_outbox_message');
     }
 
     public function testInspectionReturnsMessagePayloadAndOrderedRequeueHistory(): void
@@ -47,11 +47,11 @@ final class PostgreSqlOutboxInspectionTest extends KernelTestCase
         };
         $dispatcher = new WalletOutboxDispatcher($service, [$handler], maxAttempts: 1, baseDelaySeconds: 30, maxDelaySeconds: 30);
         $dispatcher->dispatchBatchReport(1);
-        $id = (string) $this->connection->fetchOne("SELECT id FROM outbox_message WHERE deduplication_key = 'posting.inspect.test:one'");
+        $id = (string) $this->connection->fetchOne("SELECT id FROM wallet_outbox_message WHERE deduplication_key = 'posting.inspect.test:one'");
 
         $this->entityManager->clear();
         (new WalletOutboxDeadLetterService($this->entityManager))->requeue($id, 'operator-a', 'First repair');
-        $this->connection->executeStatement("UPDATE outbox_message SET available_at = (CURRENT_TIMESTAMP AT TIME ZONE 'UTC') - INTERVAL '1 second' WHERE id = ?", [$id]);
+        $this->connection->executeStatement("UPDATE wallet_outbox_message SET available_at = (CURRENT_TIMESTAMP AT TIME ZONE 'UTC') - INTERVAL '1 second' WHERE id = ?", [$id]);
         $this->entityManager->clear();
         $dispatcher->dispatchBatchReport(1);
         $this->entityManager->clear();

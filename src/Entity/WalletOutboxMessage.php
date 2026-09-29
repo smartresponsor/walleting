@@ -9,7 +9,7 @@ use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Uid\Uuid;
 
 #[ORM\Entity]
-#[ORM\Table(name: 'outbox_message')]
+#[ORM\Table(name: 'wallet_outbox_message')]
 #[ORM\Index(name: 'idx_outbox_dispatchable', columns: ['status', 'available_at', 'created_at'])]
 #[ORM\UniqueConstraint(name: 'uniq_outbox_deduplication_key', columns: ['deduplication_key'])]
 class WalletOutboxMessage
