@@ -1,6 +1,7 @@
 <?php
 
 return [
+    App\Failing\FailingBundle::class => ['all' => true],
     App\Objecting\ObjectBundle::class => ['all' => true],
     App\Walleting\WalletingBundle::class => ['all' => true],
     Doctrine\Bundle\DoctrineBundle\DoctrineBundle::class => ['all' => true],

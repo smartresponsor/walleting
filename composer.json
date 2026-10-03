@@ -1,100 +1,183 @@
 {
-    "name": "walleting/wallet",
-    "description": "Symfony-native immutable double-entry walleting component",
-    "type": "library",
-    "license": "proprietary",
-    "require": {
-        "php": ">=8.4",
-        "collectioning/collection": "dev-master",
-        "cruding/crud": "dev-master",
-        "doctrine/dbal": "^4.3",
-        "doctrine/doctrine-bundle": "^3.0",
-        "doctrine/doctrine-migrations-bundle": "^4.0",
-        "doctrine/orm": "^3.4",
-        "easycorp/easyadmin-bundle": "^5.0",
-        "interfacing/interface": "dev-master",
-        "objecting/object": "dev-master",
-        "tabling/table": "dev-master",
-        "symfony/config": "^8.1",
-        "symfony/console": "^8.1",
-        "symfony/dependency-injection": "^8.1",
-        "symfony/doctrine-messenger": "^8.1",
-        "symfony/dotenv": "^8.1",
-        "symfony/flex": "^2.6",
-        "symfony/framework-bundle": "^8.1",
-        "symfony/messenger": "^8.1",
-        "symfony/runtime": "^8.1",
-        "symfony/uid": "^8.1",
-        "symfony/yaml": "^8.1",
-        "viewing/view": "dev-master"
+  "name": "walleting/wallet",
+  "description": "Symfony-native immutable double-entry walleting component",
+  "type": "library",
+  "license": "PolyForm-Noncommercial-1.0.0",
+  "require": {
+    "php": ">=8.4",
+    "collectioning/collection": "dev-master",
+    "cruding/crud": "dev-master",
+    "doctrine/dbal": "^4.3",
+    "doctrine/doctrine-bundle": "^3.0",
+    "doctrine/doctrine-migrations-bundle": "^4.0",
+    "doctrine/orm": "^3.4",
+    "easycorp/easyadmin-bundle": "^5.0",
+    "failing/failure": "dev-master",
+    "interfacing/interface": "dev-master",
+    "objecting/object": "dev-master",
+    "tabling/table": "dev-master",
+    "symfony/config": "^8.1",
+    "symfony/console": "^8.1",
+    "symfony/dependency-injection": "^8.1",
+    "symfony/doctrine-messenger": "^8.1",
+    "symfony/dotenv": "^8.1",
+    "symfony/flex": "^2.6",
+    "symfony/framework-bundle": "^8.1",
+    "symfony/messenger": "^8.1",
+    "symfony/runtime": "^8.1",
+    "symfony/uid": "^8.1",
+    "symfony/yaml": "^8.1",
+    "viewing/view": "dev-master"
+  },
+  "require-dev": {
+    "friendsofphp/php-cs-fixer": "^3.95",
+    "phpstan/phpstan": "^2.1",
+    "phpunit/phpunit": "^12.3",
+    "symfony/browser-kit": "^8.1",
+    "symfony/css-selector": "^8.1",
+    "symfony/panther": "^2.4",
+    "symfony/phpunit-bridge": "^8.1",
+    "gating/gate": "dev-master"
+  },
+  "autoload": {
+    "psr-4": {
+      "App\\Walleting\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "App\\Walleting\\Tests\\": "tests/"
+    }
+  },
+  "scripts": {
+    "auto-scripts": {
+      "cache:clear": "symfony-cmd",
+      "assets:install %PUBLIC_DIR%": "symfony-cmd",
+      "importmap:install": "symfony-cmd"
     },
-    "require-dev": {
-        "friendsofphp/php-cs-fixer": "^3.95",
-        "phpstan/phpstan": "^2.1",
-        "phpunit/phpunit": "^12.3",
-        "symfony/browser-kit": "^8.1",
-        "symfony/css-selector": "^8.1",
-        "symfony/panther": "^2.4",
-        "symfony/phpunit-bridge": "^8.1",
-        "symfony/test-pack": "^1.2"
-    },
-    "autoload": {"psr-4": {"App\\Walleting\\": "src/"}},
-    "autoload-dev": {"psr-4": {"App\\Walleting\\Tests\\": "tests/"}},
-    "scripts": {
-        "auto-scripts": {
-            "cache:clear": "symfony-cmd",
-            "assets:install %PUBLIC_DIR%": "symfony-cmd",
-            "importmap:install": "symfony-cmd"
-        },
-        "cs:check": "php vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.php --dry-run --diff",
-        "cs:fix": "php vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.php",
-        "stan": "php vendor/bin/phpstan analyse --memory-limit=1G --no-progress",
-        "test": "phpunit",
-        "test:coverage": ["@php -r \"if (!is_dir('var/coverage')) { mkdir('var/coverage', 0777, true); }\"", "@php -d xdebug.mode=coverage vendor/bin/phpunit --path-coverage --coverage-text=var/coverage/summary.txt"],
-        "test:integration": "@php bin/test-integration.php",
-        "test:integration:phpunit": "php vendor/bin/phpunit -c phpunit.integration.xml",
-        "schema:parity": ["@php bin/console doctrine:migrations:up-to-date --env=test", "@php bin/schema-parity.php"],
-        "validate:prod": "composer validate --strict --no-check-all composer.prod.json",
-        "lint": ["@php bin/console lint:container", "@php bin/console doctrine:schema:validate --skip-sync"],
-        "quality": ["@cs:check", "@stan", "@lint", "@test"]
-    },
-    "repositories": [
-        {
-            "type": "path",
-            "url": "../Collectioning",
-            "options": {"symlink": true, "versions": {"collectioning/collection": "dev-master"}}
-        },
-        {
-            "type": "path",
-            "url": "../Cruding",
-            "options": {"symlink": true, "versions": {"cruding/crud": "dev-master"}}
-        },
-        {
-            "type": "path",
-            "url": "../Interfacing",
-            "options": {"symlink": true, "versions": {"interfacing/interface": "dev-master"}}
-        },
-        {
-            "type": "path",
-            "url": "../Objecting",
-            "options": {"symlink": true, "versions": {"objecting/object": "dev-master"}}
-        },
-        {
-            "type": "path",
-            "url": "../Tabling",
-            "options": {"symlink": true, "versions": {"tabling/table": "dev-master"}}
-        },
-        {
-            "type": "path",
-            "url": "../Viewing",
-            "options": {"symlink": true, "versions": {"viewing/view": "dev-master"}}
-        }
+    "cs:check": "php vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.php --dry-run --diff",
+    "cs:fix": "php vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.php",
+    "stan": "php vendor/bin/phpstan analyse --memory-limit=1G --no-progress",
+    "test": "phpunit",
+    "test:coverage": [
+      "@php -r \"if (!is_dir('var/coverage')) { mkdir('var/coverage', 0777, true); }\"",
+      "@php -d xdebug.mode=coverage vendor/bin/phpunit --path-coverage --coverage-text=var/coverage/summary.txt"
     ],
-    "config": {
-        "allow-plugins": {"symfony/flex": true, "symfony/runtime": true},
-        "sort-packages": true
+    "test:integration": "@php bin/test-integration.php",
+    "test:integration:phpunit": "php vendor/bin/phpunit -c phpunit.integration.xml",
+    "schema:parity": [
+      "@php bin/console doctrine:migrations:up-to-date --env=test",
+      "@php bin/schema-parity.php"
+    ],
+    "validate:prod": "composer validate --strict --no-check-all composer.prod.json",
+    "lint": [
+      "@php bin/console lint:container",
+      "@php bin/console doctrine:schema:validate --skip-sync"
+    ],
+    "quality": [
+      "@cs:check",
+      "@stan",
+      "@lint",
+      "@test",
+      "@gate"
+    ],
+    "gate": "@php vendor/bin/gating check --target=."
+  },
+  "repositories": [
+    {
+      "type": "path",
+      "url": "../Collectioning",
+      "options": {
+        "symlink": true,
+        "versions": {
+          "collectioning/collection": "dev-master"
+        }
+      }
     },
-    "extra": {"symfony": {"allow-contrib": false, "require": "^8.1"}},
-    "minimum-stability": "dev",
-    "prefer-stable": true
+    {
+      "type": "path",
+      "url": "../Cruding",
+      "options": {
+        "symlink": true,
+        "versions": {
+          "cruding/crud": "dev-master"
+        }
+      }
+    },
+    {
+      "type": "path",
+      "url": "../Failing",
+      "options": {
+        "symlink": true,
+        "versions": {
+          "failing/failure": "dev-master"
+        }
+      }
+    },
+    {
+      "type": "path",
+      "url": "../Interfacing",
+      "options": {
+        "symlink": true,
+        "versions": {
+          "interfacing/interface": "dev-master"
+        }
+      }
+    },
+    {
+      "type": "path",
+      "url": "../Objecting",
+      "options": {
+        "symlink": true,
+        "versions": {
+          "objecting/object": "dev-master"
+        }
+      }
+    },
+    {
+      "type": "path",
+      "url": "../Tabling",
+      "options": {
+        "symlink": true,
+        "versions": {
+          "tabling/table": "dev-master"
+        }
+      }
+    },
+    {
+      "type": "path",
+      "url": "../Viewing",
+      "options": {
+        "symlink": true,
+        "versions": {
+          "viewing/view": "dev-master"
+        }
+      }
+    },
+    {
+      "type": "path",
+      "url": "../Gating",
+      "options": {
+        "symlink": true,
+        "versions": {
+          "gating/gate": "dev-master"
+        }
+      }
+    }
+  ],
+  "config": {
+    "allow-plugins": {
+      "symfony/flex": true,
+      "symfony/runtime": true
+    },
+    "sort-packages": true
+  },
+  "extra": {
+    "symfony": {
+      "allow-contrib": false,
+      "require": "^8.1"
+    }
+  },
+  "minimum-stability": "dev",
+  "prefer-stable": true
 }

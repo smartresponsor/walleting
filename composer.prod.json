@@ -1,68 +1,128 @@
 {
-    "name": "walleting/wallet",
-    "description": "Symfony-native immutable double-entry walleting component",
-    "type": "library",
-    "license": "proprietary",
-    "require": {
-        "php": ">=8.4",
-        "collectioning/collection": "dev-main || dev-master",
-        "cruding/crud": "dev-master",
-        "doctrine/dbal": "^4.3",
-        "doctrine/doctrine-bundle": "^3.0",
-        "doctrine/doctrine-migrations-bundle": "^4.0",
-        "doctrine/orm": "^3.4",
-        "easycorp/easyadmin-bundle": "^5.0",
-        "interfacing/interface": "dev-master",
-        "objecting/object": "dev-master",
-        "tabling/table": "dev-main || dev-master",
-        "symfony/config": "^8.1",
-        "symfony/console": "^8.1",
-        "symfony/dependency-injection": "^8.1",
-        "symfony/doctrine-messenger": "^8.1",
-        "symfony/dotenv": "^8.1",
-        "symfony/flex": "^2.6",
-        "symfony/framework-bundle": "^8.1",
-        "symfony/messenger": "^8.1",
-        "symfony/runtime": "^8.1",
-        "symfony/uid": "^8.1",
-        "symfony/yaml": "^8.1",
-        "viewing/view": "dev-master"
+  "name": "walleting/wallet",
+  "description": "Symfony-native immutable double-entry walleting component",
+  "type": "library",
+  "license": "proprietary",
+  "require": {
+    "php": ">=8.4",
+    "collectioning/collection": "dev-main || dev-master",
+    "cruding/crud": "dev-master",
+    "doctrine/dbal": "^4.3",
+    "doctrine/doctrine-bundle": "^3.0",
+    "doctrine/doctrine-migrations-bundle": "^4.0",
+    "doctrine/orm": "^3.4",
+    "easycorp/easyadmin-bundle": "^5.0",
+    "failing/failure": "dev-master",
+    "interfacing/interface": "dev-master",
+    "objecting/object": "dev-master",
+    "tabling/table": "dev-main || dev-master",
+    "symfony/config": "^8.1",
+    "symfony/console": "^8.1",
+    "symfony/dependency-injection": "^8.1",
+    "symfony/doctrine-messenger": "^8.1",
+    "symfony/dotenv": "^8.1",
+    "symfony/flex": "^2.6",
+    "symfony/framework-bundle": "^8.1",
+    "symfony/messenger": "^8.1",
+    "symfony/runtime": "^8.1",
+    "symfony/uid": "^8.1",
+    "symfony/yaml": "^8.1",
+    "viewing/view": "dev-master"
+  },
+  "require-dev": {
+    "friendsofphp/php-cs-fixer": "^3.95",
+    "phpstan/phpstan": "^2.1",
+    "phpunit/phpunit": "^12.3",
+    "symfony/phpunit-bridge": "^8.1",
+    "gating/gate": "dev-master"
+  },
+  "autoload": {
+    "psr-4": {
+      "App\\Walleting\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "App\\Walleting\\Tests\\": "tests/"
+    }
+  },
+  "scripts": {
+    "auto-scripts": {
+      "cache:clear": "symfony-cmd",
+      "assets:install %PUBLIC_DIR%": "symfony-cmd",
+      "importmap:install": "symfony-cmd"
     },
-    "require-dev": {
-        "friendsofphp/php-cs-fixer": "^3.95",
-        "phpstan/phpstan": "^2.1",
-        "phpunit/phpunit": "^12.3",
-        "symfony/phpunit-bridge": "^8.1"
-    },
-    "autoload": {"psr-4": {"App\\Walleting\\": "src/"}},
-    "autoload-dev": {"psr-4": {"App\\Walleting\\Tests\\": "tests/"}},
-    "scripts": {
-        "auto-scripts": {
-            "cache:clear": "symfony-cmd",
-            "assets:install %PUBLIC_DIR%": "symfony-cmd",
-            "importmap:install": "symfony-cmd"
-        },
-        "cs:check": "php vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.php --dry-run --diff",
-        "cs:fix": "php vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.php",
-        "stan": "php vendor/bin/phpstan analyse --memory-limit=1G --no-progress",
-        "test": "phpunit",
-        "test:integration": "@php bin/test-integration.php",
-        "lint": ["@php bin/console lint:container", "@php bin/console doctrine:schema:validate --skip-sync"],
-        "quality": ["@cs:check", "@stan", "@lint", "@test"]
-    },
-    "repositories": [
-        {"type": "vcs", "url": "https://github.com/smartresponsor/Collectioning.git", "no-api": true},
-        {"type": "vcs", "url": "https://github.com/smartresponsor/Cruding.git", "no-api": true},
-        {"type": "vcs", "url": "https://github.com/smartresponsor/Interfacing.git", "no-api": true},
-        {"type": "vcs", "url": "https://github.com/smartresponsor/Objecting.git", "no-api": true},
-        {"type": "vcs", "url": "https://github.com/smartresponsor/Tabling.git", "no-api": true},
-        {"type": "vcs", "url": "https://github.com/smartresponsor/Viewing.git", "no-api": true}
+    "cs:check": "php vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.php --dry-run --diff",
+    "cs:fix": "php vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.php",
+    "stan": "php vendor/bin/phpstan analyse --memory-limit=1G --no-progress",
+    "test": "phpunit",
+    "test:integration": "@php bin/test-integration.php",
+    "lint": [
+      "@php bin/console lint:container",
+      "@php bin/console doctrine:schema:validate --skip-sync"
     ],
-    "config": {
-        "allow-plugins": {"symfony/flex": true, "symfony/runtime": true},
-        "sort-packages": true
+    "quality": [
+      "@cs:check",
+      "@stan",
+      "@lint",
+      "@test"
+    ]
+  },
+  "repositories": [
+    {
+      "type": "vcs",
+      "url": "https://github.com/smartresponsor/Collectioning.git",
+      "no-api": true
     },
-    "extra": {"symfony": {"allow-contrib": false, "require": "^8.1"}},
-    "minimum-stability": "dev",
-    "prefer-stable": true
+    {
+      "type": "vcs",
+      "url": "https://github.com/smartresponsor/Cruding.git",
+      "no-api": true
+    },
+    {
+      "type": "vcs",
+      "url": "https://github.com/smartresponsor/Failing.git",
+      "no-api": true
+    },
+    {
+      "type": "vcs",
+      "url": "https://github.com/smartresponsor/Interfacing.git",
+      "no-api": true
+    },
+    {
+      "type": "vcs",
+      "url": "https://github.com/smartresponsor/Objecting.git",
+      "no-api": true
+    },
+    {
+      "type": "vcs",
+      "url": "https://github.com/smartresponsor/Tabling.git",
+      "no-api": true
+    },
+    {
+      "type": "vcs",
+      "url": "https://github.com/smartresponsor/Viewing.git",
+      "no-api": true
+    },
+    {
+      "type": "vcs",
+      "url": "https://github.com/smartresponsor/gating.git",
+      "no-api": true
+    }
+  ],
+  "config": {
+    "allow-plugins": {
+      "symfony/flex": true,
+      "symfony/runtime": true
+    },
+    "sort-packages": true
+  },
+  "extra": {
+    "symfony": {
+      "allow-contrib": false,
+      "require": "^8.1"
+    }
+  },
+  "minimum-stability": "dev",
+  "prefer-stable": true
 }
