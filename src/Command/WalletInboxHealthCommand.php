@@ -37,26 +37,19 @@ final class WalletInboxHealthCommand extends Command
         $json = (bool) $input->getOption('json');
         $source = trim((string) ($input->getOption('source') ?? ''));
         $messageId = trim((string) ($input->getOption('message-id') ?? ''));
-        if (('' === $source) !== ('' === $messageId)) {
-            $output->writeln($json ? '{"ok":false,"error":"source and message-id must be provided together."}' : '<error>source and message-id must be provided together.</error>');
 
-            return Command::INVALID;
+        $validationError = $this->validationError($stuckAfter, $limit, $source, $messageId);
+        if (null !== $validationError) {
+            return $this->writeError($output, $json, $validationError);
         }
-        if (!is_int($stuckAfter) || $stuckAfter < 1 || $stuckAfter > 86400 || !is_int($limit) || $limit < 1 || $limit > 500) {
-            $output->writeln($json ? '{"ok":false,"error":"Invalid stuck-after or limit."}' : '<error>Invalid stuck-after or limit.</error>');
-
-            return Command::INVALID;
-        }
+        assert(is_int($stuckAfter) && is_int($limit));
 
         try {
             $snapshot = $this->inboxService->healthSnapshot($stuckAfter);
             $stuck = $this->inboxService->stuckProcessing($stuckAfter, $limit);
             $receipt = '' === $source ? [] : $this->inboxService->receiptDiagnostics($source, $messageId);
         } catch (\Throwable $exception) {
-            $error = trim($exception->getMessage()) ?: $exception::class;
-            $output->writeln($json ? json_encode(['ok' => false, 'error' => $error], JSON_THROW_ON_ERROR) : '<error>'.$error.'</error>');
-
-            return Command::INVALID;
+            return $this->writeError($output, $json, trim($exception->getMessage()) ?: $exception::class);
         }
 
         $data = [
@@ -70,18 +63,54 @@ final class WalletInboxHealthCommand extends Command
         if ($json) {
             $output->writeln(json_encode($data, JSON_THROW_ON_ERROR));
         } else {
-            $io = new SymfonyStyle($input, $output);
-            $io->definitionList(
-                ['Status counts' => json_encode($snapshot->statusCounts, JSON_THROW_ON_ERROR)],
-                ['Oldest processing age' => null === $snapshot->oldestProcessingAgeSeconds ? 'none' : $snapshot->oldestProcessingAgeSeconds.' seconds'],
-                ['Stuck processing' => (string) $snapshot->stuckProcessingCount],
-            );
-            $snapshot->isHealthy() ? $io->success('Inbox is healthy.') : $io->error('Inbox has stuck processing receipts.');
-            if ([] !== $stuck) {
-                $io->table(array_keys($stuck[0]), array_map('array_values', $stuck));
-            }
+            $this->writeHumanReadableSnapshot($input, $output, $snapshot->statusCounts, $snapshot->oldestProcessingAgeSeconds, $snapshot->stuckProcessingCount, $snapshot->isHealthy(), $stuck);
         }
 
         return $snapshot->isHealthy() ? Command::SUCCESS : Command::FAILURE;
+    }
+
+    private function validationError(int|false $stuckAfter, int|false $limit, string $source, string $messageId): ?string
+    {
+        if (('' === $source) !== ('' === $messageId)) {
+            return 'source and message-id must be provided together.';
+        }
+
+        if (!is_int($stuckAfter) || $stuckAfter < 1 || $stuckAfter > 86400 || !is_int($limit) || $limit < 1 || $limit > 500) {
+            return 'Invalid stuck-after or limit.';
+        }
+
+        return null;
+    }
+
+    private function writeError(OutputInterface $output, bool $json, string $error): int
+    {
+        $output->writeln($json ? json_encode(['ok' => false, 'error' => $error], JSON_THROW_ON_ERROR) : '<error>'.$error.'</error>');
+
+        return Command::INVALID;
+    }
+
+    /**
+     * @param array<string, int>         $statusCounts
+     * @param list<array<string, mixed>> $stuck
+     */
+    private function writeHumanReadableSnapshot(
+        InputInterface $input,
+        OutputInterface $output,
+        array $statusCounts,
+        ?int $oldestProcessingAgeSeconds,
+        int $stuckProcessingCount,
+        bool $healthy,
+        array $stuck,
+    ): void {
+        $io = new SymfonyStyle($input, $output);
+        $io->definitionList(
+            ['Status counts' => json_encode($statusCounts, JSON_THROW_ON_ERROR)],
+            ['Oldest processing age' => null === $oldestProcessingAgeSeconds ? 'none' : $oldestProcessingAgeSeconds.' seconds'],
+            ['Stuck processing' => (string) $stuckProcessingCount],
+        );
+        $healthy ? $io->success('Inbox is healthy.') : $io->error('Inbox has stuck processing receipts.');
+        if ([] !== $stuck) {
+            $io->table(array_keys($stuck[0]), array_map('array_values', $stuck));
+        }
     }
 }
