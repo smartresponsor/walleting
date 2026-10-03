@@ -145,6 +145,17 @@ final class WalletOutboxEventSerializer implements SerializerInterface
             throw new \InvalidArgumentException('Messenger stamp transport header must decode to an object.');
         }
 
+        return [
+            ...$this->decodeRedeliveryStamps($data),
+            ...$this->decodeDelayStamps($data),
+            ...$this->decodeFailureTransportStamps($data),
+            ...$this->decodeErrorDetailsStamps($data),
+        ];
+    }
+
+    /** @param array<string, mixed> $data @return list<RedeliveryStamp> */
+    private function decodeRedeliveryStamps(array $data): array
+    {
         $stamps = [];
         foreach ($this->stampList($data, 'redelivery') as $item) {
             if (!is_array($item) || !is_int($item['retry_count'] ?? null) || ($item['retry_count'] ?? -1) < 0 || !is_string($item['redelivered_at'] ?? null)) {
@@ -158,6 +169,13 @@ final class WalletOutboxEventSerializer implements SerializerInterface
             $stamps[] = new RedeliveryStamp($item['retry_count'], $redeliveredAt);
         }
 
+        return $stamps;
+    }
+
+    /** @param array<string, mixed> $data @return list<DelayStamp> */
+    private function decodeDelayStamps(array $data): array
+    {
+        $stamps = [];
         foreach ($this->stampList($data, 'delay') as $delay) {
             if (!is_int($delay) || $delay < 0) {
                 throw new \InvalidArgumentException('Messenger delay stamp metadata is invalid.');
@@ -165,6 +183,13 @@ final class WalletOutboxEventSerializer implements SerializerInterface
             $stamps[] = new DelayStamp($delay);
         }
 
+        return $stamps;
+    }
+
+    /** @param array<string, mixed> $data @return list<SentToFailureTransportStamp> */
+    private function decodeFailureTransportStamps(array $data): array
+    {
+        $stamps = [];
         foreach ($this->stampList($data, 'failure_transport') as $receiverName) {
             if (!is_string($receiverName) || '' === trim($receiverName)) {
                 throw new \InvalidArgumentException('Messenger failure transport stamp metadata is invalid.');
@@ -172,6 +197,13 @@ final class WalletOutboxEventSerializer implements SerializerInterface
             $stamps[] = new SentToFailureTransportStamp($receiverName);
         }
 
+        return $stamps;
+    }
+
+    /** @param array<string, mixed> $data @return list<ErrorDetailsStamp> */
+    private function decodeErrorDetailsStamps(array $data): array
+    {
+        $stamps = [];
         foreach ($this->stampList($data, 'error_details') as $item) {
             if (!is_array($item) || !is_string($item['exception_class'] ?? null) || '' === trim($item['exception_class']) || (!is_int($item['exception_code'] ?? null) && !is_string($item['exception_code'] ?? null)) || !is_string($item['exception_message'] ?? null)) {
                 throw new \InvalidArgumentException('Messenger error details stamp metadata is invalid.');
