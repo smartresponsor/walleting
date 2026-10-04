@@ -1266,3 +1266,46 @@ Required local closure:
 
 Что осталось до RC? Final Git ownership reconciliation, signed commit/push of only the coherent SLO-state source plus this journal tail, then verify final HEAD/upstream while preserving unrelated/concurrent dirty paths.
 
+## 2026-10-03 — engine-20261004022259-walleting-bc7c8b
+
+### Reconnaissance, canon mapping, and workstreams
+
+- Authoritative Console MCP workspace: `D:\\PhpstormProjects\\www\\Walleting`, branch `task/walleting-ledger-foundation`; initial preserved dirty state was deleted `.gating/README.md`, generated/untracked `.console-mcp/`, untracked `PRODUCT_CAPABILITY_AUDIT.adoc`, and a current `src/Service/WalletFinancialOperationService.php` refactor. No reset, stash, clean, overwrite, destructive operation, or sibling mutation was used.
+- Read the complete execution specification, Walleting Composer/package/capability/journal/current service surfaces, supplied historical code-style RED, supplied Inspecting baseline, and the latest reusable same-day Inspecting report.
+- Read mandatory Objecting, Cruding, Viewing, Interfacing and Gating package/responsibility contracts. Read Canonization AGENTS/architecture canon plus normative Canon018, Canon019 and Canon033 textual rules.
+- Target-to-canon mapping: preserve `walleting/wallet` -> `App\\Walleting\\ => src/`, Wallet-prefixed component vocabulary, role-first Symfony topology with no Domain/Application/Infrastructure/Port/Adapter/Adaptor roots, explicit platform helper dependencies, and generic CRUD ownership in Cruding.
+- Market/enterprise baseline remains immutable double-entry accounting, atomic balanced writes, idempotency, auditable correction, reconciliation and operational diagnostics as RC expectations. Split-tender/refund-to-wallet policy, expiry/restrictions, broader rails, programmable flow composition and richer operator UX remain growth work.
+- The supplied historical PHP-CS-Fixer RED for `migrations/Version20260923102500.php` no longer reproduces. The latest reusable pre-mutation Inspecting report had 9 medium php-structure observations; its only remaining cyclomatic-complexity finding was `WalletFinancialOperationService::assertAllocatedPartialInverse()` at complexity 17.
+
+### Material RC-critical implementation and verification
+
+- Semantically accepted the current bounded `WalletFinancialOperationService` refactor: source posting aggregation, allocated refund aggregation, and leg-bound enforcement are extracted into private helpers while preserving positive-amount validation, balanced-allocation validation, original-account restriction, per-leg capacity rules and exception semantics.
+- No posting transaction flow, ledger amount arithmetic, reservation/funding/withdrawal state, schema, migration, provider, reconciliation, HTTP/UI, browser/mobile, or sibling-repository behavior changed.
+- `composer validate --no-interaction --strict --check-lock`: GREEN.
+- `composer quality`: GREEN; PHP-CS-Fixer 0/198, repository-configured PHPStan no errors, Symfony container lint GREEN, Doctrine mapping GREEN, PHPUnit 115 tests / 344 assertions, Gating 10 rules with 0 failed / 0 warning and 3 profile-related skips.
+- `composer validate:prod`: GREEN.
+- `composer schema:parity`: GREEN; migrations current and Doctrine schema parity synchronized.
+- `composer test:integration`: GREEN; PostgreSQL is at migration 30/30, production readiness all `ok:true`, and 53 integration tests / 491 assertions pass.
+- Post-mutation Inspecting report: `D:\\PhpstormProjects\\www\\Inspecting\\.inspecting\\reports\\D--PhpstormProjects-www-Walleting-20261004-023327.json`. PHP-structure observations decreased 9 -> 8, maximum complexity decreased 17 -> 14, and `assertAllocatedPartialInverse()` is absent from findings.
+- Inspecting still emits the established 95 high test-scope PHPStan adapter findings while recording `phpstan.errors: 0`; Walleting's canonical repository-configured PHPStan is GREEN, so this remains external analyzer scope/configuration drift rather than a Walleting source regression.
+- No user-observable UI changed, so Panther/Playwright screenshots and visual artifacts are not applicable.
+
+### RC-critical vs growth closure
+
+- RC-critical: integrate only `src/Service/WalletFinancialOperationService.php` plus this factual journal entry, preserving unrelated/generated dirty paths.
+- Growth (non-blocking): the remaining eight medium Inspecting design/maintainability observations should be handled incrementally with financial regression protection; product-growth items remain split tender, refund-to-wallet, expiry/restriction policy, provider breadth and richer finance/operator UX.
+
+Что имеем? The historical static-quality RED remains closed, the last current cyclomatic-complexity finding is removed, and deterministic plus PostgreSQL financial acceptance is GREEN after the bounded refactor.
+
+Что осталось до RC? Signed commit/push of only the coherent financial-operation service plus this journal entry, followed by final HEAD/upstream/worktree verification while preserving unrelated dirty/generated paths.
+
+### Git reconciliation checkpoint
+
+- During this execution window the verified `src/Service/WalletFinancialOperationService.php` refactor was integrated concurrently as commit `455fc14d9b0857762a8df9254f491685c3c16dcb` (`refactor Walleting allocated refund validation`) and published to `origin/task/walleting-ledger-foundation`.
+- Re-inspection confirms the service has no remaining worktree diff and branch/upstream are synchronized at that commit. This task does not duplicate or recommit the source change.
+- Remaining task-owned mutation is this factual orchestration journal entry. Preserved outside task integration: deleted `.gating/README.md`, generated `.console-mcp/`, and untracked `PRODUCT_CAPABILITY_AUDIT.adoc`.
+
+Что имеем? The verified allocated-refund validation refactor is already committed and published, all acceptance evidence remains GREEN, and the current worktree contains no uncommitted source change from this workstream.
+
+Что осталось до RC? Commit/publish this task journal only, then verify final HEAD/upstream while preserving unrelated dirty/generated paths.
+
