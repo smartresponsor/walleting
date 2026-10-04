@@ -1,5 +1,27 @@
 # CMCP orchestration journal
 
+## 2026-10-03 — engine-20261004025934-walleting-3b09f0
+
+### Reconnaissance, current RC acceptance, and closure
+
+- Authoritative Console MCP workspace: `D:\\PhpstormProjects\\www\\Walleting`, branch `task/walleting-ledger-foundation`; preserved pre-existing deleted `.gating/README.md`, generated/untracked `.console-mcp/`, and untracked `PRODUCT_CAPABILITY_AUDIT.adoc` without reset, stash, clean, overwrite, or sibling mutation.
+- Read the complete execution specification, Walleting README/product audit/production/outbox/Messenger/package/test surfaces, mandatory Objecting/Cruding/Viewing/Interfacing contracts, Gating, Canonization `AGENTS.md`, and normative Canon004/005/007/008/009/018/019/022/052/054 textual rules.
+- Canon mapping remains `walleting/wallet` -> `App\\Walleting\\ => src/`, role-first Symfony topology, explicit foreign package dependencies, no Host implementation coupling, no `Domain/Application/Infrastructure/Port/Adapter/Adaptor` roots, artifact-only consumer `.gating/`, and lower-snake-case current Doctrine identifiers with `underscore_number_aware` naming.
+- Market/enterprise baseline remains immutable double-entry history, atomic balanced writes, idempotency, concurrency protection, auditability, reconciliation, and operational diagnostics. Split tender/refund-to-wallet, expiry/restriction policy, richer provenance and broader operator/provider UX remain non-blocking growth work.
+- Consumed the current post-remediation Inspecting report `D:\\PhpstormProjects\\www\\Inspecting\\.inspecting\\reports\\D--PhpstormProjects-www-Walleting-20261004-025838.json`: seven medium structural observations remain (Entity/public-API breadth plus `WalletFinancialOperationService` size/cohesion), maximum complexity 14. These are broad contract-sensitive design observations, not safe narrow RC fixes. The report's 95 test-scope PHPStan findings remain external analyzer scope drift while `phpstan.errors` is 0 and repository-owned PHPStan is GREEN.
+- Fresh strict Composer validation is GREEN. Because Console MCP temporarily admitted light work only, aggregate `composer quality` did not start; its complete constituent contour was run directly and is GREEN: PHP-CS-Fixer 0/201, PHPStan no errors, Symfony container/Doctrine mapping GREEN, PHPUnit 118 tests / 356 assertions, Gating 10 rules with 0 failed / 0 warning. `composer validate:prod` and `composer schema:parity` are also GREEN.
+- A fresh asynchronous `test:integration` start lost the Console MCP transport response, so no duplicate PostgreSQL harness was launched. Same-HEAD integration acceptance already recorded by the immediately preceding integrating work remains valid: migration 30/30, production readiness all `ok:true`, 53 integration tests / 491 assertions. No Walleting source mutation occurred in this task to invalidate that evidence.
+- No user-observable browser/mobile UI changed; Panther/Playwright screenshots and visual evidence are not applicable.
+
+### Workstreams
+
+- RC-critical: no reproducible Walleting-owned blocker remains; preserve current verified source and close only factual orchestration/Git state.
+- Growth: address the seven remaining medium design observations incrementally with financial regression protection, and continue split-tender/refund/expiry/provenance/operator maturity separately.
+
+Что имеем? Current deterministic acceptance is GREEN, the supplied historical static-quality RED is closed, same-HEAD PostgreSQL acceptance remains valid, and no safe narrow RC source remediation remains justified.
+
+Что осталось до RC? Commit/publish this factual journal entry only, then confirm HEAD/upstream synchronization while preserving unrelated dirty/generated paths.
+
 ## 2026-10-03 — engine-20261004025023-walleting-19e061
 
 ### Reconnaissance, canon mapping, and workstreams
