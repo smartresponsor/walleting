@@ -1,5 +1,43 @@
 # CMCP orchestration journal
 
+## 2026-10-03 — engine-20261004012406-walleting-afe51c
+
+### Reconnaissance baseline
+
+- Authoritative Console MCP workspace: `D:\\PhpstormProjects\\www\\Walleting`, branch `task/walleting-ledger-foundation`; preserved pre-existing unrelated deleted `.gating/README.md`, generated/untracked `.console-mcp/`, and untracked `PRODUCT_CAPABILITY_AUDIT.adoc` without reset, stash, clean, overwrite, or sibling mutation.
+- Read the complete execution specification, Walleting README/Composer/runtime/test/journal surfaces, supplied historical code-style RED, supplied Inspecting baseline, and the latest same-day post-mutation Inspecting report before selecting work.
+- Read current Objecting, Cruding, Viewing, Interfacing and Gating package/responsibility contracts. Read Canonization README/AGENTS plus normative Canon018, Canon019, Canon021 and Canon022 textual rules.
+- Target-to-canon mapping: `walleting/wallet` remains `App\\Walleting\\ => src/` with Wallet-prefixed component types; retain role-first Symfony topology with no `Domain/Application/Infrastructure/Port/Adapter/Adaptor` roots; generic application CRUD remains in Cruding; standalone baseline dependencies remain direct and current.
+- Current market/enterprise benchmark across Modern Treasury, Formance and TigerBeetle reinforces immutable double-entry accounting, balanced atomic writes, idempotency, auditability and operational correctness as RC expectations. Programmable flow composition, broader rails, split-tender/refund policy, expiry/restriction policy and richer operator UX remain growth work.
+- The historical CanonScanning code-style RED named only `migrations/Version20260923102500.php`; current canonical quality reports 0/198 formatter findings, so that RED does not reproduce.
+- Fresh reusable Inspecting evidence before this mutation had already reduced php-structure debt to 15 medium findings with maximum complexity 17. The selected current low-risk finding was `WalletPostingSloTrendPolicy::assess()` at 100 lines.
+
+### Material implementation
+
+- Decomposed `WalletPostingSloTrendPolicy::assess()` into focused private helpers for window-order validation, burn-rate calculation, status/reason classification, and critical-reason classification.
+- Preserved the public policy contract, threshold semantics, reason identifiers, burn-rate values, insufficient-sample precedence, critical/degraded/healthy status behavior, and `WalletPostingSloTrendAssessment` payload shape.
+- No ledger posting, balance projection, schema, migration, provider, reconciliation, browser/mobile, or sibling-repository behavior changed.
+
+### Verification evidence
+
+- `composer validate --no-interaction --strict --check-lock`: GREEN.
+- `composer quality`: GREEN; PHP-CS-Fixer 0/198, repository-configured PHPStan no errors, Symfony container lint GREEN, Doctrine mapping GREEN, PHPUnit 115 tests / 344 assertions, Gating 10 rules with 0 failed / 0 warning and 3 profile-related skips.
+- `composer validate:prod`: GREEN.
+- `composer schema:parity`: GREEN; migrations are current and Doctrine schema parity is synchronized.
+- Repository-owned `bin/bootstrap-local-integration.ps1`: GREEN with exit code 0 on a fresh isolated PostgreSQL database; 30 migrations / 297 SQL queries, production-readiness JSON all `ok:true`, 53 integration tests / 491 assertions, isolated database dropped.
+- Post-mutation Inspecting report: `D:\\PhpstormProjects\\www\\Inspecting\\.inspecting\\reports\\D--PhpstormProjects-www-Walleting-20261004-013341.json`; php-structure findings decreased 15 -> 14 and the `WalletPostingSloTrendPolicy::assess()` long-method finding is absent. Maximum complexity remains 17.
+- Inspecting still emits the established 95 high test-scope PHPStan adapter findings while recording `phpstan.errors: 0`; Walleting's canonical repository-configured PHPStan is GREEN, so this remains external analyzer scope/configuration drift rather than a Walleting source regression.
+- No user-observable browser/mobile UI changed; Panther/Playwright screenshots are not applicable.
+
+### Workstreams
+
+- RC-critical: integrate only the verified SLO trend policy refactor plus this factual journal entry while preserving unrelated dirty/generated paths.
+- Growth (non-blocking): remaining 14 medium Inspecting structural/design observations should be handled incrementally with financial regression protection; product growth remains broader provider rails, programmable money-flow composition, split-tender/refund-to-wallet, expiry/restriction policy, and richer reconciliation/operator UX.
+
+Что имеем? The historical static-quality RED remains closed, one additional current structural finding is removed, and deterministic plus clean-database financial acceptance is GREEN after the policy refactor.
+
+Что осталось до RC? Only Git ownership reconciliation and publication of the coherent policy+journal surface; no Walleting-owned RC blocker remains in this bounded scope.
+
 ## 2026-10-03 — engine-20261004005736-walleting-403f3c
 
 ### Reconnaissance baseline

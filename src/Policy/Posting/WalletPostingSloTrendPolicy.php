@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Walleting\Policy\Posting;
 
+use App\Walleting\ValueObject\Posting\WalletPostingHealthAssessment;
 use App\Walleting\ValueObject\Posting\WalletPostingHealthSnapshot;
 use App\Walleting\ValueObject\Posting\WalletPostingHealthStatus;
 use App\Walleting\ValueObject\Posting\WalletPostingSloTrendAssessment;
@@ -23,103 +24,93 @@ final readonly class WalletPostingSloTrendPolicy
 
     public function assess(WalletPostingHealthSnapshot $short, WalletPostingHealthSnapshot $long): WalletPostingSloTrendAssessment
     {
-        if ($short->windowSeconds >= $long->windowSeconds) {
-            throw new \InvalidArgumentException('Posting SLO short window must be smaller than long window.');
-        }
+        $this->assertWindowOrder($short, $long);
 
         $shortAssessment = $this->shortPolicy->assess($short);
         $longAssessment = $this->longPolicy->assess($long);
-        $shortRetryBurn = $this->burnRate($short->retryRate, $this->shortPolicy->degradedRetryRate);
-        $longRetryBurn = $this->burnRate($long->retryRate, $this->longPolicy->degradedRetryRate);
-        $shortFailureBurn = $this->burnRate($short->failureRate, $this->shortPolicy->degradedFailureRate);
-        $longFailureBurn = $this->burnRate($long->failureRate, $this->longPolicy->degradedFailureRate);
+        $burnRates = $this->burnRates($short, $long);
+        [$status, $reasons] = $this->statusAndReasons($short, $long, $shortAssessment, $longAssessment, $burnRates);
 
+        return new WalletPostingSloTrendAssessment(
+            $status,
+            $shortAssessment,
+            $longAssessment,
+            $burnRates['short_retry'],
+            $burnRates['long_retry'],
+            $burnRates['short_failure'],
+            $burnRates['long_failure'],
+            $reasons,
+        );
+    }
+
+    private function assertWindowOrder(WalletPostingHealthSnapshot $short, WalletPostingHealthSnapshot $long): void
+    {
+        if ($short->windowSeconds >= $long->windowSeconds) {
+            throw new \InvalidArgumentException('Posting SLO short window must be smaller than long window.');
+        }
+    }
+
+    /** @return array{short_retry: float, long_retry: float, short_failure: float, long_failure: float} */
+    private function burnRates(WalletPostingHealthSnapshot $short, WalletPostingHealthSnapshot $long): array
+    {
+        return [
+            'short_retry' => $this->burnRate($short->retryRate, $this->shortPolicy->degradedRetryRate),
+            'long_retry' => $this->burnRate($long->retryRate, $this->longPolicy->degradedRetryRate),
+            'short_failure' => $this->burnRate($short->failureRate, $this->shortPolicy->degradedFailureRate),
+            'long_failure' => $this->burnRate($long->failureRate, $this->longPolicy->degradedFailureRate),
+        ];
+    }
+
+    /**
+     * @param array{short_retry: float, long_retry: float, short_failure: float, long_failure: float} $burnRates
+     *
+     * @return array{WalletPostingHealthStatus, list<string>}
+     */
+    private function statusAndReasons(
+        WalletPostingHealthSnapshot $short,
+        WalletPostingHealthSnapshot $long,
+        WalletPostingHealthAssessment $shortAssessment,
+        WalletPostingHealthAssessment $longAssessment,
+        array $burnRates,
+    ): array {
         if ($long->executionCount < $this->longPolicy->minimumSamples) {
-            return new WalletPostingSloTrendAssessment(
-                WalletPostingHealthStatus::Degraded,
-                $shortAssessment,
-                $longAssessment,
-                $shortRetryBurn,
-                $longRetryBurn,
-                $shortFailureBurn,
-                $longFailureBurn,
-                ['insufficient_long_samples'],
-            );
+            return [WalletPostingHealthStatus::Degraded, ['insufficient_long_samples']];
         }
-
         if ($short->executionCount < $this->shortPolicy->minimumSamples) {
-            return new WalletPostingSloTrendAssessment(
-                WalletPostingHealthStatus::Degraded,
-                $shortAssessment,
-                $longAssessment,
-                $shortRetryBurn,
-                $longRetryBurn,
-                $shortFailureBurn,
-                $longFailureBurn,
-                ['insufficient_short_samples'],
-            );
+            return [WalletPostingHealthStatus::Degraded, ['insufficient_short_samples']];
         }
 
+        $criticalReasons = $this->criticalReasons($shortAssessment, $longAssessment, $burnRates);
+        if ([] !== $criticalReasons) {
+            return [WalletPostingHealthStatus::Critical, $criticalReasons];
+        }
+        if (WalletPostingHealthStatus::Healthy !== $shortAssessment->status && WalletPostingHealthStatus::Healthy === $longAssessment->status) {
+            return [WalletPostingHealthStatus::Degraded, ['short_window_spike']];
+        }
+        if (WalletPostingHealthStatus::Healthy !== $shortAssessment->status || WalletPostingHealthStatus::Healthy !== $longAssessment->status) {
+            return [WalletPostingHealthStatus::Degraded, ['sustained_degradation']];
+        }
+
+        return [WalletPostingHealthStatus::Healthy, []];
+    }
+
+    /**
+     * @param array{short_retry: float, long_retry: float, short_failure: float, long_failure: float} $burnRates
+     *
+     * @return list<string>
+     */
+    private function criticalReasons(WalletPostingHealthAssessment $shortAssessment, WalletPostingHealthAssessment $longAssessment, array $burnRates): array
+    {
         $reasons = [];
-        $criticalBurn = ($shortRetryBurn >= $this->criticalShortBurnRate && $longRetryBurn >= $this->criticalLongBurnRate)
-            || ($shortFailureBurn >= $this->criticalShortBurnRate && $longFailureBurn >= $this->criticalLongBurnRate);
-        if ($criticalBurn) {
+        if (($burnRates['short_retry'] >= $this->criticalShortBurnRate && $burnRates['long_retry'] >= $this->criticalLongBurnRate)
+            || ($burnRates['short_failure'] >= $this->criticalShortBurnRate && $burnRates['long_failure'] >= $this->criticalLongBurnRate)) {
             $reasons[] = 'sustained_burn_rate';
         }
-
         if (WalletPostingHealthStatus::Critical === $shortAssessment->status && WalletPostingHealthStatus::Critical === $longAssessment->status) {
             $reasons[] = 'sustained_critical';
         }
 
-        if ([] !== $reasons) {
-            return new WalletPostingSloTrendAssessment(
-                WalletPostingHealthStatus::Critical,
-                $shortAssessment,
-                $longAssessment,
-                $shortRetryBurn,
-                $longRetryBurn,
-                $shortFailureBurn,
-                $longFailureBurn,
-                $reasons,
-            );
-        }
-
-        if (WalletPostingHealthStatus::Healthy !== $shortAssessment->status && WalletPostingHealthStatus::Healthy === $longAssessment->status) {
-            return new WalletPostingSloTrendAssessment(
-                WalletPostingHealthStatus::Degraded,
-                $shortAssessment,
-                $longAssessment,
-                $shortRetryBurn,
-                $longRetryBurn,
-                $shortFailureBurn,
-                $longFailureBurn,
-                ['short_window_spike'],
-            );
-        }
-
-        if (WalletPostingHealthStatus::Healthy !== $shortAssessment->status || WalletPostingHealthStatus::Healthy !== $longAssessment->status) {
-            return new WalletPostingSloTrendAssessment(
-                WalletPostingHealthStatus::Degraded,
-                $shortAssessment,
-                $longAssessment,
-                $shortRetryBurn,
-                $longRetryBurn,
-                $shortFailureBurn,
-                $longFailureBurn,
-                ['sustained_degradation'],
-            );
-        }
-
-        return new WalletPostingSloTrendAssessment(
-            WalletPostingHealthStatus::Healthy,
-            $shortAssessment,
-            $longAssessment,
-            $shortRetryBurn,
-            $longRetryBurn,
-            $shortFailureBurn,
-            $longFailureBurn,
-            [],
-        );
+        return $reasons;
     }
 
     private function burnRate(float $observedRate, float $budgetRate): float
