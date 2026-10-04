@@ -1,5 +1,37 @@
 # CMCP orchestration journal
 
+## 2026-10-03 — engine-20261004015624-walleting-d93b74
+
+### Reconnaissance, canon mapping, and workstreams
+
+- Authoritative Console MCP workspace: `D:\\PhpstormProjects\\www\\Walleting`, branch `task/walleting-ledger-foundation`; initial preserved dirty state was deleted `.gating/README.md`, generated/untracked `.console-mcp/`, and untracked `PRODUCT_CAPABILITY_AUDIT.adoc`. No reset, stash, clean, overwrite, destructive operation, or sibling mutation was used.
+- Read the complete execution specification, current Walleting README/development and production Composer manifests, package/test/static-analysis surfaces, product capability audit, orchestration journal, supplied CanonScanning code-style RED, and the latest reusable same-day Inspecting report.
+- Read mandatory Objecting, Cruding, Viewing, Interfacing and Gating package/responsibility contracts. Read Canonization README/AGENTS plus normative Canon018, Canon019, Canon021, Canon022, Canon052 and Canon054 textual rules.
+- Target-to-canon mapping: preserve `walleting/wallet` -> `App\\Walleting\\ => src/` and Wallet-prefixed component types; retain role-first Symfony topology with no `Domain/Application/Infrastructure/Port/Adapter/Adaptor` roots; generic CRUD remains in Cruding; standalone baseline dependencies including Failing stay direct in development and production manifests; consumer `.gating/` remains artifact-only; current Doctrine identifiers remain lower_snake_case.
+- Market/enterprise benchmark against current Modern Treasury, Formance and TigerBeetle documentation reinforces immutable double-entry accounting, atomic balanced writes, idempotency, auditable history, reconciliation and operational diagnostics as RC expectations. Programmable flow DSLs, wider rails, split-tender/refund-to-wallet policy, expiry/restrictions and richer operator UX remain a separate growth workstream.
+- The supplied historical formatter RED names only `migrations/Version20260923102500.php`; current pre/post-change formatter evidence is GREEN. Fresh reusable Inspecting evidence before this task had 13 medium php-structure observations with maximum complexity 17; the bounded RC-critical target selected here was `WalletStatementQueryService::statement()` at 104 lines because it is a read-only query path with direct PostgreSQL regression coverage.
+
+### Material implementation and verification
+
+- Decomposed `WalletStatementQueryService::statement()` into focused request validation, query-argument assembly, SQL materialization and page construction helpers while preserving SQL text, placeholder order, cursor encoding/decoding, date filters, running-balance calculation, counterparty projection, `limit + 1` pagination semantics and the public `WalletingFacade` contract.
+- `composer validate --no-interaction --strict --check-lock`: GREEN.
+- `composer quality`: GREEN; PHP-CS-Fixer 0/198, repository-configured PHPStan no errors, Symfony container lint GREEN, Doctrine mapping GREEN, PHPUnit 115 tests / 344 assertions, Gating 10 rules with 0 failed / 0 warning and 3 profile-related skips.
+- `composer validate:prod`: GREEN.
+- `composer schema:parity`: GREEN; migrations are current and Doctrine schema parity is synchronized.
+- `composer test:integration`: GREEN with exit code 0; PostgreSQL is at migration 30/30, production-readiness JSON is all `ok:true`, and 53 integration tests / 491 assertions pass.
+- Post-mutation Inspecting report: `D:\\PhpstormProjects\\www\\Inspecting\\.inspecting\\reports\\D--PhpstormProjects-www-Walleting-20261004-021703.json`. PHP-structure observations are 9 medium findings, down from the latest reusable 13-finding baseline; `WalletStatementQueryService::statement()` is absent. Maximum complexity remains 17 elsewhere.
+- Inspecting still reports the established 95 high test-scope PHPStan adapter findings while recording `phpstan.errors: 0`; Walleting's canonical repository-configured PHPStan is GREEN, so this remains external analyzer scope/configuration drift rather than a Walleting source regression.
+- During verification, concurrent dirty changes appeared in `src/Service/WalletFinancialOperationService.php` and `src/Service/WalletPostingSloStateService.php`; they are not owned by this task and must remain outside its commit. No browser/mobile/user-observable UI surface changed, so Panther/Playwright screenshots and visual artifacts are not applicable.
+
+### RC-critical vs growth closure
+
+- RC-critical: integrate only `src/Service/WalletStatementQueryService.php` plus this factual orchestration journal, preserving all unrelated/concurrent dirty paths.
+- Growth (non-blocking): remaining structural observations and product capability growth stay separate, especially broad financial-operation service decomposition, entity API reduction, split tender, refund-to-wallet, expiry/restriction policy, broader provider rails and richer reconciliation/operator UX.
+
+Что имеем? The historical static-quality RED remains closed, the statement-query long-method finding is removed, and deterministic plus PostgreSQL behavioral acceptance is GREEN after the query-only refactor.
+
+Что осталось до RC? Commit/publish only the coherent statement-query source plus this journal entry, then verify final HEAD/upstream while preserving unrelated and concurrent dirty paths.
+
 ## 2026-10-03 — engine-20261004013219-walleting-e206bf
 
 ### Reconnaissance, remediation attribution, and canon mapping

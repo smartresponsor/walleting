@@ -23,16 +23,35 @@ final readonly class WalletStatementQueryService
         ?\DateTimeImmutable $from = null,
         ?\DateTimeImmutable $to = null,
     ): WalletStatementPage {
+        $this->validateRequest($limit, $from, $to);
+        [$where, $parameters, $types] = $this->queryArguments($account, $limit, $cursor, $from, $to);
+        $rows = $this->connection->fetchAllAssociative($this->statementSql($where), $parameters, $types);
+
+        return $this->page($rows, $limit);
+    }
+
+    private function validateRequest(int $limit, ?\DateTimeImmutable $from, ?\DateTimeImmutable $to): void
+    {
         if ($limit < 1 || $limit > 200) {
             throw new \InvalidArgumentException('Statement limit must be between 1 and 200.');
         }
         if (null !== $from && null !== $to && $from > $to) {
             throw new \InvalidArgumentException('Statement from date cannot be later than to date.');
         }
+    }
 
+    /** @return array{string, list<mixed>, list<ParameterType>} */
+    private function queryArguments(
+        WalletAccount $account,
+        int $limit,
+        ?string $cursor,
+        ?\DateTimeImmutable $from,
+        ?\DateTimeImmutable $to,
+    ): array {
         $filters = [];
-        $parameters = [$account->id()->toRfc4122()];
-        $types = [ParameterType::STRING];
+        $accountId = $account->id()->toRfc4122();
+        $parameters = [$accountId, $accountId];
+        $types = [ParameterType::STRING, ParameterType::STRING];
 
         if (null !== $from) {
             $filters[] = 'activity.posted_at >= ?';
@@ -59,6 +78,11 @@ final readonly class WalletStatementQueryService
         $types[] = ParameterType::INTEGER;
         $where = [] === $filters ? '' : 'WHERE '.implode(' AND ', $filters);
 
+        return [$where, $parameters, $types];
+    }
+
+    private function statementSql(string $where): string
+    {
         $sql = <<<'SQL'
 WITH account_activity AS (
     SELECT
@@ -100,12 +124,13 @@ __WHERE__
 ORDER BY posted_at DESC, transaction_id DESC
 LIMIT ?
 SQL;
-        $sql = str_replace('__WHERE__', $where, $sql);
 
-        array_splice($parameters, 1, 0, [$account->id()->toRfc4122()]);
-        array_splice($types, 1, 0, [ParameterType::STRING]);
+        return str_replace('__WHERE__', $where, $sql);
+    }
 
-        $rows = $this->connection->fetchAllAssociative($sql, $parameters, $types);
+    /** @param list<array<string, mixed>> $rows */
+    private function page(array $rows, int $limit): WalletStatementPage
+    {
         $hasMore = count($rows) > $limit;
         if ($hasMore) {
             array_pop($rows);
