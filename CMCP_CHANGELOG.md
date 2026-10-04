@@ -55,7 +55,15 @@
 
 Что имеем? The historical static-quality RED remains closed; the selected contract-test static-analysis cluster is materially removed, aggregate deterministic acceptance is GREEN, clean-database PostgreSQL acceptance is GREEN, and post-mutation Inspecting improved from 95 to 77 adapter findings without any production structural regression.
 
-Что осталось до RC? Only final Git ownership inspection and signed publication of `tests/Contract/PostingExecutorContractTest.php` plus this task journal entry. Preserve outside this task: deleted `.gating/README.md`, generated `.console-mcp/`, untracked `PRODUCT_CAPABILITY_AUDIT.adoc`, and the concurrently appeared `tests/Integration/PostgreSqlConcurrencyTest.php` modification; none is absorbed into this commit.
+### Git integration closure
+
+- Signed commit `04b0ac6fc5fa47ec6892c56c9f18843389e40ec5` (`harden Walleting posting executor contract test`) published the coherent contract-test + journal change to `origin/task/walleting-ledger-foundation`.
+- Post-push branch/upstream were synchronized at 0 ahead / 0 behind.
+- Preserved outside task integration: deleted `.gating/README.md`, generated `.console-mcp/`, untracked `PRODUCT_CAPABILITY_AUDIT.adoc`, and the concurrently appeared `tests/Integration/PostgreSqlConcurrencyTest.php` modification.
+
+Что имеем? The selected static-quality remediation is verified, signed, and published; current repository acceptance is GREEN and no user-observable UI changed.
+
+Что осталось до RC? No Walleting-owned RC blocker remains from this task. Publish this factual journal-only closure and re-confirm final HEAD/upstream synchronization while preserving unrelated/concurrent dirty paths.
 
 ## 2026-10-03 — engine-20261004033242-walleting-b9ed9a
 
