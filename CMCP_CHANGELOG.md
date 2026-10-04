@@ -963,6 +963,17 @@ Required local closure:
 
 Что осталось до RC? Run schema/integration acceptance, inspect final Git ownership and publish only the coherent source+journal change while leaving unrelated/generated dirty paths untouched.
 
+### Git and final runtime closure
+
+- The verified `WalletPostingSloStateCommand` source plus its orchestration journal were integrated as signed commit `fba7016b04c8376f10042f7c283032ce90cb0508` (`refactor Walleting SLO state command`) and published to `origin/task/walleting-ledger-foundation`; post-publication branch/upstream were 0 ahead / 0 behind.
+- A final repository-owned clean-database `bin/bootstrap-local-integration.ps1` run completed with exit code 0 after that integration: 30 migrations / 297 SQL queries, production readiness all `ok:true`, 53 integration tests / 491 assertions, isolated database dropped.
+- A subsequent concurrent `WalletPostingSloTrendCommand.php` refactor was observed, quality-checked and Inspecting-checked, but is not owned or committed by this task. It remains outside this task's Git closure together with deleted `.gating/README.md`, generated `.console-mcp/`, and untracked `PRODUCT_CAPABILITY_AUDIT.adoc`.
+- No visual/browser/mobile evidence is required because this task changed CLI diagnostics only.
+
+Что имеем? This task's SLO-state remediation is verified, committed and published, and the clean-database financial acceptance remains GREEN after integration.
+
+Что осталось до RC? No Walleting-owned RC blocker remains from this task. Current unrelated/concurrent dirty paths are intentionally preserved for their owning workstreams.
+
 ## 2026-10-03 — engine-20261004010316-walleting-e18d47
 
 ### Reconnaissance, acceptance, and integration checkpoint
