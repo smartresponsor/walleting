@@ -1,5 +1,42 @@
 # CMCP orchestration journal
 
+## 2026-10-03 — engine-20261004013703-walleting-eb9a3f
+
+### Reconnaissance baseline
+
+- Authoritative Console MCP workspace: `D:\\PhpstormProjects\\www\\Walleting`, branch `task/walleting-ledger-foundation`; preserved pre-existing deleted `.gating/README.md`, generated/untracked `.console-mcp/`, and untracked `PRODUCT_CAPABILITY_AUDIT.adoc` without reset, stash, clean, overwrite, or sibling mutation.
+- Read the complete execution specification, Walleting README/development and production Composer manifests/current orchestration journal, supplied historical code-style RED, supplied Inspecting baseline, and the latest same-day post-mutation Inspecting report (`20261004-013341`).
+- Read current Objecting, Cruding, Viewing, Interfacing and Gating package/responsibility contracts. Read Canonization README/AGENTS plus normative Canon018 and Canon021 textual rules.
+- Target-to-canon mapping: `walleting/wallet` remains `App\\Walleting\\ => src/` with Wallet-prefixed component types; retain role-first Symfony topology with no `Domain/Application/Infrastructure/Port/Adapter/Adaptor` roots; generic application CRUD remains in Cruding; declared application dependencies and sibling development wiring remain explicit.
+- Current fresh structural baseline is 14 medium php-structure observations with maximum complexity 17. The supplied historical formatter RED for `migrations/Version20260923102500.php` is stale relative to current same-day green formatter evidence.
+- Market/enterprise maturity baseline remains immutable double-entry accounting, atomic balanced writes, idempotency, auditable correction, reconciliation and operational diagnostics as RC expectations. Broader rails, programmable flow composition, split-tender/refund policy and richer operator UX remain growth work.
+
+### RC-critical workstream
+
+- Selected the current `WalletPostingRetryPolicy::retryReason()` repeated-type-dispatch observation for a bounded policy refactor.
+- Moved the common `RetryableException` classification into `retryableReason()` so `retryReason()` performs one driver-boundary check while preserving SQLSTATE mappings (`40001`, `40P01`, `55P03`) and the generic retryable fallback.
+- No posting transaction, balance, schema, provider, reconciliation, migration, browser/mobile, or sibling-repository behavior is changed.
+
+### Growth workstream
+
+- Remaining Inspecting design/maintainability observations stay incremental quality debt requiring regression protection; product growth remains provider breadth, programmable flows, split-tender/refund-to-wallet, expiry/restriction policy and richer reconciliation/operator UX.
+
+Что имеем? The historical static-quality RED remains closed and one current low-risk structural finding has a behavior-preserving remediation applied.
+
+Что осталось до RC? Run deterministic, production/schema and PostgreSQL acceptance, refresh Inspecting after mutation, then integrate only the coherent policy+journal change while preserving unrelated dirty paths.
+
+### Verification and acceptance closure
+
+- `composer quality`: GREEN; PHP-CS-Fixer 0/198, repository-configured PHPStan no errors, Symfony container lint GREEN, Doctrine mapping GREEN, PHPUnit 115 tests / 344 assertions, Gating 10 rules with 0 failed / 0 warning and 3 profile-related skips.
+- Repository-owned `bin/bootstrap-local-integration.ps1`: GREEN with exit code 0 on a fresh isolated PostgreSQL database; 30 migrations / 297 SQL queries, production-readiness JSON all `ok:true`, 53 integration tests / 491 assertions, isolated database dropped.
+- Post-mutation Inspecting completed at `D:\\PhpstormProjects\\www\\Inspecting\\.inspecting\\reports\\D--PhpstormProjects-www-Walleting-20261004-014808.json`. PHP-structure observations decreased from 14 to 13 medium findings; the `WalletPostingRetryPolicy::retryReason()` repeated-type-dispatch finding is absent. Maximum complexity remains 17 elsewhere.
+- Inspecting continues to emit the established 95 high test-scope PHPStan adapter findings while recording `phpstan.errors: 0`; Walleting's canonical repository-configured PHPStan is GREEN, so this remains external analyzer scope/configuration drift rather than an accepted Walleting source regression.
+- No browser/mobile/user-observable UI surface changed; Panther/Playwright visual evidence is not applicable.
+
+Что имеем? The repeated-type-dispatch finding is removed, canonical deterministic quality is GREEN, and clean-database PostgreSQL financial acceptance is GREEN after the policy refactor.
+
+Что осталось до RC? Only Git ownership reconciliation and publication of the coherent retry-policy+journal surface; remaining medium Inspecting observations stay incremental quality debt.
+
 ## 2026-10-03 — engine-20261004012406-walleting-afe51c
 
 ### Reconnaissance baseline

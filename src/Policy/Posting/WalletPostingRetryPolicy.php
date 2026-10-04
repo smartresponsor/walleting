@@ -27,16 +27,16 @@ final readonly class WalletPostingRetryPolicy
 
     public function retryReason(\Throwable $exception): ?string
     {
-        if ($exception instanceof DriverException) {
-            return match ($exception->getSQLState()) {
-                '40001' => 'serialization_failure',
-                '40P01' => 'deadlock',
-                '55P03' => 'lock_timeout',
-                default => $exception instanceof RetryableException ? 'retryable_database_error' : null,
-            };
+        if (!$exception instanceof DriverException) {
+            return $this->retryableReason($exception);
         }
 
-        return $exception instanceof RetryableException ? 'retryable_database_error' : null;
+        return match ($exception->getSQLState()) {
+            '40001' => 'serialization_failure',
+            '40P01' => 'deadlock',
+            '55P03' => 'lock_timeout',
+            default => $this->retryableReason($exception),
+        };
     }
 
     public function shouldRetry(\Throwable $exception, int $attempt): bool
@@ -64,5 +64,10 @@ final readonly class WalletPostingRetryPolicy
         );
 
         return $delayMilliseconds * 1000;
+    }
+
+    private function retryableReason(\Throwable $exception): ?string
+    {
+        return $exception instanceof RetryableException ? 'retryable_database_error' : null;
     }
 }
