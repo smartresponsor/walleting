@@ -1,5 +1,33 @@
 # CMCP orchestration journal
 
+## 2026-10-03 — engine-20261004025023-walleting-19e061
+
+### Reconnaissance, canon mapping, and workstreams
+
+- Authoritative execution plane: Console MCP workspace `D:\\PhpstormProjects\\www\\Walleting`, branch `task/walleting-ledger-foundation`; the task specification, supplied CanonScanning code-style RED, supplied Inspecting baseline, current Walleting source/tests/journal, and mandatory Objecting, Cruding, Viewing, Interfacing, Gating, and Canonization contracts were consumed before conclusions.
+- Canonization textual rules consulted for this pass: `Canon018ComposerIdentityMappingRule`, `Canon019NoAlternativeLayerTaxonomyRule`, `Canon021CrudingOwnsGenericCrudRule`, and `Canon022StandaloneApplicationDependencyBaselineRule`. Mapping remains `walleting/wallet` -> `App\\Walleting\\ => src/`, Wallet-prefixed subject vocabulary, role-first Symfony topology, no `Domain/Application/Infrastructure/Port/Adapter/Adaptor` roots, generic application CRUD owned by Cruding, and direct standalone platform baseline dependencies.
+- Market/enterprise ledger baseline remains immutable double-entry accounting, atomic balanced writes, idempotency, auditable correction/history, reconciliation, and operational diagnostics as RC expectations. Programmable flow DSLs, broader rails, split-tender/refund-to-wallet policy, expiry/restrictions, and richer operator UX remain growth work.
+- The historical code-style RED names only `migrations/Version20260923102500.php`; same-day current repository acceptance already proves that formatter failure stale and closed.
+
+### RC-critical material state and verification
+
+- A concurrent Walleting execution window integrated the bounded `WalletOutboxDispatcher` cohesion remediation before this task could safely duplicate it: exact-one-handler selection is delegated to `Resolver/Outbox/WalletOutboxMessageHandlerResolver`, retry exhaustion/backoff to `Policy/Outbox/WalletOutboxRetryPolicy`, while the dispatcher constructor/public API and terminal/retry semantics remain stable.
+- Focused `tests/Service/OutboxDispatchPolicyTest.php` verifies attempt-budget exhaustion, bounded exponential backoff, exact-one-handler selection, duplicate-handler rejection, and stable missing-handler diagnostics.
+- Fresh post-mutation Inspecting report `D:\\PhpstormProjects\\www\\Inspecting\\.inspecting\\reports\\D--PhpstormProjects-www-Walleting-20261004-025838.json` reports seven medium php-structure observations, maximum complexity 14, and no `WalletOutboxDispatcher` cohesion finding. The established 95 broader test-scope PHPStan adapter findings coexist with `phpstan.errors: 0`; Walleting's canonical repository-configured PHPStan was GREEN in the verified aggregate quality run.
+- Fresh same-day acceptance attached to the integrated source state is GREEN: strict Composer validation, aggregate `composer quality`, production manifest validation, schema parity, and PostgreSQL integration (30/30 migrations; production readiness all `ok:true`; 53 integration tests / 491 assertions). A duplicate heavy `composer quality` start in this task was correctly refused by Console MCP capacity admission while the engine backlog was high, so no competing heavy process was launched.
+- No user-observable browser/mobile UI changed; visual behavioral evidence is not applicable.
+
+### Git ownership and closure
+
+- Current source remediation is already committed and published; branch/upstream were synchronized at `4ed984da2addc911c772a11bf2fe9f041e3d7f3a` before this journal-only update.
+- Preserve outside this task integration: deleted `.gating/README.md`, generated/untracked `.console-mcp/`, and pre-existing untracked `PRODUCT_CAPABILITY_AUDIT.adoc`.
+- RC-critical: publish only this factual task journal entry after final status inspection; do not duplicate the already-integrated source remediation.
+- Growth: the remaining seven medium structural observations and product capability expansion stay separate, bounded follow-up workstreams.
+
+Что имеем? The historical static-quality RED is closed, the current outbox cohesion remediation is implemented and regression-covered, fresh post-mutation Inspecting confirms the selected finding is gone, and deterministic plus PostgreSQL acceptance is GREEN on the integrated source state.
+
+Что осталось до RC? Commit/publish only this task journal entry and verify final HEAD/upstream/worktree state while preserving unrelated/generated dirty paths.
+
 ## 2026-10-03 — engine-20261004024312-walleting-6df971
 
 ### Acceptance of concurrent RC-critical implementation
