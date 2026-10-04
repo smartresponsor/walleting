@@ -894,3 +894,61 @@ Required local closure:
 
 Что осталось до RC? Only Git closure remains for `src/Command/WalletPostingHealthCommand.php` plus this task journal entry. Keep deleted `.gating/README.md`, generated `.console-mcp/`, and `PRODUCT_CAPABILITY_AUDIT.adoc` outside the commit.
 
+## 2026-10-03 — engine-20261004004103-walleting-319971
+
+### Reconnaissance and RC-critical remediation
+
+- Console MCP resolved the authoritative workspace to `D:\\PhpstormProjects\\www\\Walleting` on branch `task/walleting-ledger-foundation`; pre-existing deleted `.gating/README.md`, generated/untracked `.console-mcp/`, and untracked `PRODUCT_CAPABILITY_AUDIT.adoc` were preserved without reset, stash, clean, overwrite, or sibling mutation.
+- Consumed the supplied historical code-style RED and Inspecting fingerprint before remediation. Fresh formatter evidence showed the historical migration style failure no longer reproduces; the only current formatter issue observed during this window was a PHPDoc union-order detail in the concurrent SLO-state command refactor, which was already corrected before mutation could safely be applied.
+- Read the current Walleting product/package contract and the mandatory Objecting, Cruding, Viewing, Interfacing, Gating, and Canonization contours. Canon029 confirms repository-owned PHP-CS-Fixer/PHPStan tooling and evidence-first Inspecting usage; platform mapping remains `walleting/wallet` -> `App\\Walleting\\ => src/`, role-first Symfony structure, generic CRUD outside Walleting, and no Domain/Port/Adapter/Adaptor trees.
+- Market baseline checked against current Modern Treasury, Adyen and TigerBeetle documentation: immutable double-entry accounting, write atomicity, idempotency, auditable balances, reconciliation and reliable retry semantics remain RC expectations. Wider rails, programmable flows and richer operator UX remain growth work.
+- Current `src/Command/WalletPostingSloStateCommand.php` decomposes option validation, error rendering, payload creation, human rendering and exit-code mapping while preserving command options, policy/service calls, JSON keys and status semantics. No ledger posting, balance, migration, provider, reconciliation, browser/mobile or sibling-repository behavior changed.
+
+### Verification
+
+- `composer cs:check`: GREEN, 0/198 fixable files.
+- `composer quality`: GREEN; repository-configured PHPStan reports no errors, Symfony container lint and Doctrine mapping are GREEN, PHPUnit reports 115 tests / 344 assertions, and Gating reports 0 failed / 0 warning with three profile-related skips.
+- `composer validate:prod`: GREEN.
+- Post-mutation Inspecting completed at `D:\\PhpstormProjects\\www\\Inspecting\\.inspecting\\reports\\D--PhpstormProjects-www-Walleting-20261004-010841.json`. PHP-structure findings are 17 medium observations; `WalletPostingSloStateCommand::execute()` is no longer present, and maximum reported cyclomatic complexity is 22.
+- Inspecting also emits the established 95 high test-scope PHPStan findings while its aggregate metric records `phpstan.errors: 0`; Walleting's canonical repository-configured PHPStan is GREEN. This remains external analyzer scope/configuration drift rather than an accepted Walleting source regression.
+- No user-observable browser/mobile UI changed; visual screenshot evidence is not applicable.
+
+### Workstreams
+
+- RC-critical: preserve the verified SLO-state diagnostic refactor and integrate only its coherent source+journal surface.
+- Growth (non-blocking): remaining 17 medium Inspecting observations, programmable posting composition, broader provider rails, split-tender/refund policy and richer reconciliation/operator UX.
+
+Что имеем? The historical formatter RED remains closed, the SLO-state command structural finding is removed, and the canonical deterministic quality contour plus post-mutation Inspecting evidence are GREEN/acceptable for the bounded source change.
+
+Что осталось до RC? Run schema/integration acceptance, inspect final Git ownership and publish only the coherent source+journal change while leaving unrelated/generated dirty paths untouched.
+
+## 2026-10-03 — engine-20261004010316-walleting-e18d47
+
+### Reconnaissance, acceptance, and integration checkpoint
+
+- Authoritative execution plane: Console MCP workspace `D:\\PhpstormProjects\\www\\Walleting`, branch `task/walleting-ledger-foundation`; no container-path probing, sibling mutation, reset, stash, clean, or destructive reconciliation was used.
+- Consumed the supplied CanonScanning code-style RED and Inspecting baseline before conclusions. The historical style failure no longer reproduces (`composer cs:check` GREEN, 0/198 fixable files).
+- Read the current Walleting product/package contract plus mandatory Objecting, Cruding, Viewing, Interfacing and Gating responsibility contours. Canonization textual mapping used for this pass includes the platform `App\\<Component>\\` namespace baseline and Canon005/007/008/009/018/019 constraints: preserve literal PSR-4 identity, meaningful role-first Symfony topology, explicit foreign package dependencies, component/host separation, and no Domain/Application/Infrastructure/Port/Adapter/Adaptor roots.
+- Current market benchmark against Modern Treasury and Adyen confirms immutable double-entry accounting, balanced atomic writes, idempotency, reconciliation, auditable correction and operational diagnostics as RC expectations. Programmable transaction DSLs, broader rails, split-tender/refund policy and richer operator UX remain growth work.
+- Semantically reviewed the current `WalletPostingSloStateCommand` decomposition: option validation, error rendering, result payload shaping, human rendering and exit-code mapping are extracted without changing command options, policy/service calls, JSON keys, status transitions or exit semantics. No ledger posting, balance, schema, provider, reconciliation, migration or user-visible UI behavior changed.
+
+### Verification evidence
+
+- Changed-PHP syntax: GREEN.
+- `composer quality`: GREEN; PHP-CS-Fixer 0/198, repository PHPStan no errors, Symfony container lint GREEN, Doctrine mapping GREEN, PHPUnit 115 tests / 344 assertions, Gating 0 failed / 0 warning (3 profile-related skips).
+- `composer validate:prod`: GREEN.
+- `composer schema:parity`: GREEN; migrations are current and Doctrine schema parity is synchronized.
+- Direct `composer test:integration` first encountered the known transient Windows Symfony cache deletion race (`var/cache/tes_` not empty); this was not treated as a code regression.
+- Repository-owned bounded `bin/bootstrap-local-integration.ps1`: GREEN with exit code 0 on a fresh isolated PostgreSQL database; 30 migrations / 297 SQL queries, production readiness JSON all `ok:true`, 53 integration tests / 491 assertions, isolated database dropped.
+- Post-mutation Inspecting report `D:\\PhpstormProjects\\www\\Inspecting\\.inspecting\\reports\\D--PhpstormProjects-www-Walleting-20261004-011114.json`: 17 medium php-structure observations remain; `WalletPostingSloStateCommand::execute()` is absent and maximum complexity is 22. Inspecting's established 95 high test-scope PHPStan adapter findings coexist with aggregate `phpstan.errors: 0`; canonical repository PHPStan is GREEN, so this remains external analyzer scope/configuration drift.
+- No browser/mobile/user-observable UI changed; visual evidence is not applicable.
+
+### Workstreams
+
+- RC-critical: integrate the verified SLO-state command refactor with the factual orchestration journal while preserving unrelated dirty/generated paths.
+- Growth: address the remaining 17 medium structural observations incrementally with regression coverage; broader provider rails, programmable flow composition and richer finance/operator UX remain post-RC capability work.
+
+Что имеем? The historical static-quality RED is closed, the selected SLO-state command complexity/long-method observation is removed, and deterministic plus clean-database financial acceptance is GREEN after the current source change.
+
+Что осталось до RC? Only Git ownership reconciliation and publication of the coherent source+journal surface. Preserve deleted `.gating/README.md`, generated `.console-mcp/`, and untracked `PRODUCT_CAPABILITY_AUDIT.adoc` outside the commit.
+

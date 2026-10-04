@@ -45,42 +45,83 @@ final class WalletPostingSloStateCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $scope = (string) $input->getOption('scope');
-        $shortWindow = filter_var($input->getOption('short-window'), FILTER_VALIDATE_INT);
-        $longWindow = filter_var($input->getOption('long-window'), FILTER_VALIDATE_INT);
-        $shortMinSamples = filter_var($input->getOption('short-min-samples'), FILTER_VALIDATE_INT);
-        $longMinSamples = filter_var($input->getOption('long-min-samples'), FILTER_VALIDATE_INT);
-        $breachEvaluations = filter_var($input->getOption('breach-evaluations'), FILTER_VALIDATE_INT);
-        $recoveryEvaluations = filter_var($input->getOption('recovery-evaluations'), FILTER_VALIDATE_INT);
-        $shortBurn = is_numeric($input->getOption('critical-short-burn')) ? (float) $input->getOption('critical-short-burn') : -1.0;
-        $longBurn = is_numeric($input->getOption('critical-long-burn')) ? (float) $input->getOption('critical-long-burn') : -1.0;
+        $options = $this->validatedOptions($input);
         $json = (bool) $input->getOption('json');
-
-        if (!is_int($shortWindow) || !is_int($longWindow) || !is_int($shortMinSamples) || !is_int($longMinSamples) || !is_int($breachEvaluations) || !is_int($recoveryEvaluations) || $shortWindow < 60 || $longWindow > 604800 || $shortWindow >= $longWindow) {
-            $output->writeln($json ? '{"ok":false,"error":"Invalid posting SLO state options."}' : '<error>Invalid posting SLO state options.</error>');
+        if (null === $options) {
+            $this->renderError($output, $json, 'Invalid posting SLO state options.');
 
             return Command::INVALID;
         }
 
         try {
             $trendPolicy = new WalletPostingSloTrendPolicy(
-                new WalletPostingSloPolicy(minimumSamples: $shortMinSamples),
-                new WalletPostingSloPolicy(minimumSamples: $longMinSamples),
-                $shortBurn,
-                $longBurn,
+                new WalletPostingSloPolicy(minimumSamples: $options['shortMinSamples']),
+                new WalletPostingSloPolicy(minimumSamples: $options['longMinSamples']),
+                $options['shortBurn'],
+                $options['longBurn'],
             );
-            $short = $this->healthService->snapshot($shortWindow);
-            $long = $this->healthService->snapshot($longWindow);
+            $short = $this->healthService->snapshot($options['shortWindow']);
+            $long = $this->healthService->snapshot($options['longWindow']);
             $observed = $trendPolicy->assess($short, $long);
-            $transition = $this->stateService->apply($scope, $observed, $breachEvaluations, $recoveryEvaluations);
+            $transition = $this->stateService->apply(
+                $options['scope'],
+                $observed,
+                $options['breachEvaluations'],
+                $options['recoveryEvaluations'],
+            );
         } catch (\Throwable $exception) {
-            $error = trim($exception->getMessage()) ?: $exception::class;
-            $output->writeln($json ? json_encode(['ok' => false, 'error' => $error], JSON_THROW_ON_ERROR) : '<error>'.$error.'</error>');
+            $this->renderError($output, $json, trim($exception->getMessage()) ?: $exception::class);
 
             return Command::INVALID;
         }
 
-        $data = [
+        if ($json) {
+            $output->writeln(json_encode($this->resultPayload($transition), JSON_THROW_ON_ERROR));
+        } else {
+            $this->renderHumanResult(new SymfonyStyle($input, $output), $transition);
+        }
+
+        return $this->exitCode($transition->currentStatus);
+    }
+
+    /**
+     * @return array{scope: string, shortWindow: int, longWindow: int, shortMinSamples: int, longMinSamples: int, breachEvaluations: int, recoveryEvaluations: int, shortBurn: float, longBurn: float}|null
+     */
+    private function validatedOptions(InputInterface $input): ?array
+    {
+        $shortWindow = filter_var($input->getOption('short-window'), FILTER_VALIDATE_INT);
+        $longWindow = filter_var($input->getOption('long-window'), FILTER_VALIDATE_INT);
+        $shortMinSamples = filter_var($input->getOption('short-min-samples'), FILTER_VALIDATE_INT);
+        $longMinSamples = filter_var($input->getOption('long-min-samples'), FILTER_VALIDATE_INT);
+        $breachEvaluations = filter_var($input->getOption('breach-evaluations'), FILTER_VALIDATE_INT);
+        $recoveryEvaluations = filter_var($input->getOption('recovery-evaluations'), FILTER_VALIDATE_INT);
+
+        if (!is_int($shortWindow) || !is_int($longWindow) || !is_int($shortMinSamples) || !is_int($longMinSamples) || !is_int($breachEvaluations) || !is_int($recoveryEvaluations) || $shortWindow < 60 || $longWindow > 604800 || $shortWindow >= $longWindow) {
+            return null;
+        }
+
+        return [
+            'scope' => (string) $input->getOption('scope'),
+            'shortWindow' => $shortWindow,
+            'longWindow' => $longWindow,
+            'shortMinSamples' => $shortMinSamples,
+            'longMinSamples' => $longMinSamples,
+            'breachEvaluations' => $breachEvaluations,
+            'recoveryEvaluations' => $recoveryEvaluations,
+            'shortBurn' => is_numeric($input->getOption('critical-short-burn')) ? (float) $input->getOption('critical-short-burn') : -1.0,
+            'longBurn' => is_numeric($input->getOption('critical-long-burn')) ? (float) $input->getOption('critical-long-burn') : -1.0,
+        ];
+    }
+
+    private function renderError(OutputInterface $output, bool $json, string $error): void
+    {
+        $output->writeln($json ? json_encode(['ok' => false, 'error' => $error], JSON_THROW_ON_ERROR) : '<error>'.$error.'</error>');
+    }
+
+    /** @return array<string, bool|int|string|list<string>|null> */
+    private function resultPayload(\App\Walleting\ValueObject\Posting\WalletPostingSloStateTransition $transition): array
+    {
+        return [
             'ok' => WalletPostingHealthStatus::Healthy === $transition->currentStatus,
             'scope' => $transition->scope,
             'previous_status' => $transition->previousStatus->value,
@@ -92,23 +133,26 @@ final class WalletPostingSloStateCommand extends Command
             'changed' => $transition->changed,
             'reasons' => $transition->reasons,
         ];
+    }
 
-        if ($json) {
-            $output->writeln(json_encode($data, JSON_THROW_ON_ERROR));
-        } else {
-            $io = new SymfonyStyle($input, $output);
-            $io->definitionList(
-                ['Scope' => $transition->scope],
-                ['Observed' => $transition->observedStatus->value],
-                ['Persisted' => $transition->currentStatus->value],
-                ['Previous' => $transition->previousStatus->value],
-                ['Pending' => null === $transition->pendingStatus ? 'none' : $transition->pendingStatus->value.' '.$transition->pendingCount.'/'.$transition->requiredCount],
-                ['Changed' => $transition->changed ? 'yes' : 'no'],
-                ['Reasons' => [] === $transition->reasons ? 'none' : implode(', ', $transition->reasons)],
-            );
-        }
+    private function renderHumanResult(
+        SymfonyStyle $io,
+        \App\Walleting\ValueObject\Posting\WalletPostingSloStateTransition $transition,
+    ): void {
+        $io->definitionList(
+            ['Scope' => $transition->scope],
+            ['Observed' => $transition->observedStatus->value],
+            ['Persisted' => $transition->currentStatus->value],
+            ['Previous' => $transition->previousStatus->value],
+            ['Pending' => null === $transition->pendingStatus ? 'none' : $transition->pendingStatus->value.' '.$transition->pendingCount.'/'.$transition->requiredCount],
+            ['Changed' => $transition->changed ? 'yes' : 'no'],
+            ['Reasons' => [] === $transition->reasons ? 'none' : implode(', ', $transition->reasons)],
+        );
+    }
 
-        return match ($transition->currentStatus) {
+    private function exitCode(WalletPostingHealthStatus $status): int
+    {
+        return match ($status) {
             WalletPostingHealthStatus::Healthy => Command::SUCCESS,
             WalletPostingHealthStatus::Degraded => self::EXIT_DEGRADED,
             WalletPostingHealthStatus::Critical => Command::FAILURE,
