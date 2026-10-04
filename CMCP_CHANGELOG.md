@@ -1,5 +1,46 @@
 # CMCP orchestration journal
 
+## 2026-10-03 — engine-20261004005736-walleting-403f3c
+
+### Reconnaissance baseline
+
+- Authoritative Console MCP workspace: `D:\\PhpstormProjects\\www\\Walleting`, branch `task/walleting-ledger-foundation`; pre-existing unrelated dirty state was preserved without reset, stash, clean, overwrite, or sibling mutation: deleted `.gating/README.md`, generated/untracked `.console-mcp/`, and untracked `PRODUCT_CAPABILITY_AUDIT.adoc`.
+- Read the task specification, Walleting README/Composer/runtime/test/journal surfaces, supplied historical code-style RED, current migration, and supplied/current Inspecting evidence.
+- Read mandatory Objecting, Cruding, Viewing, Interfacing and Gating responsibility/package contracts plus Canonization README/AGENTS and normative Canon018, Canon019, Canon021, Canon022, Canon052 and Canon054 rule texts.
+- Target-to-canon mapping remains: `walleting/wallet` -> `App\\Walleting\\ => src/` with Wallet-prefixed component types; role-first Symfony topology with no `Domain/Application/Infrastructure/Port/Adapter/Adaptor` roots; generic CRUD stays in Cruding; standalone platform dependencies and Failing registration remain direct; consumer `.gating/` stays artifact-only; current Doctrine identifiers remain lower_snake_case.
+- Market/enterprise baseline remains immutable double-entry accounting, atomic balanced writes, idempotency, balance protection, auditable correction, reconciliation and operational diagnostics as RC expectations. Programmable flow DSLs, wider rails, split-tender/refund policy and richer operator UX remain growth work.
+- The supplied code-style RED names only `migrations/Version20260923102500.php`; the current migration is formatter-compliant and fresh quality checks report 0/198 formatter findings.
+
+### Material implementation
+
+- Reduced the current `WalletPostingSloStateCommand::execute()` long-method/complexity findings by extracting option validation, error rendering, result payload/human rendering and exit mapping while preserving option names/defaults, policy/service calls, JSON keys, human output and exit semantics.
+- During this execution window that coherent state-command change was integrated concurrently as branch history commit `fba7016b04c8376f10042f7c283032ce90cb0508` (`refactor Walleting SLO state command`); this task did not duplicate or overwrite that integration.
+- Continued the same safe CLI-diagnostics workstream with `WalletPostingSloTrendCommand::execute()`, extracting validation, error/human rendering and exit mapping while preserving short/long snapshots, burn-rate policy inputs, JSON payload keys, operator messages and exit semantics.
+- No ledger posting, balance, schema, provider, reconciliation, migration, browser/mobile, or sibling-repository behavior was changed.
+
+### Verification evidence
+
+- Changed-PHP syntax: GREEN.
+- `composer validate --no-interaction --strict --check-lock`: GREEN.
+- Canonical formatter/PHPStan/container/Doctrine/unit contour: GREEN; PHP-CS-Fixer 0/198, repository-configured PHPStan no errors, container lint GREEN, Doctrine mapping GREEN, PHPUnit 115 tests / 344 assertions GREEN. The synchronous aggregate wrapper exceeded its transport window after already-green substeps, so the remaining Gating stage was executed separately.
+- `composer gate`: GREEN; 10 rules, 0 failed, 0 warning, 3 profile-related skips.
+- `composer validate:prod`: GREEN.
+- `composer schema:parity`: GREEN.
+- Repository-owned isolated PostgreSQL runner: first attempt hit the known generated test-cache collision before migrations and dropped its isolated DB; bounded retry GREEN. Final post-change run is GREEN: 30 migrations / 297 SQL queries, production-readiness JSON all `ok:true`, 53 integration tests / 491 assertions, exit code 0, isolated DB dropped.
+- Post-state-command Inspecting reduced php-structure findings 19 -> 17 and max complexity 23 -> 22.
+- Final post-trend-command Inspecting report: `D:\\PhpstormProjects\\www\\Inspecting\\.inspecting\\reports\\D--PhpstormProjects-www-Walleting-20261004-011857.json`; php-structure findings reduced 17 -> 15 and max complexity 22 -> 17. Both SLO command `execute()` findings are absent.
+- Inspecting still emits the established 95 high test-scope PHPStan adapter findings while recording `phpstan.errors: 0`; Walleting's canonical repository-configured PHPStan is GREEN, so this remains external analyzer scope/configuration drift rather than a Walleting source regression.
+- No user-observable browser/mobile UI changed; Panther/Playwright screenshots are not applicable.
+
+### Workstreams
+
+- RC-critical: integrate only the verified SLO trend command plus this factual journal entry, preserving unrelated dirty paths.
+- Growth (non-blocking): remaining 15 medium Inspecting structural/design observations should be addressed incrementally with financial regression protection; product growth remains split tender, refund-to-wallet, expiry/restriction policy, broader provider rails, programmable money-flow composition and richer reconciliation/operator UX.
+
+Что имеем? The historical formatter RED remains closed, two additional SLO CLI complexity pairs are removed, deterministic and clean-database runtime acceptance is GREEN, and Inspecting structural debt is reduced from 19 to 15 without changing financial semantics.
+
+Что осталось до RC? Final Git ownership check, signed commit/push of only `WalletPostingSloTrendCommand.php` plus this task journal entry, then verify HEAD/upstream synchronization. No Walleting-owned RC blocker remains in this execution scope.
+
 ## engine-20260911151414-walleting-3cf49d — iteration 1 baseline
 
 ### Scope and repository state
