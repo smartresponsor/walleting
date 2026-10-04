@@ -1,5 +1,44 @@
 # CMCP orchestration journal
 
+## 2026-10-03 — engine-20261004043510-walleting-3e4086
+
+### Reconnaissance and RC static-quality hardening
+
+- Authoritative execution plane: Console MCP workspace `D:\\PhpstormProjects\\www\\Walleting`, branch `task/walleting-ledger-foundation`, baseline HEAD `d0540bb127b0785f4c9677eb16ccc6e00cbd35f7`; preserved pre-existing deleted `.gating/README.md`, generated/untracked `.console-mcp/`, and untracked `PRODUCT_CAPABILITY_AUDIT.adoc` without reset, stash, clean, overwrite, or sibling mutation.
+- Read the complete execution specification; Walleting README, development/production Composer manifests, runtime/test/production/outbox/Messenger surfaces, supplied historical code-style RED, current same-day Inspecting evidence, mandatory Objecting/Cruding/Viewing/Interfacing/Gating contracts, and Canonization architecture canon including Canon019, Canon020, Canon021, Canon022, Canon025, Canon026, Canon039, Canon041, and Canon067.
+- Target mapping remains `walleting/wallet` -> `App\\Walleting\\ => src/`, role-first Symfony topology, no Domain/Application/Infrastructure/Port/Adapter/Adaptor roots, generic application CRUD owned by Cruding, and explicit platform dependencies.
+- Market/enterprise RC baseline remains immutable double-entry accounting, atomic balanced writes, integer money, idempotency, concurrency safety, auditability, reconciliation, and operator diagnostics. Split tender, refund-to-wallet, expiry/restriction policy, broader rails, and richer finance UX remain growth work.
+- The supplied historical formatter RED for `migrations/Version20260923102500.php` is stale against the current source. Latest same-day Inspecting evidence (`D:\\PhpstormProjects\\www\\Inspecting\\.inspecting\\reports\\D--PhpstormProjects-www-Walleting-20261004-042239.json`) contains seven broad medium production-structure observations plus 75 test-scope PHPStan adapter findings while `phpstan.errors=0`; maximum production complexity is 14.
+- Selected a bounded test-scope correctness hardening in `tests/Integration/PostgreSqlFeeRefundTest.php`: explicitly narrow the Symfony container entity-manager service and replace stale PHPDoc aliases with current `WalletAccount` / `WalletLedgerTransaction` types. No production source, ledger semantics, schema, migration, provider, reconciliation, routing, browser/mobile, or sibling repository behavior is changed.
+
+### Workstreams
+
+- RC-critical: verify the test-contract hardening through repository deterministic gates and PostgreSQL acceptance, refresh Inspecting because the inspected test scope changed, then publish only the coherent test+journal surface.
+- Growth (non-blocking): the seven remaining broad public-API/cohesion observations require contract-led redesign rather than speculative RC churn; product growth remains split tender, refund-to-wallet, expiry/restrictions, broader provider rails, and richer reconciliation/operator UX.
+
+Что имеем? The historical formatter RED is already closed, current production structural debt has no remaining narrow complexity target, and one safe test-scope static-analysis cluster has been materially corrected without changing financial behavior.
+
+Что осталось до RC? Run formatter/static/unit/container/Gating and clean-database PostgreSQL acceptance, refresh Inspecting, then reconcile Git and publish only task-owned files while preserving unrelated dirty/generated paths.
+
+### Verification and acceptance closure
+
+- Changed PHP syntax: GREEN.
+- `composer validate --no-interaction --strict --check-lock`: GREEN.
+- `composer cs:check`: GREEN, 0/201 fixable files.
+- Repository-configured `composer stan`: GREEN, no errors.
+- `composer lint`: GREEN; Symfony container and Doctrine mapping are valid.
+- `composer test`: GREEN, 118 tests / 356 assertions.
+- `composer gate`: GREEN, 10 rules with 0 failed / 0 warning and three profile-related skips.
+- `composer validate:prod`: GREEN.
+- `composer schema:parity`: GREEN; migrations are current and Doctrine parity is synchronized.
+- `composer test:integration`: GREEN; PostgreSQL remains at migration 30/30, production-readiness JSON is all `ok:true`, and 53 integration tests / 505 assertions pass.
+- Post-mutation Inspecting report: `D:\\PhpstormProjects\\www\\Inspecting\\.inspecting\\reports\\D--PhpstormProjects-www-Walleting-20261004-044616.json`. Test-scope PHPStan adapter findings decreased from 75 to 54; the `PostgreSqlFeeRefundTest` type/property findings are absent. Production php-structure observations remain the same seven medium findings with maximum complexity 14 and `phpstan.errors=0`.
+- No user-observable UI/browser/mobile surface changed; Panther/Playwright screenshots and visual artifacts are not applicable.
+
+Что имеем? The bounded integration-test contract hardening materially reduced external static-analysis noise (75 -> 54 findings), while all canonical deterministic and PostgreSQL acceptance gates remain GREEN and production structural findings are unchanged.
+
+Что осталось до RC? Only Git ownership reconciliation and publication of `tests/Integration/PostgreSqlFeeRefundTest.php` plus this factual journal entry; preserve `.gating/README.md`, `.console-mcp/`, and `PRODUCT_CAPABILITY_AUDIT.adoc` outside task integration.
+
 ## 2026-10-03 — engine-20261004042627-walleting-701600
 
 ### Reconnaissance, RC acceptance, and publication checkpoint

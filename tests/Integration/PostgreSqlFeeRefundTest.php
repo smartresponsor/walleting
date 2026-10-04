@@ -6,6 +6,7 @@ namespace App\Walleting\Tests\Integration;
 
 use App\Walleting\Entity\Wallet;
 use App\Walleting\Entity\WalletAccount;
+use App\Walleting\Entity\WalletLedgerTransaction;
 use App\Walleting\Enum\WalletAccountCategory;
 use App\Walleting\Enum\WalletTransactionType;
 use App\Walleting\Policy\Posting\WalletPostingRetryPolicy;
@@ -31,7 +32,9 @@ final class PostgreSqlFeeRefundTest extends KernelTestCase
     protected function setUp(): void
     {
         self::bootKernel();
-        $this->entityManager = self::getContainer()->get('doctrine.orm.entity_manager');
+        $entityManager = self::getContainer()->get('doctrine.orm.entity_manager');
+        self::assertInstanceOf(EntityManagerInterface::class, $entityManager);
+        $this->entityManager = $entityManager;
         $connection = $this->entityManager->getConnection();
         $outbox = new WalletOutboxService($this->entityManager, $connection);
         $this->postingService = new WalletPostingService($this->entityManager, $outbox, new WalletPostingDbalExecutor($connection, $outbox, new WalletPostingRetryPolicy(), new WalletNullPostingTelemetry()));
@@ -90,7 +93,7 @@ final class PostgreSqlFeeRefundTest extends KernelTestCase
         ]);
     }
 
-    /** @return array{Account,Account,Account,Account,\App\Walleting\Entity\LedgerTransaction} */
+    /** @return array{WalletAccount, WalletAccount, WalletAccount, WalletAccount, WalletLedgerTransaction} */
     private function feeCapture(string $prefix): array
     {
         $wallet = new Wallet('vendor', $prefix.'-wallet');
