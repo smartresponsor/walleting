@@ -717,6 +717,44 @@ Required local closure:
 
 Что осталось до RC? Verify the outbox-health refactor, refresh Inspecting after mutation, inspect final Git ownership/state, and commit/publish only coherent task-owned changes if all required evidence is green.
 
+## 2026-10-03 — engine-20261003235736-walleting-828986
+
+### Reconnaissance and baseline
+
+- Authoritative Console MCP workspace: `D:\\PhpstormProjects\\www\\Walleting`, branch `task/walleting-ledger-foundation`; existing dirty paths were preserved without reset, stash, clean, overwrite, or sibling mutation.
+- Read the complete execution specification, Walleting README/Composer/journal/capability audit/current outbox-health command, supplied historical code-style RED, and supplied Inspecting baseline.
+- Read current Objecting, Cruding, Viewing, Interfacing and Gating package/responsibility contracts. Read current Canonization README plus normative Canon018, Canon019, Canon021 and Canon022 rule texts; mapping remains `walleting/wallet` -> `App\\Walleting\\ => src/`, role-first Symfony structure, generic CRUD outside Walleting, and direct standalone platform baseline dependencies.
+- Market/enterprise maturity baseline remains immutable double-entry accounting, atomic balanced movement, idempotency, reconciliation, auditable correction, and operational diagnostics as RC expectations. Programmable flow DSLs, wider provider rails, split-tender/refund policy, and richer operator UX remain growth work.
+- The historical code-style RED only identified `migrations/Version20260923102500.php`; fresh `composer cs:check` is GREEN across 198 files, so the supplied RED no longer reproduces.
+
+### Material implementation accepted
+
+- The current `WalletOutboxHealthCommand` decomposition is retained: validation, error rendering, and human-readable rendering are extracted into private helpers while CLI options, JSON keys, service calls, dead-letter guidance, and exit semantics remain stable.
+- `deadLetters()` output is normalized with `array_values()` before list-oriented rendering, preserving the existing JSON/list contract while making the list shape explicit for static analysis and rendering.
+- No ledger posting, balance, schema, reconciliation, provider, migration, browser/mobile, or sibling-repository behavior was changed.
+
+### Verification
+
+- Changed-PHP syntax: GREEN.
+- `composer cs:check`: GREEN, 0/198 fixable files.
+- Strict Composer lock validation: GREEN.
+- Aggregate quality reached formatter, repository-configured PHPStan, container lint, Doctrine mapping, and PHPUnit 115 tests / 344 assertions GREEN; the synchronous wrapper returned without a final aggregate exit while entering Gating, so Gating was executed separately.
+- `composer gate`: GREEN, 10 rules, 0 failed, 0 warning, 3 profile-related skips.
+- `composer validate:prod`: GREEN.
+- `composer schema:parity`: GREEN.
+- Post-mutation Inspecting completed at `D:\\PhpstormProjects\\www\\Inspecting\\.inspecting\\reports\\D--PhpstormProjects-www-Walleting-20261004-000502.json`. PHP-structure findings are now 22 medium observations, down from the supplied 25 baseline and from the 23-finding same-day state after prior command/serializer work; the `WalletOutboxHealthCommand::execute()` complexity finding is removed and max complexity remains 23.
+- Inspecting also reports 95 high PHPStan findings on test scope, while Walleting's canonical repository-configured PHPStan is GREEN. This remains known Inspecting adapter/scope drift rather than accepted Walleting source failure.
+- No user-observable UI changed; behavioral screenshot evidence is not applicable.
+
+### Git ownership
+
+- Coherent value-bearing task surface: `src/Command/WalletOutboxHealthCommand.php` plus the orchestration journal documenting the same refactor and verification.
+- Preserve outside this commit: deleted `.gating/README.md`, generated `.console-mcp/`, and untracked `PRODUCT_CAPABILITY_AUDIT.adoc`.
+
+Что имеем? The stale static-quality RED is closed, the outbox-health complexity finding is removed, and Walleting's canonical deterministic acceptance contour is GREEN for this change.
+
+Что осталось до RC? Commit and publish only the coherent outbox-health source plus journal change, then re-inspect final HEAD/upstream/worktree state. Remaining Inspecting medium observations are separate growth-quality debt, not blockers for this bounded RC task.
+
 ### Verification and acceptance closure
 
 - `php -l` for the changed PHP file: GREEN.
