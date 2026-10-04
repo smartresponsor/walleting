@@ -33,20 +33,17 @@ final class WalletOutboxHealthCommand extends Command
         $maxAge = filter_var($input->getOption('max-age'), FILTER_VALIDATE_INT);
         $deadLimit = filter_var($input->getOption('dead-limit'), FILTER_VALIDATE_INT);
         $json = (bool) $input->getOption('json');
-        if (!is_int($maxAge) || $maxAge < 1 || !is_int($deadLimit) || $deadLimit < 1 || $deadLimit > 500) {
-            $output->writeln($json ? '{"ok":false,"error":"Invalid max-age or dead-limit."}' : '<error>Invalid max-age or dead-limit.</error>');
-
-            return Command::INVALID;
+        $validationError = $this->validationError($maxAge, $deadLimit);
+        if (null !== $validationError) {
+            return $this->writeError($output, $json, $validationError);
         }
+        assert(is_int($maxAge) && is_int($deadLimit));
 
         try {
             $snapshot = $this->outboxService->healthSnapshot();
-            $deadLetters = $this->outboxService->deadLetters($deadLimit);
+            $deadLetters = array_values($this->outboxService->deadLetters($deadLimit));
         } catch (\Throwable $exception) {
-            $error = trim($exception->getMessage()) ?: $exception::class;
-            $output->writeln($json ? json_encode(['ok' => false, 'error' => $error], JSON_THROW_ON_ERROR) : '<error>'.$error.'</error>');
-
-            return Command::INVALID;
+            return $this->writeError($output, $json, trim($exception->getMessage()) ?: $exception::class);
         }
 
         $healthy = $snapshot->isHealthy($maxAge);
@@ -60,22 +57,64 @@ final class WalletOutboxHealthCommand extends Command
         if ($json) {
             $output->writeln(json_encode($data, JSON_THROW_ON_ERROR));
         } else {
-            $io = new SymfonyStyle($input, $output);
-            $io->definitionList(
-                ['Status counts' => json_encode($snapshot->statusCounts, JSON_THROW_ON_ERROR)],
-                ['Oldest dispatchable age' => null === $snapshot->oldestDispatchableAgeSeconds ? 'none' : $snapshot->oldestDispatchableAgeSeconds.' seconds'],
-                ['Dead letters' => (string) $snapshot->deadCount],
+            $this->writeHumanReadableSnapshot(
+                $input,
+                $output,
+                $snapshot->statusCounts,
+                $snapshot->oldestDispatchableAgeSeconds,
+                $snapshot->deadCount,
+                $healthy,
+                $deadLetters,
             );
-            $healthy ? $io->success('Outbox is healthy.') : $io->error('Outbox health thresholds are exceeded.');
-            if ([] !== $deadLetters) {
-                $io->table(array_keys($deadLetters[0]), array_map('array_values', $deadLetters));
-                $io->section('Operator next actions');
-                foreach ($deadLetters as $deadLetter) {
-                    $io->writeln(sprintf('Inspect %s: walleting:outbox:inspect --id=%s', $deadLetter['id'], $deadLetter['id']));
-                }
-            }
         }
 
         return $healthy ? Command::SUCCESS : Command::FAILURE;
+    }
+
+    private function validationError(int|false $maxAge, int|false $deadLimit): ?string
+    {
+        if (!is_int($maxAge) || $maxAge < 1 || !is_int($deadLimit) || $deadLimit < 1 || $deadLimit > 500) {
+            return 'Invalid max-age or dead-limit.';
+        }
+
+        return null;
+    }
+
+    private function writeError(OutputInterface $output, bool $json, string $error): int
+    {
+        $output->writeln($json ? json_encode(['ok' => false, 'error' => $error], JSON_THROW_ON_ERROR) : '<error>'.$error.'</error>');
+
+        return Command::INVALID;
+    }
+
+    /**
+     * @param array<string, int>         $statusCounts
+     * @param list<array<string, mixed>> $deadLetters
+     */
+    private function writeHumanReadableSnapshot(
+        InputInterface $input,
+        OutputInterface $output,
+        array $statusCounts,
+        ?int $oldestDispatchableAgeSeconds,
+        int $deadCount,
+        bool $healthy,
+        array $deadLetters,
+    ): void {
+        $io = new SymfonyStyle($input, $output);
+        $io->definitionList(
+            ['Status counts' => json_encode($statusCounts, JSON_THROW_ON_ERROR)],
+            ['Oldest dispatchable age' => null === $oldestDispatchableAgeSeconds ? 'none' : $oldestDispatchableAgeSeconds.' seconds'],
+            ['Dead letters' => (string) $deadCount],
+        );
+        $healthy ? $io->success('Outbox is healthy.') : $io->error('Outbox health thresholds are exceeded.');
+        if ([] === $deadLetters) {
+            return;
+        }
+
+        $io->table(array_keys($deadLetters[0]), array_map('array_values', $deadLetters));
+        $io->section('Operator next actions');
+        foreach ($deadLetters as $deadLetter) {
+            $io->writeln(sprintf('Inspect %s: walleting:outbox:inspect --id=%s', $deadLetter['id'], $deadLetter['id']));
+        }
     }
 }
