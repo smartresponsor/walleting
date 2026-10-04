@@ -6,6 +6,8 @@ namespace App\Walleting\Command;
 
 use App\Walleting\Policy\Posting\WalletPostingSloPolicy;
 use App\Walleting\Service\WalletPostingHealthService;
+use App\Walleting\ValueObject\Posting\WalletPostingHealthAssessment;
+use App\Walleting\ValueObject\Posting\WalletPostingHealthSnapshot;
 use App\Walleting\ValueObject\Posting\WalletPostingHealthStatus;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -54,11 +56,16 @@ final class WalletPostingHealthCommand extends Command
         $criticalFailureRate = $this->rateOption($input, 'critical-failure-rate');
         $json = (bool) $input->getOption('json');
 
-        if (!is_int($window) || $window < 60 || $window > 604800 || !is_int($minimumSamples) || !is_int($degradedP95) || !is_int($criticalP95) || !is_int($degradedContention) || !is_int($criticalContention)) {
-            $output->writeln($json ? '{"ok":false,"error":"Invalid posting SLO options."}' : '<error>Invalid posting SLO options.</error>');
-
-            return Command::INVALID;
+        if (!$this->validOptions($window, $minimumSamples, $degradedP95, $criticalP95, $degradedContention, $criticalContention)) {
+            return $this->renderError($output, $json, 'Invalid posting SLO options.');
         }
+
+        assert(is_int($window));
+        assert(is_int($minimumSamples));
+        assert(is_int($degradedP95));
+        assert(is_int($criticalP95));
+        assert(is_int($degradedContention));
+        assert(is_int($criticalContention));
 
         try {
             $policy = new WalletPostingSloPolicy(
@@ -76,12 +83,44 @@ final class WalletPostingHealthCommand extends Command
             $assessment = $policy->assess($snapshot);
         } catch (\Throwable $exception) {
             $error = trim($exception->getMessage()) ?: $exception::class;
-            $output->writeln($json ? json_encode(['ok' => false, 'error' => $error], JSON_THROW_ON_ERROR) : '<error>'.$error.'</error>');
 
-            return Command::INVALID;
+            return $this->renderError($output, $json, $error);
         }
 
-        $data = [
+        $data = $this->resultData($assessment, $snapshot, $policy);
+
+        if ($json) {
+            $output->writeln(json_encode($data, JSON_THROW_ON_ERROR));
+        } else {
+            $this->renderHumanResult($input, $output, $assessment, $snapshot, $policy);
+        }
+
+        return $this->exitCode($assessment->status);
+    }
+
+    private function validOptions(mixed $window, mixed $minimumSamples, mixed $degradedP95, mixed $criticalP95, mixed $degradedContention, mixed $criticalContention): bool
+    {
+        return is_int($window)
+            && $window >= 60
+            && $window <= 604800
+            && is_int($minimumSamples)
+            && is_int($degradedP95)
+            && is_int($criticalP95)
+            && is_int($degradedContention)
+            && is_int($criticalContention);
+    }
+
+    private function renderError(OutputInterface $output, bool $json, string $error): int
+    {
+        $output->writeln($json ? json_encode(['ok' => false, 'error' => $error], JSON_THROW_ON_ERROR) : '<error>'.$error.'</error>');
+
+        return Command::INVALID;
+    }
+
+    /** @return array<string, mixed> */
+    private function resultData(WalletPostingHealthAssessment $assessment, WalletPostingHealthSnapshot $snapshot, WalletPostingSloPolicy $policy): array
+    {
+        return [
             'ok' => WalletPostingHealthStatus::Healthy === $assessment->status,
             'status' => $assessment->status->value,
             'reasons' => $assessment->reasons,
@@ -109,30 +148,32 @@ final class WalletPostingHealthCommand extends Command
                 'critical_contention' => $policy->criticalContentionCount,
             ],
         ];
+    }
 
-        if ($json) {
-            $output->writeln(json_encode($data, JSON_THROW_ON_ERROR));
-        } else {
-            $io = new SymfonyStyle($input, $output);
-            $io->definitionList(
-                ['Status' => $assessment->status->value],
-                ['Reasons' => [] === $assessment->reasons ? 'none' : implode(', ', $assessment->reasons)],
-                ['Window' => $snapshot->windowSeconds.' seconds'],
-                ['Executions' => $snapshot->executionCount.' / minimum '.$policy->minimumSamples],
-                ['Completed / failed' => $snapshot->completedCount.' / '.$snapshot->failedCount],
-                ['Retry rate' => sprintf('%.2f%%', $snapshot->retryRate * 100)],
-                ['Failure rate' => sprintf('%.2f%%', $snapshot->failureRate * 100)],
-                ['p95 latency' => null === $snapshot->p95LatencyMilliseconds ? 'none' : $snapshot->p95LatencyMilliseconds.' ms'],
-                ['Lock timeouts / deadlocks' => $snapshot->lockTimeoutCount.' / '.$snapshot->deadlockCount],
-            );
-            match ($assessment->status) {
-                WalletPostingHealthStatus::Healthy => $io->success('Posting SLO is healthy.'),
-                WalletPostingHealthStatus::Degraded => $io->warning('Posting SLO is degraded.'),
-                WalletPostingHealthStatus::Critical => $io->error('Posting SLO is critical.'),
-            };
-        }
+    private function renderHumanResult(InputInterface $input, OutputInterface $output, WalletPostingHealthAssessment $assessment, WalletPostingHealthSnapshot $snapshot, WalletPostingSloPolicy $policy): void
+    {
+        $io = new SymfonyStyle($input, $output);
+        $io->definitionList(
+            ['Status' => $assessment->status->value],
+            ['Reasons' => [] === $assessment->reasons ? 'none' : implode(', ', $assessment->reasons)],
+            ['Window' => $snapshot->windowSeconds.' seconds'],
+            ['Executions' => $snapshot->executionCount.' / minimum '.$policy->minimumSamples],
+            ['Completed / failed' => $snapshot->completedCount.' / '.$snapshot->failedCount],
+            ['Retry rate' => sprintf('%.2f%%', $snapshot->retryRate * 100)],
+            ['Failure rate' => sprintf('%.2f%%', $snapshot->failureRate * 100)],
+            ['p95 latency' => null === $snapshot->p95LatencyMilliseconds ? 'none' : $snapshot->p95LatencyMilliseconds.' ms'],
+            ['Lock timeouts / deadlocks' => $snapshot->lockTimeoutCount.' / '.$snapshot->deadlockCount],
+        );
+        match ($assessment->status) {
+            WalletPostingHealthStatus::Healthy => $io->success('Posting SLO is healthy.'),
+            WalletPostingHealthStatus::Degraded => $io->warning('Posting SLO is degraded.'),
+            WalletPostingHealthStatus::Critical => $io->error('Posting SLO is critical.'),
+        };
+    }
 
-        return match ($assessment->status) {
+    private function exitCode(WalletPostingHealthStatus $status): int
+    {
+        return match ($status) {
             WalletPostingHealthStatus::Healthy => Command::SUCCESS,
             WalletPostingHealthStatus::Degraded => self::EXIT_DEGRADED,
             WalletPostingHealthStatus::Critical => Command::FAILURE,

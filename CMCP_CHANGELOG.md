@@ -853,3 +853,44 @@ Required local closure:
 
 Что осталось до RC? Only Git closure for this coherent source+journal change remains. Preserve the unrelated `.gating/README.md` deletion, generated `.console-mcp/`, and pre-existing `PRODUCT_CAPABILITY_AUDIT.adoc` outside the commit; remaining medium Inspecting observations stay a separate growth-quality workstream.
 
+## 2026-10-03 — engine-20261004003436-walleting-4adb65
+
+### Reconnaissance baseline and canon mapping
+
+- Authoritative Console MCP workspace resolved to `D:\\PhpstormProjects\\www\\Walleting`, branch `task/walleting-ledger-foundation`, HEAD `4774a4faf30089b2f9b5a557509f862bfd9326d7`, upstream 0 ahead / 0 behind before this pass.
+- Preserved the pre-existing dirty paths without reset, stash, clean, overwrite, or sibling mutation: deleted `.gating/README.md`, generated/untracked `.console-mcp/`, and untracked `PRODUCT_CAPABILITY_AUDIT.adoc`.
+- Consumed the supplied CanonScanning code-style RED and Inspecting fingerprint baseline. The historical formatter RED names only `migrations/Version20260923102500.php`; current repository evidence already showed that failure no longer reproduces. The latest post-mutation Inspecting report contained 21 medium php-structure observations plus the known generic test-scope PHPStan adapter mismatch.
+- Read current Walleting README/Composer/product audit, Objecting, Cruding, Viewing, Interfacing and Gating package contracts, and Canonization textual rules Canon005, Canon007, Canon008, Canon009, Canon017, Canon018 and Canon019.
+- Target mapping: preserve `walleting/wallet` -> `App\\Walleting\\ => src/`, literal PSR-4 identity, role-first Symfony topology, explicit foreign package dependencies, standalone component/host separation, current runtime documentation, and no Domain/Application/Infrastructure/Port/Adapter/Adaptor roots.
+- Market/enterprise maturity baseline remains immutable double-entry accounting, atomic balanced writes, idempotency, balance protection, reconciliation, auditable correction, and operator diagnostics as RC expectations. Wider rails, programmable transaction DSLs, split-tender/refund policy and richer operator UX remain growth work.
+
+### RC-critical workstream
+
+- Selected the current `WalletPostingHealthCommand::execute()` long-method/high-complexity observation for a bounded diagnostics-only refactor.
+- Extracted option validation, error rendering, result payload shaping, human rendering, and status-to-exit mapping into typed private helpers.
+- Preserved command options, validation bounds, policy construction, snapshot query, JSON keys, human-readable fields/messages, exception handling and exit semantics.
+- No ledger posting, balance, schema, provider, reconciliation, migration, browser/mobile, or sibling-repository behavior was changed.
+
+### Initial verification
+
+- Changed-PHP syntax: GREEN.
+- `composer quality`: GREEN; PHP-CS-Fixer 0/198, repository-configured PHPStan no errors, Symfony container lint GREEN, Doctrine mapping GREEN, PHPUnit 115 tests / 344 assertions, Gating 10 rules with 0 failed / 0 warning and 3 profile-related skips.
+
+Что имеем? The historical formatter RED remains closed, the posting-health command is decomposed without financial-semantic changes, and the canonical deterministic quality gate is GREEN.
+
+Что осталось до RC? Run production-manifest/schema/integration verification, refresh Inspecting after this source mutation, then reconcile and publish only the coherent source+journal change while preserving unrelated dirty paths.
+
+### Verification and acceptance closure
+
+- `composer validate:prod`: GREEN.
+- `composer schema:parity`: GREEN; migrations are up to date and Doctrine schema parity is synchronized.
+- `composer test:integration`: GREEN with exit code 0; PostgreSQL is at migration 30/30, production-readiness JSON reports every check `ok:true`, and the integration suite reports 53 tests / 491 assertions.
+- Post-mutation Inspecting completed at `D:\\PhpstormProjects\\www\\Inspecting\\.inspecting\\reports\\D--PhpstormProjects-www-Walleting-20261004-004722.json`.
+- PHP-structure observations decreased from 21 to 19 medium findings. Both prior findings for `WalletPostingHealthCommand::execute()` (98-line long method and complexity 22) are absent, confirming the selected remediation is closed.
+- Inspecting still reports the known 95 high test-scope PHPStan adapter findings while its aggregate metric records `phpstan.errors: 0`; Walleting's canonical repository-configured PHPStan is GREEN in `composer quality`. This remains external Inspecting scope/configuration drift, not an accepted Walleting source failure.
+- No browser/mobile/user-visible UI surface changed, so Panther/Playwright screenshots and visual behavioral evidence are not applicable.
+
+Что имеем? The posting-health diagnostic refactor removes two current structural findings, preserves behavior, and passes canonical deterministic plus PostgreSQL runtime acceptance.
+
+Что осталось до RC? Only Git closure remains for `src/Command/WalletPostingHealthCommand.php` plus this task journal entry. Keep deleted `.gating/README.md`, generated `.console-mcp/`, and `PRODUCT_CAPABILITY_AUDIT.adoc` outside the commit.
+
