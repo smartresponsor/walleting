@@ -22,6 +22,18 @@
 
 Что осталось до RC? Re-run quality and post-mutation Inspecting after the concurrency-test repair, execute PostgreSQL integration acceptance, then commit/publish only the coherent test+journal surface while preserving unrelated dirty/generated paths.
 
+### Verification and integration closure
+
+- Repeated `composer quality` after the concurrency-test repair is GREEN: PHP-CS-Fixer 0/201, repository PHPStan no errors, Symfony container/Doctrine mapping GREEN, PHPUnit 118 tests / 356 assertions, Gating 0 failed / 0 warning.
+- Repository-owned `bin/bootstrap-local-integration.ps1` is GREEN on a fresh isolated PostgreSQL database: 30 migrations / 297 SQL queries, production-readiness JSON all `ok:true`, 53 integration tests / 502 assertions, exit code 0, database dropped.
+- Final post-mutation Inspecting report: `D:\\PhpstormProjects\\www\\Inspecting\\.inspecting\\reports\\D--PhpstormProjects-www-Walleting-20261004-042239.json`. Test-scope adapter findings decreased 77 -> 75 after the concurrency repair; structural observations remain seven medium findings with maximum complexity 14 and `phpstan.errors` remains 0.
+- Residual Inspecting high findings remain test-scope adapter/configuration drift relative to Walleting's canonical repository PHPStan, which is GREEN; broad remaining test annotation cleanup is a separate bounded quality workstream, not a reason to alter financial runtime behavior.
+- No user-observable UI changed; visual/browser evidence remains not applicable.
+
+Что имеем? The static-quality repair is deterministic and behaviorally verified: canonical quality and clean-database PostgreSQL integration are GREEN, and external Inspecting findings were reduced without production semantic changes.
+
+Что осталось до RC? Only Git closure for `tests/Contract/PostingExecutorContractTest.php`, `tests/Integration/PostgreSqlConcurrencyTest.php`, and this factual journal entry, preserving unrelated `.gating/README.md`, `.console-mcp/`, and `PRODUCT_CAPABILITY_AUDIT.adoc` outside the commit.
+
 ## 2026-10-03 — engine-20261004040405-walleting-ec10df
 
 ### Reconnaissance, test-contract hardening, and RC verification

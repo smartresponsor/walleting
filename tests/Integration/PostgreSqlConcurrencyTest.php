@@ -19,7 +19,9 @@ final class PostgreSqlConcurrencyTest extends KernelTestCase
     protected function setUp(): void
     {
         self::bootKernel();
-        $this->connection = self::getContainer()->get('doctrine.dbal.default_connection');
+        $connection = self::getContainer()->get('doctrine.dbal.default_connection');
+        self::assertInstanceOf(Connection::class, $connection);
+        $this->connection = $connection;
         self::assertInstanceOf(\Doctrine\DBAL\Platforms\PostgreSQLPlatform::class, $this->connection->getDatabasePlatform());
         $this->connection->executeStatement('DELETE FROM wallet_outbox_requeue_audit');
         $this->connection->executeStatement('DELETE FROM wallet_outbox_message');
@@ -141,7 +143,6 @@ final class PostgreSqlConcurrencyTest extends KernelTestCase
             'id' => $walletId,
             'owner_type' => 'concurrency',
             'owner_id' => Uuid::v7()->toRfc4122(),
-            'status' => 'active',
             'uuid' => '\\x'.str_replace('-', '', $walletId),
             'slug' => 'wallet:'.$walletId,
             'first_title' => 'concurrency',
