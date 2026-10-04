@@ -14,6 +14,36 @@ final readonly class WalletFeePostingComposer
     /** @param list<WalletFeeAllocation> $fees */
     public function compose(WalletAccount $source, WalletAccount $netDestination, int $grossAmountMinor, array $fees): WalletFeePostingPlan
     {
+        $currency = $this->settlementCurrency($source, $netDestination, $grossAmountMinor);
+        [$feeAmountMinor, $feeMetadata, $feeInstructions] = $this->feePostingData(
+            $fees,
+            $currency,
+            $grossAmountMinor,
+            $source,
+            $netDestination,
+        );
+        $netAmountMinor = $grossAmountMinor - $feeAmountMinor;
+
+        return new WalletFeePostingPlan(
+            [
+                new WalletPostingInstruction($source, -$grossAmountMinor),
+                new WalletPostingInstruction($netDestination, $netAmountMinor),
+                ...$feeInstructions,
+            ],
+            [
+                'gross_amount_minor' => $grossAmountMinor,
+                'net_amount_minor' => $netAmountMinor,
+                'fee_amount_minor' => $feeAmountMinor,
+                'fees' => $feeMetadata,
+            ],
+            $grossAmountMinor,
+            $netAmountMinor,
+            $feeAmountMinor,
+        );
+    }
+
+    private function settlementCurrency(WalletAccount $source, WalletAccount $netDestination, int $grossAmountMinor): string
+    {
         if ($grossAmountMinor <= 0) {
             throw new \InvalidArgumentException('Gross settlement amount must be positive.');
         }
@@ -25,11 +55,21 @@ final readonly class WalletFeePostingComposer
             throw new \InvalidArgumentException('Settlement accounts must use one currency.');
         }
 
+        return $currency;
+    }
+
+    /**
+     * @param list<WalletFeeAllocation> $fees
+     *
+     * @return array{int, list<array{code: string, account_id: string, amount_minor: int}>, list<WalletPostingInstruction>}
+     */
+    private function feePostingData(array $fees, string $currency, int $grossAmountMinor, WalletAccount $source, WalletAccount $netDestination): array
+    {
         $feeAmountMinor = 0;
         $codes = [];
         $accounts = [$source->id()->toRfc4122() => true, $netDestination->id()->toRfc4122() => true];
         $feeMetadata = [];
-        $instructions = [new WalletPostingInstruction($source, -$grossAmountMinor)];
+        $instructions = [];
 
         foreach ($fees as $fee) {
             if (!$fee instanceof WalletFeeAllocation) {
@@ -60,20 +100,6 @@ final readonly class WalletFeePostingComposer
             ];
         }
 
-        $netAmountMinor = $grossAmountMinor - $feeAmountMinor;
-        array_splice($instructions, 1, 0, [new WalletPostingInstruction($netDestination, $netAmountMinor)]);
-
-        return new WalletFeePostingPlan(
-            $instructions,
-            [
-                'gross_amount_minor' => $grossAmountMinor,
-                'net_amount_minor' => $netAmountMinor,
-                'fee_amount_minor' => $feeAmountMinor,
-                'fees' => $feeMetadata,
-            ],
-            $grossAmountMinor,
-            $netAmountMinor,
-            $feeAmountMinor,
-        );
+        return [$feeAmountMinor, $feeMetadata, $instructions];
     }
 }

@@ -56,6 +56,23 @@
 
 Что осталось до RC? Apply and verify the fee-composer decomposition, refresh Inspecting, then reconcile Git and publish only coherent task-owned source+journal changes while preserving unrelated dirty paths.
 
+### Verification and acceptance closure
+
+- Refactored `WalletFeePostingComposer::compose()` into focused settlement validation and fee-leg composition helpers while preserving gross/net/fee arithmetic, posting instruction order, fee metadata, validation messages, and exception semantics.
+- Changed-PHP syntax: GREEN.
+- `composer validate --no-interaction --strict --check-lock`: GREEN.
+- `composer quality`: GREEN; PHP-CS-Fixer 0/198, repository-configured PHPStan no errors, Symfony container lint GREEN, Doctrine mapping GREEN, PHPUnit 115 tests / 344 assertions, Gating 10 rules with 0 failed / 0 warning and 3 profile-related skips.
+- `composer validate:prod`: GREEN.
+- `composer schema:parity`: GREEN; migrations are current and Doctrine schema parity is synchronized.
+- Repository-owned `bin/bootstrap-local-integration.ps1`: GREEN with exit code 0 on a fresh isolated PostgreSQL database; 30 migrations / 297 SQL queries, production readiness all `ok:true`, 53 integration tests / 491 assertions, isolated database dropped.
+- Post-mutation Inspecting completed at `D:\\PhpstormProjects\\www\\Inspecting\\.inspecting\\reports\\D--PhpstormProjects-www-Walleting-20261004-020120.json`. PHP-structure observations decreased 13 -> 12; the `WalletFeePostingComposer::compose()` long-method finding is absent and maximum complexity remains 17 elsewhere.
+- Inspecting continues to emit the established 95 test-scope PHPStan adapter findings while reporting `phpstan.errors: 0`; Walleting's canonical repository-configured PHPStan is GREEN, so this remains external analyzer scope/configuration drift rather than a Walleting source regression.
+- No browser/mobile/user-observable UI surface changed; Panther/Playwright screenshots and visual evidence are not applicable.
+
+Что имеем? The historical formatter RED remains closed, the selected fee-composer maintainability finding is removed, and deterministic plus clean-database financial acceptance is GREEN after the refactor.
+
+Что осталось до RC? Only Git closure for the coherent fee-composer source plus this factual journal update; preserve unrelated `.gating/README.md`, generated `.console-mcp/`, and `PRODUCT_CAPABILITY_AUDIT.adoc` outside the commit.
+
 ## 2026-10-03 — engine-20261004013703-walleting-eb9a3f
 
 ### Reconnaissance baseline
