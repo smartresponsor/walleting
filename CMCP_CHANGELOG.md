@@ -1,5 +1,28 @@
 # CMCP orchestration journal
 
+## 2026-10-03 — engine-20261004031543-walleting-763927
+
+### Reconnaissance, static-quality acceptance, and RC checkpoint
+
+- Authoritative Console MCP workspace: `D:\\PhpstormProjects\\www\\Walleting`, branch `task/walleting-ledger-foundation`; preserved pre-existing deleted `.gating/README.md`, generated/untracked `.console-mcp/`, and untracked `PRODUCT_CAPABILITY_AUDIT.adoc` without reset, stash, clean, overwrite, or sibling mutation.
+- Read the complete execution specification, Walleting README/product audit/Composer/quality surfaces and current migration; mandatory Objecting, Cruding, Viewing, Interfacing and Gating contracts; Canonization normative Canon018, Canon019, Canon021, Canon022 and Canon054 rule texts; the supplied historical code-style RED; and fresh same-source Inspecting evidence.
+- Canon mapping remains `walleting/wallet` -> `App\\Walleting\\ => src/` with Wallet-prefixed component types, technical-role-first Symfony topology, no `Domain/Application/Infrastructure/Port/Adapter/Adaptor` roots, generic CRUD owned by Cruding, direct standalone platform baseline dependencies, and lower-snake-case Doctrine identifiers.
+- Market/enterprise RC baseline remains immutable double-entry history, atomic balanced writes, idempotency, balance protection, reconciliation, auditability and operational diagnostics. Split tender/refund-to-wallet, expiry/restrictions, broader rails and richer operator UX remain separate growth work.
+- The supplied historical RED is closed: `migrations/Version20260923102500.php` is formatter-compliant and fresh `composer cs:check` reports 0/201 fixable files.
+- Fresh deterministic acceptance is GREEN: strict Composer lock validation, PHPStan no errors, Symfony container and Doctrine mapping lint, PHPUnit 118 tests / 356 assertions, Gating 10 rules with 0 failed / 0 warning, production-manifest validation, and schema parity.
+- Aggregate `composer quality` start was not admitted because Console MCP runtime capacity temporarily allowed light work only; every quality constituent was executed individually and passed, so no duplicate heavy process was launched.
+- Reused current post-remediation Inspecting report `D:\\PhpstormProjects\\www\\Inspecting\\.inspecting\\reports\\D--PhpstormProjects-www-Walleting-20261004-025838.json`: seven medium structural observations remain (Entity/public-API breadth plus `WalletFinancialOperationService` size/cohesion), maximum complexity 14. These are contract-sensitive redesign candidates rather than safe narrow RC fixes; the known 95 test-scope PHPStan adapter findings coexist with `phpstan.errors: 0` and canonical Walleting PHPStan GREEN.
+- No user-observable browser/mobile UI changed; Panther/Playwright screenshots and visual evidence are not applicable.
+
+### Workstreams
+
+- RC-critical: no reproducible Walleting-owned static-quality blocker remains; preserve verified financial semantics and close only factual journal/Git state.
+- Growth: address the seven remaining medium structural observations incrementally with financial regression protection, and continue split-tender/refund/expiry/provider/operator capability growth separately.
+
+Что имеем? The supplied static-quality RED is factually closed, the deterministic acceptance contour is GREEN, and no safe narrow Walleting source remediation remains justified on the current repository state.
+
+Что осталось до RC? Commit/publish only this factual orchestration journal entry, then confirm final HEAD/upstream synchronization while preserving unrelated/generated dirty paths.
+
 ## 2026-10-03 — engine-20261004025934-walleting-3b09f0
 
 ### Reconnaissance, current RC acceptance, and closure
