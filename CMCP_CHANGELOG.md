@@ -30,7 +30,7 @@
 
 Что имеем? The historical static-quality RED remains closed, the statement-query long-method finding is removed, and deterministic plus PostgreSQL behavioral acceptance is GREEN after the query-only refactor.
 
-Что осталось до RC? Commit/publish only the coherent statement-query source plus this journal entry, then verify final HEAD/upstream while preserving unrelated and concurrent dirty paths.
+Что осталось до RC? No task-owned implementation tail remains. Signed commit `ea6e558` published the coherent statement-query source plus this journal to `origin/task/walleting-ledger-foundation`; final verification must confirm HEAD/upstream parity while preserving unrelated and concurrent dirty paths.
 
 ## 2026-10-03 — engine-20261004013219-walleting-e206bf
 
@@ -1183,4 +1183,41 @@ Required local closure:
 Что имеем? The historical static-quality RED is closed, the selected SLO-state command complexity/long-method observation is removed, and deterministic plus clean-database financial acceptance is GREEN after the current source change.
 
 Что осталось до RC? Only Git ownership reconciliation and publication of the coherent source+journal surface. Preserve deleted `.gating/README.md`, generated `.console-mcp/`, and untracked `PRODUCT_CAPABILITY_AUDIT.adoc` outside the commit.
+
+## 2026-10-03 — engine-20261004020210-walleting-e43356
+
+### Reconnaissance and canon mapping
+
+- Authoritative Console MCP workspace: `D:\PhpstormProjects\www\Walleting`, branch `task/walleting-ledger-foundation`; preserved unrelated deleted `.gating/README.md`, generated/untracked `.console-mcp/`, untracked `PRODUCT_CAPABILITY_AUDIT.adoc`, and the concurrent `WalletStatementQueryService.php` workstream without reset, stash, clean, overwrite, or sibling mutation.
+- Read the complete execution specification; Walleting README/Composer/product audit/production/outbox/Messenger docs; supplied historical code-style RED and Inspecting evidence; current post-mutation Inspecting baseline; and mandatory Objecting, Cruding, Viewing, Interfacing, Gating, and Canonization contracts.
+- Canonization textual rules consulted: Canon000, Canon001, Canon004, Canon006, Canon008, Canon017, Canon018, Canon019, Canon021, Canon023, Canon024, and Canon026. Mapping remains `walleting/wallet` -> `App\Walleting\ => src/`, Wallet-prefixed subjects, technical-role-first Symfony topology, no Domain/Application/Infrastructure/Port/Adapter/Adaptor roots, explicit foreign dependencies, generic CRUD owned by Cruding, symlinked local development dependencies, path-independent production packaging, and PHP 8.4 / Symfony 8.1+ baseline.
+- Market/enterprise baseline: immutable double-entry history, atomic balanced writes, idempotency, auditable correction, reconciliation and operational diagnostics are RC expectations; split tender, refund-to-wallet, expiry/restrictions, broader rails and richer operator UX remain growth work.
+- The supplied `Walleting.code-style.log` is stale against the current worktree: repository-owned PHP-CS-Fixer reports 0/198 fixable files.
+
+### RC-critical implementation
+
+- Selected the current `WalletPostingSloStateService::apply()` long-method/high-complexity pair from fresh same-day Inspecting evidence because the service is isolated to operational SLO state and has direct PostgreSQL regression coverage.
+- Decomposed scope/hysteresis validation, locked state initialization, hysteresis transition calculation, state persistence, and outbox emission into focused private helpers while preserving row locking, initial healthy state, breach/recovery thresholds, pending-sequence reset, revision increments, deduplication keys, payload fields and transition result semantics.
+- No ledger posting, balance, provider, reconciliation, migration, HTTP/UI, browser/mobile, or sibling-repository behavior changed.
+
+### Verification evidence
+
+- Changed PHP syntax: GREEN.
+- `composer validate --no-interaction --strict --check-lock`: GREEN.
+- `composer quality`: GREEN; PHP-CS-Fixer 0/198, repository-configured PHPStan no errors, Symfony container lint GREEN, Doctrine mapping GREEN, PHPUnit 115 tests / 344 assertions, Gating 10 rules with 0 failed / 0 warning and 3 profile-related skips.
+- `composer validate:prod`: GREEN.
+- `composer schema:parity`: GREEN; migrations are current and Doctrine schema parity is synchronized.
+- Repository-owned `bin/bootstrap-local-integration.ps1`: GREEN with exit code 0 on a fresh isolated PostgreSQL database; 30 migrations / 297 SQL queries, production readiness all `ok:true`, 53 integration tests / 491 assertions, isolated database dropped.
+- Post-mutation Inspecting report: `D:\PhpstormProjects\www\Inspecting\.inspecting\reports\D--PhpstormProjects-www-Walleting-20261004-021752.json`. PHP-structure findings decreased from 12 to 9 medium observations; both `WalletPostingSloStateService::apply()` findings are absent. The concurrent statement-query refactor also removed its own long-method finding and is not attributed to this task.
+- Inspecting still emits the established 95 high test-scope PHPStan adapter findings while recording `phpstan.errors: 0`; Walleting's canonical repository-configured PHPStan is GREEN, so this remains external analyzer scope/configuration drift rather than a Walleting source regression.
+- No user-observable UI changed; Panther/Playwright screenshots and visual evidence are not applicable.
+
+### Workstreams
+
+- RC-critical: integrate only `src/Service/WalletPostingSloStateService.php` plus this factual journal entry after final ownership/state inspection.
+- Growth (non-blocking): remaining nine medium structural/design observations should be handled incrementally with financial regression protection; product maturity remains split-tender/refund-to-wallet, expiry/restriction policy, broader provider rails, programmable flow composition, and richer reconciliation/operator UX.
+
+Что имеем? The stale formatter RED remains closed, the selected SLO-state long-method/complexity findings are removed, and deterministic plus clean-database PostgreSQL acceptance is GREEN after the refactor.
+
+Что осталось до RC? Final Git ownership reconciliation, signed commit/push of only the coherent SLO-state source plus this journal tail, then verify final HEAD/upstream while preserving unrelated/concurrent dirty paths.
 
