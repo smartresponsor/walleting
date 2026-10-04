@@ -166,7 +166,7 @@ final class PostgreSqlPostingServiceTest extends KernelTestCase
     /** @param list<string> $readyFiles */
     private function awaitWorkersReady(array $readyFiles): void
     {
-        $deadline = microtime(true) + 5.0;
+        $deadline = microtime(true) + 15.0;
         do {
             $allReady = true;
             foreach ($readyFiles as $readyFile) {

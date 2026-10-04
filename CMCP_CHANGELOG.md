@@ -1,5 +1,28 @@
 # CMCP orchestration journal
 
+## 2026-10-03 — engine-20261004033242-walleting-b9ed9a
+
+### Reconnaissance, RC hardening, and acceptance
+
+- Authoritative workspace: `D:\\PhpstormProjects\\www\\Walleting`, branch `task/walleting-ledger-foundation`; preserved pre-existing deleted `.gating/README.md`, generated/untracked `.console-mcp/`, and untracked `PRODUCT_CAPABILITY_AUDIT.adoc` without reset, stash, clean, overwrite, or sibling mutation.
+- Read the complete task specification; Walleting README, Composer/runtime/test surfaces, product capability audit, current migration, orchestration journal, supplied CanonScanning code-style RED and Inspecting baseline; mandatory Objecting, Cruding, Viewing, Interfacing, Gating contracts; and Canonization architecture README, guard matrix, Canon007, Canon008, Canon018, Canon019 and Canon054 textual rules.
+- Canon mapping remains `walleting/wallet` -> `App\\Walleting\\ => src/`, literal PSR-4 identity, explicit foreign Composer dependencies, role-first Symfony topology, no `Domain/Application/Infrastructure/Port/Adapter/Adaptor` roots, and lower-snake-case Doctrine physical identifiers.
+- Market/enterprise baseline remains immutable double-entry history, atomic balanced writes, integer money, idempotency, concurrency safety, reconciliation, auditable correction and operator diagnostics as RC expectations. Split tender, refund-to-wallet, expiry/restriction policy, broader provider rails and richer finance/operator UX remain growth work.
+- The supplied historical code-style RED does not reproduce: fresh PHP-CS-Fixer reports 0/201 fixable files. Strict Composer validation, production-manifest validation, Gating (10 rules, 0 failed / 0 warning) and schema parity are GREEN; PHPUnit unit contour is 118 tests / 356 assertions GREEN.
+- Fresh PostgreSQL integration initially exposed a current test-harness synchronization failure: the opposite-direction transfer concurrency workers did not create readiness markers within the hard-coded 5-second startup window. Production readiness, schema migration 30/30 and all preceding integration stages were GREEN; the failure occurred before the financial concurrency assertion executed.
+- Hardened only `tests/Integration/PostgreSqlPostingServiceTest.php` by increasing the worker readiness deadline from 5 seconds to 15 seconds. This does not alter Walleting runtime, ledger posting, balances, schema, provider, reconciliation, routing, UI or production behavior; it makes the existing concurrency invariant test robust to process-startup latency under loaded RC execution.
+- Repeated `composer test:integration` is GREEN: production readiness all `ok:true`, PostgreSQL migration state 30/30, 53 integration tests / 491 assertions.
+- No user-observable browser/mobile UI changed; Panther/Playwright screenshots and visual artifacts are not applicable.
+
+### Workstreams
+
+- RC-critical: keep the concurrency acceptance harness deterministic enough to exercise the actual deadlock/ledger invariant rather than fail on worker process startup latency; preserve all financial runtime semantics.
+- Growth: remaining medium Inspecting structural observations and product capability expansion stay separate, bounded follow-up workstreams.
+
+Что имеем? The historical static-quality RED remains closed, a current RC acceptance flake was materially hardened, and PostgreSQL integration now reaches and passes all 53 scenarios / 491 assertions.
+
+Что осталось до RC? Canonical deterministic acceptance has been re-run: PHP-CS-Fixer 0/201, repository PHPStan no errors, Symfony container/Doctrine mapping GREEN, PHPUnit 118 tests / 356 assertions GREEN, and direct Gating 10 rules with 0 failed / 0 warning. Post-mutation Inspecting completed at `D:\\PhpstormProjects\\www\\Inspecting\\.inspecting\\reports\\D--PhpstormProjects-www-Walleting-20261004-035056.json`; it retains seven medium php-structure observations with maximum complexity 14 plus the established 95 test-scope PHPStan adapter findings while `phpstan.errors` remains 0. The repository-owned PHPStan gate is GREEN, so that adapter scope drift remains external tooling debt. No Walleting-owned RC blocker remains from this task; commit/publish only the test-harness + journal change while preserving unrelated dirty/generated paths.
+
 ## 2026-10-03 — engine-20261004031543-walleting-763927
 
 ### Reconnaissance, static-quality acceptance, and RC checkpoint
