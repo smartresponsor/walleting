@@ -780,6 +780,39 @@ Required local closure:
 
 Что осталось до RC? No Walleting-owned RC blocker remains from this execution scope. Finalize only the coherent source+journal Git change while preserving the unrelated `.gating/README.md` deletion, generated `.console-mcp/`, and pre-existing `PRODUCT_CAPABILITY_AUDIT.adoc` outside the commit.
 
+## 2026-10-03 — engine-20261004000822-walleting-b1c314
+
+### Reconnaissance and baseline
+
+- Authoritative Console MCP workspace: `D:\\PhpstormProjects\\www\\Walleting`, branch `task/walleting-ledger-foundation`; pre-existing dirty state was preserved without reset, stash, clean, overwrite, or sibling mutation.
+- Read the complete execution specification, Walleting README/all current Markdown product and production documentation, Composer/package/test surfaces, orchestration journal, supplied historical code-style RED, and supplied Inspecting baseline.
+- Read current Objecting, Cruding, Viewing, Interfacing, Gating, and Canonization contracts. Normative textual canon consulted includes Canon000, Canon007, Canon008, Canon017, Canon018, Canon019, and Canon054.
+- Target mapping: `walleting/wallet` remains `App\\Walleting\\ => src/` with `Wallet*` subject vocabulary; role-first Symfony topology is preserved; generic CRUD remains in Cruding; foreign runtime coupling remains explicit in Composer; current Doctrine identifiers remain lower_snake_case while historical migrations may reference legacy names for convergence.
+- Market/enterprise baseline checked against current Modern Treasury, Stripe Treasury, and Adyen Balance Platform documentation: immutable/double-entry accounting, auditable balances, reconciliation, balance protection, and explicit account/funding surfaces remain baseline expectations. Broader rails, programmable money flows, split-tender/refund policy, and richer operator UX remain growth work.
+- The historical CanonScanning code-style RED identifies only `migrations/Version20260923102500.php`; current aggregate quality proves formatter compliance across all 198 files, so that RED does not reproduce.
+
+### Material RC hardening and verification
+
+- The pre-existing/concurrent `src/Command/WalletProductionCheckCommand.php` refactor was semantically classified before integration. It decomposes `execute()` into runtime, database, and rendering helpers without changing the command options, check keys, JSON shape, database queries, or success/failure semantics.
+- PHP syntax for the changed command is GREEN.
+- `composer validate --no-interaction --strict --check-lock`: GREEN.
+- `composer validate:prod`: GREEN.
+- `composer quality`: GREEN; PHP-CS-Fixer 0/198, repository-configured PHPStan no errors, Symfony container lint GREEN, Doctrine mapping GREEN, PHPUnit 115 tests / 344 assertions, Gating 0 failed / 0 warning with three profile-related skips.
+- `composer test:integration`: GREEN with exit code 0; PostgreSQL schema is at migration 30/30, `walleting:production:check --json` reports every runtime/database/table check `ok:true`, and the integration suite reports 53 tests / 491 assertions.
+- Post-mutation Inspecting completed at `D:\\PhpstormProjects\\www\\Inspecting\\.inspecting\\reports\\D--PhpstormProjects-www-Walleting-20261004-001659.json`. PHP-structure findings are now 21 medium observations; `WalletProductionCheckCommand::execute()` is no longer present, so the selected complexity finding is closed. Maximum remaining complexity is 23 elsewhere.
+- Inspecting's separate generic PHPStan adapter still emits 95 high test-scope findings while its aggregate metric records zero general PHPStan errors; Walleting's canonical repository-configured PHPStan is GREEN. This remains external analyzer scope/configuration drift rather than a Walleting runtime regression.
+- No browser/mobile/user-observable UI surface changed, so Panther/Playwright screenshots are not applicable.
+
+### Workstreams and Git ownership
+
+- RC-critical: preserve the verified production-readiness command decomposition and integrate it only with this factual orchestration journal entry; do not absorb generated or unrelated dirty state.
+- Growth (non-blocking): address the remaining 21 medium Inspecting design/complexity observations incrementally with financial regression protection; continue split-tender/refund-to-wallet, expiry/restriction policy, provider breadth, programmable money-flow composition, and richer reconciliation UX separately.
+- Preserve outside this task commit: deleted `.gating/README.md`, generated `.console-mcp/`, and untracked `PRODUCT_CAPABILITY_AUDIT.adoc`.
+
+Что имеем? The historical formatter RED remains closed, the production-check complexity finding is removed, and deterministic plus PostgreSQL behavioral acceptance is GREEN after the current source mutation.
+
+Что осталось до RC? Reconcile the final Git state and publish only the coherent `WalletProductionCheckCommand` + task journal change if the source has not already been integrated concurrently; no Walleting-owned RC blocker remains in this bounded scope.
+
 ## 2026-10-03 — engine-20261004000536-walleting-7880de
 
 ### Reconnaissance baseline
