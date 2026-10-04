@@ -780,3 +780,43 @@ Required local closure:
 
 Что осталось до RC? No Walleting-owned RC blocker remains from this execution scope. Finalize only the coherent source+journal Git change while preserving the unrelated `.gating/README.md` deletion, generated `.console-mcp/`, and pre-existing `PRODUCT_CAPABILITY_AUDIT.adoc` outside the commit.
 
+## 2026-10-03 — engine-20261004000536-walleting-7880de
+
+### Reconnaissance baseline
+
+- Authoritative Console MCP workspace resolved to `D:\\PhpstormProjects\\www\\Walleting` on branch `task/walleting-ledger-foundation`; the pre-existing dirty tree was preserved without reset, stash, clean, overwrite, or sibling mutation.
+- Pre-existing dirty state at task start was limited to deleted `.gating/README.md`, generated/untracked `.console-mcp/`, and untracked `PRODUCT_CAPABILITY_AUDIT.adoc`; these paths remain outside this task's source ownership.
+- Read the complete execution specification, current Walleting README/Composer/runtime/test surfaces, current orchestration journal, the supplied historical code-style RED, and the supplied Inspecting baseline.
+- Read mandatory Objecting, Cruding, Viewing, Interfacing and Gating package/responsibility contracts. Read Canonization normative rules Canon008, Canon021, Canon022, Canon023, Canon024, Canon033 and Canon052.
+- Target-to-canon mapping: preserve `walleting/wallet` and `App\\Walleting\\ => src/`; keep generic CRUD in Cruding; retain the standalone direct dependency baseline and Failing registration; development first-party packages remain sibling symlinks while production resolution remains path-independent; consumer `.gating/` remains artifact-only.
+- Market/enterprise baseline remains immutable double-entry accounting, atomic balanced movement, idempotency, concurrency safety, auditability, reconciliation and operational diagnostics as RC expectations. Programmable transaction DSLs, wider provider rails, split-tender/refund policy and richer operator UX remain growth work.
+- The supplied code-style RED is historical and no longer reproduces in the current repository: post-change aggregate quality reports 0/198 formatter findings.
+
+### RC-critical workstream
+
+- Selected the still-current advisory `WalletProductionCheckCommand::execute()` cyclomatic-complexity finding for a bounded diagnostic refactor because it is isolated from ledger posting, balance, provider and reconciliation semantics.
+- Decomposed production-readiness collection into `runtimeChecks()` and `databaseChecks()` and isolated JSON/human rendering in `renderResult()`.
+- Preserved command name/options, check names, required-table inventory, PostgreSQL version rule, durable-Messenger rule, JSON shape, error-byte substitution, human table semantics and success/failure exit behavior.
+- No migration, ledger posting, balance projection, provider event, reconciliation, browser/mobile, or sibling-repository behavior was changed.
+
+### Growth workstream
+
+- Continue remaining medium Inspecting complexity/design observations only as bounded refactors with regression protection; do not treat advisory maintainability debt as permission for broad financial-core rewrites.
+- Product growth remains split tender, refund-to-wallet acceptance, expiry/restriction policy, provider breadth, programmable money-flow composition and richer finance/operator reconciliation UX.
+
+### Verification
+
+- Changed-PHP syntax: GREEN.
+- `composer validate --no-interaction --strict --check-lock`: GREEN.
+- `composer quality`: GREEN; PHP-CS-Fixer 0/198, repository-configured PHPStan no errors, Symfony container lint GREEN, Doctrine mapping GREEN, PHPUnit 115 tests / 344 assertions, Gating 10 rules with 0 failed / 0 warning and 3 profile-related skips.
+- `composer validate:prod`: GREEN.
+- `composer schema:parity`: GREEN; migrations are up to date and Doctrine schema parity is synchronized.
+- Repository-owned `bin/bootstrap-local-integration.ps1`: GREEN with exit code 0 on a fresh isolated PostgreSQL database; 30 migrations / 297 SQL queries, production-readiness JSON all `ok:true`, 53 integration tests / 491 assertions, and the isolated database was dropped.
+- Post-mutation Inspecting completed at `D:\\PhpstormProjects\\www\\Inspecting\\.inspecting\\reports\\D--PhpstormProjects-www-Walleting-20261004-001521.json`. PHP-structure observations decreased from the prior same-day 22 to 21 medium findings; maximum complexity remains 23 elsewhere. The targeted `WalletProductionCheckCommand::execute()` finding is therefore closed.
+- Inspecting also reports 95 high test-scope PHPStan findings while recording zero general PHPStan errors. This is the already-established adapter/scope mismatch: Walleting's canonical `phpstan.neon` scopes `src`, and the repository-owned PHPStan gate is GREEN, so adapter-only test findings are not accepted as a Walleting source regression.
+- No browser/mobile/user-visible UI surface changed, so Panther/Playwright behavioral screenshots and visual evidence are not applicable.
+
+Что имеем? The historical formatter RED remains closed, one additional current structural complexity finding is removed, and deterministic plus clean-database runtime acceptance is GREEN after the production-diagnostics refactor.
+
+Что осталось до RC? Only Git closure for this coherent source+journal change remains. Preserve the unrelated `.gating/README.md` deletion, generated `.console-mcp/`, and pre-existing `PRODUCT_CAPABILITY_AUDIT.adoc` outside the commit; remaining medium Inspecting observations stay a separate growth-quality workstream.
+

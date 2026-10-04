@@ -44,10 +44,22 @@ final class WalletProductionCheckCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $checks = [];
-        $checks['app_env'] = $this->check('prod' === $this->kernel->getEnvironment(), $this->kernel->getEnvironment());
-        $checks['php_84_or_newer'] = $this->check(version_compare(PHP_VERSION, '8.4.0', '>='), PHP_VERSION);
-        $checks['pdo_pgsql'] = $this->check(extension_loaded('pdo_pgsql'), extension_loaded('pdo_pgsql') ? 'loaded' : 'missing');
+        $checks = array_merge($this->runtimeChecks(), $this->databaseChecks());
+        $ok = !in_array(false, array_column($checks, 'ok'), true);
+        $this->renderResult($input, $output, $checks, $ok);
+
+        return $ok ? Command::SUCCESS : Command::FAILURE;
+    }
+
+    /** @return array<string, array{ok: bool, detail: string}> */
+    private function runtimeChecks(): array
+    {
+        $environment = $this->kernel->getEnvironment();
+        $checks = [
+            'app_env' => $this->check('prod' === $environment, $environment),
+            'php_84_or_newer' => $this->check(version_compare(PHP_VERSION, '8.4.0', '>='), PHP_VERSION),
+            'pdo_pgsql' => $this->check(extension_loaded('pdo_pgsql'), extension_loaded('pdo_pgsql') ? 'loaded' : 'missing'),
+        ];
 
         foreach (['APP_SECRET', 'DATABASE_URL', 'MESSENGER_TRANSPORT_DSN'] as $name) {
             $value = $this->environment($name);
@@ -58,33 +70,48 @@ final class WalletProductionCheckCommand extends Command
         $nonDurableMessengerDsn = '' === $messengerDsn || str_starts_with($messengerDsn, 'in-memory://') || str_starts_with($messengerDsn, 'sync://') || str_starts_with($messengerDsn, 'null://');
         $checks['messenger_durable'] = $this->check(!$nonDurableMessengerDsn, '' === $messengerDsn ? 'missing' : ($nonDurableMessengerDsn ? 'non-durable transport is not production-safe' : 'configured'));
 
+        return $checks;
+    }
+
+    /** @return array<string, array{ok: bool, detail: string}> */
+    private function databaseChecks(): array
+    {
         try {
             $serverVersion = (int) $this->connection->fetchOne('SHOW server_version_num');
-            $checks['postgresql_16'] = $this->check($serverVersion >= 160000 && $serverVersion < 170000, (string) $serverVersion);
+            $checks = [
+                'postgresql_16' => $this->check($serverVersion >= 160000 && $serverVersion < 170000, (string) $serverVersion),
+            ];
 
             foreach (self::REQUIRED_TABLES as $table) {
                 $regclass = $this->connection->fetchOne('SELECT to_regclass(?)', ['public.'.$table]);
                 $exists = is_string($regclass) && '' !== $regclass;
                 $checks['table_'.$table] = $this->check($exists, $exists ? 'present' : 'missing');
             }
-        } catch (\Throwable $exception) {
-            $checks['database_connection'] = $this->check(false, trim($exception->getMessage()) ?: $exception::class);
-        }
 
-        $ok = !in_array(false, array_column($checks, 'ok'), true);
+            return $checks;
+        } catch (\Throwable $exception) {
+            return [
+                'database_connection' => $this->check(false, trim($exception->getMessage()) ?: $exception::class),
+            ];
+        }
+    }
+
+    /** @param array<string, array{ok: bool, detail: string}> $checks */
+    private function renderResult(InputInterface $input, OutputInterface $output, array $checks, bool $ok): void
+    {
         if ((bool) $input->getOption('json')) {
             $output->writeln(json_encode(['ok' => $ok, 'checks' => $checks], JSON_THROW_ON_ERROR | JSON_INVALID_UTF8_SUBSTITUTE));
-        } else {
-            $io = new SymfonyStyle($input, $output);
-            $rows = [];
-            foreach ($checks as $name => $result) {
-                $rows[] = [$name, $result['ok'] ? 'OK' : 'FAIL', $result['detail']];
-            }
-            $io->table(['Check', 'Status', 'Detail'], $rows);
-            $ok ? $io->success('Walleting production readiness checks passed.') : $io->error('Walleting production readiness checks failed.');
+
+            return;
         }
 
-        return $ok ? Command::SUCCESS : Command::FAILURE;
+        $io = new SymfonyStyle($input, $output);
+        $rows = [];
+        foreach ($checks as $name => $result) {
+            $rows[] = [$name, $result['ok'] ? 'OK' : 'FAIL', $result['detail']];
+        }
+        $io->table(['Check', 'Status', 'Detail'], $rows);
+        $ok ? $io->success('Walleting production readiness checks passed.') : $io->error('Walleting production readiness checks failed.');
     }
 
     /** @return array{ok: bool, detail: string} */
