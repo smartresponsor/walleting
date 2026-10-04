@@ -286,11 +286,35 @@ final readonly class WalletFinancialOperationService
             throw new \InvalidArgumentException('Partial refund amount must be positive.');
         }
 
-        $source = [];
-        foreach ($original->postings() as $posting) {
-            $accountId = $posting->account()->id()->toRfc4122();
-            $source[$accountId] = ($source[$accountId] ?? 0) + $posting->amountMinor();
+        $source = $this->postingAmountsByAccount($original);
+        [$actual, $positive] = $this->allocatedRefundAmounts($instructions, $source);
+        if ($positive !== $amountMinor || 0 !== array_sum($actual)) {
+            throw new \DomainException('Allocated refund postings must balance to the requested refund amount.');
         }
+
+        $this->assertAllocatedRefundLegBounds($source, $actual);
+    }
+
+    /** @return array<string, int> */
+    private function postingAmountsByAccount(WalletLedgerTransaction $transaction): array
+    {
+        $amounts = [];
+        foreach ($transaction->postings() as $posting) {
+            $accountId = $posting->account()->id()->toRfc4122();
+            $amounts[$accountId] = ($amounts[$accountId] ?? 0) + $posting->amountMinor();
+        }
+
+        return $amounts;
+    }
+
+    /**
+     * @param non-empty-list<WalletPostingInstruction> $instructions
+     * @param array<string, int>                       $source
+     *
+     * @return array{array<string, int>, int}
+     */
+    private function allocatedRefundAmounts(array $instructions, array $source): array
+    {
         $actual = [];
         $positive = 0;
         foreach ($instructions as $instruction) {
@@ -303,9 +327,16 @@ final readonly class WalletFinancialOperationService
                 $positive += $instruction->amountMinor;
             }
         }
-        if ($positive !== $amountMinor || 0 !== array_sum($actual)) {
-            throw new \DomainException('Allocated refund postings must balance to the requested refund amount.');
-        }
+
+        return [$actual, $positive];
+    }
+
+    /**
+     * @param array<string, int> $source
+     * @param array<string, int> $actual
+     */
+    private function assertAllocatedRefundLegBounds(array $source, array $actual): void
+    {
         foreach ($actual as $accountId => $amount) {
             $sourceAmount = $source[$accountId];
             if (0 === $amount || 0 === $sourceAmount || ($sourceAmount > 0 && ($amount > 0 || -$amount > $sourceAmount)) || ($sourceAmount < 0 && ($amount < 0 || $amount > -$sourceAmount))) {

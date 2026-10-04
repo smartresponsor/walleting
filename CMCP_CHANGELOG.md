@@ -1,5 +1,50 @@
 # CMCP orchestration journal
 
+## 2026-10-03 — engine-20261004020856-walleting-87a364
+
+### Reconnaissance baseline and canon mapping
+
+- Authoritative Console MCP workspace: `D:\\PhpstormProjects\\www\\Walleting`, branch `task/walleting-ledger-foundation`; no container workspace probing, reset, stash, clean, destructive reconciliation, or sibling mutation was used.
+- Read the complete execution specification, Walleting README/Composer/current journal, the supplied historical code-style RED and Inspecting baseline, current post-remediation Inspecting evidence, and relevant source/tests for the selected financial-operation hotspot.
+- Read mandatory Objecting, Cruding, Viewing, Interfacing and Gating responsibility/package contracts. Read Canonization normative architecture baseline plus Canon005, Canon007, Canon008, Canon009, Canon017, Canon018, Canon019 and Canon054.
+- Target mapping remains `walleting/wallet` -> `App\\Walleting\\ => src/` with Wallet-prefixed subjects, literal PSR-4 identity, role-first Symfony topology, explicit foreign package dependencies, component/host separation, no `Domain/Application/Infrastructure/Port/Adapter/Adaptor` roots, and lower-snake-case current Doctrine identifiers.
+- Market/enterprise baseline remains immutable double-entry accounting, atomic balanced writes, idempotency, concurrency safety, auditable correction, reconciliation and operational diagnostics as RC expectations. Programmable flow composition, broader rails, richer reconciliation/operator UX and deeper multi-asset/provenance capabilities remain growth work.
+- The supplied static-quality RED on `migrations/Version20260923102500.php` is stale: fresh `composer cs:check` is GREEN with 0/198 fixable files.
+- Fresh pre-change structural evidence had 12 medium php-structure observations. Existing concurrent dirty work in `WalletPostingSloStateService.php` and `WalletStatementQueryService.php` was classified and preserved rather than overwritten or absorbed.
+
+### RC-critical material implementation
+
+- Selected the still-current `WalletFinancialOperationService::assertAllocatedPartialInverse()` cyclomatic-complexity finding for a bounded behavior-preserving refactor.
+- Extracted original-posting aggregation, allocated-refund instruction aggregation/account-membership validation, and per-leg inversion bounds into focused private helpers.
+- Preserved public API, exception messages, requested-positive-amount validation, balance arithmetic, account-membership rules, per-leg inversion/capacity rules, idempotency/link behavior, schema, and posting semantics.
+- No UI/browser/mobile, routing, CRUD, schema/migration, provider, or sibling-repository behavior changed.
+
+### Verification and acceptance
+
+- Changed PHP syntax: GREEN.
+- First aggregate `composer quality` correctly exposed one PHPDoc formatter alignment; repaired exactly that line. A later aggregate wrapper hit a transport timeout, so it was not represented as a pass; its canonical constituent gates were executed directly.
+- `composer cs:check`: GREEN, 0/198 fixable files.
+- `composer stan`: GREEN, `[OK] No errors` using repository `phpstan.neon`.
+- `composer lint`: GREEN; Symfony container and Doctrine mapping valid.
+- `composer test`: GREEN, 115 tests / 344 assertions.
+- `composer gate`: GREEN, 10 rules, 0 failed / 0 warning, 3 profile-related skips.
+- `composer validate --no-interaction --strict --check-lock`: GREEN.
+- `composer validate:prod`: GREEN.
+- `composer schema:parity`: GREEN; no pending migrations and Doctrine parity synchronized.
+- `composer test:integration`: GREEN; PostgreSQL at migration 30/30, production-readiness JSON all `ok:true`, 53 integration tests / 491 assertions.
+- Post-mutation Inspecting report: `D:\\PhpstormProjects\\www\\Inspecting\\.inspecting\\reports\\D--PhpstormProjects-www-Walleting-20261004-022848.json`. PHP-structure observations are 8 medium, maximum complexity 14, and `assertAllocatedPartialInverse()` is absent. The decrease from 12 to 8 also includes concurrently integrated SLO-state/statement refactors and is not attributed solely to this task.
+- Inspecting still emits the established 95 test-scope PHPStan adapter findings while its aggregate metric records `phpstan.errors: 0`; Walleting's canonical repository PHPStan is GREEN, so this remains external analyzer scope/configuration drift rather than a Walleting source regression.
+- No user-observable UI changed; visual/browser evidence is not applicable.
+
+### Workstreams
+
+- RC-critical: publish only this verified financial-operation refactor plus this factual journal entry, preserving unrelated deleted `.gating/README.md`, generated `.console-mcp/`, and `PRODUCT_CAPABILITY_AUDIT.adoc` outside the commit.
+- Growth (non-blocking): the remaining 8 medium structural observations are mostly public-API/cohesion/large-class advisory debt; address them incrementally with financial regression protection rather than broad speculative churn.
+
+Что имеем? The selected allocated-refund complexity finding is removed and deterministic plus PostgreSQL financial acceptance is GREEN after the change.
+
+Что осталось до RC? Only Git closure for the coherent source+journal surface, followed by final HEAD/upstream/worktree verification; no Walleting-owned RC blocker remains from this task scope.
+
 ## 2026-10-03 — engine-20261004015624-walleting-d93b74
 
 ### Reconnaissance, canon mapping, and workstreams
