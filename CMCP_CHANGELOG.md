@@ -755,6 +755,15 @@ Required local closure:
 
 Что осталось до RC? Commit and publish only the coherent outbox-health source plus journal change, then re-inspect final HEAD/upstream/worktree state. Remaining Inspecting medium observations are separate growth-quality debt, not blockers for this bounded RC task.
 
+### Integration closure
+
+- Signed commit `f25203083ac07c453779c13127eb24b518d50a22` (`refactor Walleting outbox health command`) was created for the coherent outbox-health refactor and published to `origin/task/walleting-ledger-foundation`.
+- Post-push branch state was 1 ahead / 0 behind immediately before publication; push completed successfully. Unrelated deleted `.gating/README.md`, generated `.console-mcp/`, and untracked `PRODUCT_CAPABILITY_AUDIT.adoc` remain intentionally outside task integration.
+
+Что имеем? The bounded outbox-health complexity remediation is verified, committed, and published without absorbing unrelated workspace state.
+
+Что осталось до RC? No Walleting-owned RC blocker remains in this task scope. Remaining Inspecting medium observations are growth-quality debt; visual/browser evidence is not applicable because no user-observable UI changed.
+
 ### Verification and acceptance closure
 
 - `php -l` for the changed PHP file: GREEN.
