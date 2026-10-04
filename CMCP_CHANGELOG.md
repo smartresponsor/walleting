@@ -1,5 +1,70 @@
 # CMCP orchestration journal
 
+## 2026-10-03 — engine-20261004023658-walleting-ef9568
+
+### Reconnaissance, concurrent ownership, and canon mapping
+
+- Authoritative execution plane: Console MCP workspace `D:\\PhpstormProjects\\www\\Walleting`, branch `task/walleting-ledger-foundation`, baseline HEAD `a147dc2757eb214d3e1c27e6a3b5b376811cd0bd`, initially 0 ahead / 0 behind `origin/task/walleting-ledger-foundation`.
+- Preserved the pre-existing unrelated dirty state without reset, stash, clean, overwrite, or sibling mutation: deleted `.gating/README.md`, generated/untracked `.console-mcp/`, and untracked `PRODUCT_CAPABILITY_AUDIT.adoc`.
+- Read the complete execution specification; Walleting README/Composer/current journal/production and outbox docs; supplied historical code-style RED and Inspecting baseline; current outbox dispatcher/tests; mandatory Objecting, Cruding, Viewing, Interfacing and Gating contracts; and Canonization README/AGENTS plus normative Canon007, Canon008, Canon017, Canon018, Canon019 and Canon054.
+- Target mapping remains `walleting/wallet` -> `App\\Walleting\\ => src/`, Wallet-prefixed subjects, role-first Symfony topology, explicit foreign package dependencies, generic CRUD owned by Cruding, no `Domain/Application/Infrastructure/Port/Adapter/Adaptor` roots, and canonical lower-snake-case current Doctrine identifiers.
+- The supplied static-quality RED for `migrations/Version20260923102500.php` is stale: fresh `composer cs:check` was GREEN before the current outbox mutation.
+- Fresh pre-change Inspecting report `D:\\PhpstormProjects\\www\\Inspecting\\.inspecting\\reports\\D--PhpstormProjects-www-Walleting-20261004-024516.json` had 8 medium php-structure observations and maximum complexity 14. Its 95 high test-scope PHPStan adapter findings coexist with `phpstan.errors: 0`; Walleting's canonical repository PHPStan remained GREEN.
+- During this execution window, concurrent task `engine-20261004022937-walleting-8a5adf` selected the same remaining `WalletOutboxDispatcher` low-property-cohesion finding and began the same bounded handler-resolution/retry-policy extraction. That work was preserved and semantically verified rather than overwritten or duplicated.
+
+### RC-critical material implementation and repair
+
+- `WalletOutboxDispatcher` now delegates handler cardinality/selection to `Resolver/Outbox/WalletOutboxMessageHandlerResolver` and retry exhaustion/backoff calculation to `Policy/Outbox/WalletOutboxRetryPolicy`, while preserving the existing dispatcher constructor signature and public dispatch API.
+- Added/retained focused `tests/Service/OutboxDispatchPolicyTest.php` coverage for attempt-budget exhaustion, bounded exponential backoff, exact-one-handler resolution, duplicate-handler rejection and missing-handler error text.
+- The first canonical `composer quality` run exposed only formatter normalization in the newly materialized collaborator/test files. Ran repository-owned `composer cs:fix`; no semantic workaround or analyzer suppression was used.
+- No ledger posting, balance, funding/withdrawal, schema, migration, provider, reconciliation, HTTP/UI, browser/mobile, or sibling-repository behavior changed.
+
+### Verification and acceptance
+
+- Changed PHP syntax: GREEN.
+- `composer validate --no-interaction --strict --check-lock`: GREEN.
+- `composer quality`: GREEN after formatter repair; PHP-CS-Fixer 0/201, repository-configured PHPStan no errors, Symfony container/Doctrine mapping GREEN, PHPUnit 118 tests / 356 assertions, Gating 10 rules with 0 failed / 0 warning and 3 profile-related skips.
+- `composer validate:prod`: GREEN.
+- `composer schema:parity`: GREEN; migrations are current and Doctrine schema parity is synchronized.
+- `composer test:integration`: GREEN; PostgreSQL remains at migration 30/30, production-readiness JSON is all `ok:true`, and 53 integration tests / 491 assertions pass.
+- Post-mutation Inspecting report: `D:\\PhpstormProjects\\www\\Inspecting\\.inspecting\\reports\\D--PhpstormProjects-www-Walleting-20261004-025838.json`. Medium php-structure observations decreased 8 -> 7, maximum complexity remains 14, and `WalletOutboxDispatcher` is absent from the finding set.
+- Inspecting still emits the established 95 high test-scope PHPStan adapter findings while recording `phpstan.errors: 0`; canonical Walleting PHPStan is GREEN, so this remains external analyzer scope/configuration drift rather than a Walleting source regression.
+- No user-observable UI changed; Panther/Playwright screenshots and visual artifacts are not applicable.
+
+### Workstreams
+
+- RC-critical: integrate the coherent shared outbox dispatcher + resolver + retry policy + focused test + factual journal while preserving unrelated/generated dirty paths.
+- Growth (non-blocking): the remaining seven medium observations are broad Entity/public-API and financial-service cohesion debt requiring separate contract-led redesign; product growth remains split tender, refund-to-wallet, expiry/restrictions, broader provider rails, programmable flow composition and richer reconciliation/operator UX.
+
+Что имеем? The historical static-quality RED remains closed, the dispatcher cohesion finding is removed, and deterministic plus PostgreSQL acceptance is GREEN after the responsibility split.
+
+Что осталось до RC? Final Git diff/ownership inspection, signed commit/push of only the coherent outbox source/test/journal surface, then final HEAD/upstream/worktree verification while preserving unrelated dirty/generated paths.
+
+## 2026-10-03 — engine-20261004022937-walleting-8a5adf
+
+### Reconnaissance baseline and canon mapping
+
+- Authoritative Console MCP workspace: `D:\\PhpstormProjects\\www\\Walleting`, branch `task/walleting-ledger-foundation`, baseline HEAD `455fc14d9b0857762a8df9254f491685c3c16dcb`; preserved deleted `.gating/README.md`, generated/untracked `.console-mcp/`, and untracked `PRODUCT_CAPABILITY_AUDIT.adoc` without reset, stash, clean, overwrite, destructive operations, or sibling mutation.
+- Read the complete execution specification, Walleting product/package/journal/current outbox surfaces, the supplied historical CanonScanning code-style RED, and the latest post-mutation Inspecting report `D:\\PhpstormProjects\\www\\Inspecting\\.inspecting\\reports\\D--PhpstormProjects-www-Walleting-20261004-022848.json` before selecting remediation.
+- Read mandatory Objecting, Cruding, Viewing, Interfacing, Collectioning, Tabling and Gating responsibility/package contracts. Read Canonization README/AGENTS plus normative Canon018, Canon019, Canon021 and Canon022 textual rules.
+- Target mapping remains `walleting/wallet` -> `App\\Walleting\\ => src/` with Wallet-prefixed subjects, role-first Symfony topology, no `Domain/Application/Infrastructure/Port/Adapter/Adaptor` roots, generic CRUD owned by Cruding, and the direct standalone dependency baseline already declared.
+- Current official Modern Treasury and Formance ledger guidance reinforces immutable double-entry accounting, atomic balanced writes, idempotency, concurrency safety and auditable history as RC expectations. Programmable flow DSLs, deeper asset provenance and broader money-movement composition remain growth work.
+- The supplied historical formatter RED names only `migrations/Version20260923102500.php`; fresh `composer cs:check` is GREEN with 0/198 fixable files, so the historical failure does not reproduce and that migration is not churned.
+- Fresh Inspecting evidence has eight medium php-structure observations. Broad Entity/public-API reductions remain advisory growth debt; selected the bounded `WalletOutboxDispatcher` low-property-cohesion observation because handler resolution and retry/backoff policy are independently testable operational responsibilities.
+
+### RC-critical workstream
+
+- Extract outbox handler selection and retry/backoff calculations into Wallet-prefixed role-first collaborators while preserving the existing `WalletOutboxDispatcher` constructor/public methods, handler cardinality errors, retry thresholds, exponential backoff cap, terminal-failure handling, status reports, and outbox persistence semantics.
+- Add focused unit coverage for the extracted policy/resolver, then run canonical deterministic, production/schema, PostgreSQL integration, and post-mutation Inspecting verification.
+
+### Growth workstream
+
+- Keep broad Entity API reduction, financial-operation service decomposition, programmable flow composition, richer provider rails and operator UX outside this bounded RC pass unless correctness evidence promotes them.
+
+Что имеем? The historical static-quality RED is closed, the current canon/dependency boundary is established, and one safe current outbox cohesion finding has a behavior-preserving remediation plan.
+
+Что осталось до RC? Apply the bounded outbox decomposition, verify deterministic and PostgreSQL behavior, refresh Inspecting after mutation, then reconcile Git and publish only coherent task-owned files.
+
 ## 2026-10-03 — engine-20261004020856-walleting-87a364
 
 ### Reconnaissance baseline and canon mapping

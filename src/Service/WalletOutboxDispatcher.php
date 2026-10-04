@@ -7,28 +7,27 @@ namespace App\Walleting\Service;
 use App\Walleting\Entity\WalletOutboxMessage;
 use App\Walleting\Exception\Outbox\WalletPermanentOutboxFailure;
 use App\Walleting\Handler\Outbox\WalletOutboxMessageHandlerInterface;
+use App\Walleting\Policy\Outbox\WalletOutboxRetryPolicy;
+use App\Walleting\Resolver\Outbox\WalletOutboxMessageHandlerResolver;
 use App\Walleting\ValueObject\Outbox\WalletOutboxDispatchReport;
 use Symfony\Component\DependencyInjection\Attribute\AutowireIterator;
 
 final readonly class WalletOutboxDispatcher
 {
-    /** @var list<WalletOutboxMessageHandlerInterface> */
-    private array $handlers;
+    private WalletOutboxMessageHandlerResolver $handlerResolver;
+    private WalletOutboxRetryPolicy $retryPolicy;
 
     /** @param iterable<WalletOutboxMessageHandlerInterface> $handlers */
     public function __construct(
         private WalletOutboxService $outboxService,
         #[AutowireIterator('app.outbox_message_handler')]
         iterable $handlers,
-        private int $maxAttempts = 8,
-        private int $baseDelaySeconds = 30,
-        private int $maxDelaySeconds = 3600,
+        int $maxAttempts = 8,
+        int $baseDelaySeconds = 30,
+        int $maxDelaySeconds = 3600,
     ) {
-        if ($maxAttempts < 1 || $baseDelaySeconds < 1 || $maxDelaySeconds < $baseDelaySeconds) {
-            throw new \InvalidArgumentException('Outbox retry policy is invalid.');
-        }
-
-        $this->handlers = is_array($handlers) ? array_values($handlers) : iterator_to_array($handlers, false);
+        $this->handlerResolver = new WalletOutboxMessageHandlerResolver($handlers);
+        $this->retryPolicy = new WalletOutboxRetryPolicy($maxAttempts, $baseDelaySeconds, $maxDelaySeconds);
     }
 
     public function dispatchOneById(string $messageId): WalletOutboxDispatchReport
@@ -72,46 +71,26 @@ final readonly class WalletOutboxDispatcher
     public function dispatch(WalletOutboxMessage $message): bool
     {
         try {
-            $this->handlerFor($message)->handle($message);
+            $this->handlerResolver->resolve($message->messageType())->handle($message);
             $this->outboxService->markDispatched($message);
 
             return true;
         } catch (WalletPermanentOutboxFailure $exception) {
             $this->outboxService->markTerminalFailure($message, $this->errorMessage($exception));
         } catch (\Throwable $exception) {
-            if ($message->attemptCount() >= $this->maxAttempts) {
+            if ($this->retryPolicy->isExhausted($message->attemptCount())) {
                 $this->outboxService->markTerminalFailure($message, $this->errorMessage($exception));
             } else {
-                $this->outboxService->markFailed($message, $this->errorMessage($exception), $this->nextAvailableAt($message));
+                $delaySeconds = $this->retryPolicy->delaySeconds($message->attemptCount());
+                $this->outboxService->markFailed(
+                    $message,
+                    $this->errorMessage($exception),
+                    new \DateTimeImmutable(sprintf('+%d seconds', $delaySeconds)),
+                );
             }
         }
 
         return false;
-    }
-
-    private function handlerFor(WalletOutboxMessage $message): WalletOutboxMessageHandlerInterface
-    {
-        $matching = array_values(array_filter(
-            $this->handlers,
-            static fn (WalletOutboxMessageHandlerInterface $handler): bool => $handler->supports($message->messageType()),
-        ));
-
-        if ([] === $matching) {
-            throw new WalletPermanentOutboxFailure(sprintf('No outbox handler supports message type "%s".', $message->messageType()));
-        }
-        if (1 !== count($matching)) {
-            throw new WalletPermanentOutboxFailure(sprintf('Multiple outbox handlers support message type "%s".', $message->messageType()));
-        }
-
-        return $matching[0];
-    }
-
-    private function nextAvailableAt(WalletOutboxMessage $message): \DateTimeImmutable
-    {
-        $exponent = max(0, $message->attemptCount() - 1);
-        $delay = min($this->maxDelaySeconds, $this->baseDelaySeconds * (2 ** $exponent));
-
-        return new \DateTimeImmutable(sprintf('+%d seconds', $delay));
     }
 
     private function errorMessage(\Throwable $exception): string
