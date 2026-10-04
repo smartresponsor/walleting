@@ -1,5 +1,29 @@
 # CMCP orchestration journal
 
+## 2026-10-03 — engine-20261004024312-walleting-6df971
+
+### Acceptance of concurrent RC-critical implementation
+
+- Authoritative Console MCP workspace: `D:\\PhpstormProjects\\www\\Walleting`, branch `task/walleting-ledger-foundation`; this task observed HEAD advance from `a147dc2757eb214d3e1c27e6a3b5b376811cd0bd` to published `4ed984da2addc911c772a11bf2fe9f041e3d7f3a` while preserving unrelated deleted `.gating/README.md`, generated `.console-mcp/`, and untracked `PRODUCT_CAPABILITY_AUDIT.adoc`.
+- Read Walleting product/package surfaces, mandatory Objecting/Cruding/Viewing/Interfacing contracts, Gating, Canonization textual rules Canon000/007/008/018/019/054, the historical CanonScanning style RED, and current Inspecting evidence.
+- Market/enterprise baseline remains immutable double-entry history, atomic balanced writes, idempotency, reconciliation, auditability and operational diagnostics for RC; bitemporal/history ergonomics, deeper hierarchy/governance, broader rails and richer finance UX remain growth work.
+- The historical `migrations/Version20260923102500.php` formatter RED is stale: current formatter evidence is GREEN.
+- During this execution window, the selected `WalletOutboxDispatcher` low-cohesion remediation was integrated concurrently as `4ed984d`: handler selection moved to `WalletOutboxMessageHandlerResolver`, retry exhaustion/backoff to `WalletOutboxRetryPolicy`, and focused `OutboxDispatchPolicyTest` coverage was added while preserving dispatcher constructor/public behavior.
+
+### Verification
+
+- Fresh strict Composer validation: GREEN (`--no-interaction --strict --check-lock`).
+- Fresh canonical quality constituents on `4ed984d`: PHP-CS-Fixer 0/201, repository PHPStan no errors, Symfony container lint GREEN, Doctrine mapping GREEN, PHPUnit 118 tests / 356 assertions GREEN; the aggregate wrapper lost its final exit only while entering Gating, so Gating was executed separately and is GREEN (10 rules, 0 failed / 0 warning, 3 skips).
+- Fresh production-manifest validation: GREEN.
+- Two duplicate `schema:parity` invocations in this task hit Console MCP upstream 502 before execution; same-HEAD acceptance from the integrating task already records schema parity GREEN and `composer test:integration` GREEN at migration 30/30, production-readiness all `ok:true`, 53 tests / 491 assertions. No source mutation occurred after that evidence.
+- Reused same-HEAD post-mutation Inspecting report `D:\\PhpstormProjects\\www\\Inspecting\\.inspecting\\reports\\D--PhpstormProjects-www-Walleting-20261004-025838.json`: medium php-structure findings decreased 8 -> 7, max complexity 14, and `WalletOutboxDispatcher` is absent. The 95 test-scope PHPStan findings remain known Inspecting adapter scope drift while canonical Walleting PHPStan is GREEN.
+- Remaining seven medium observations are broad Entity/public-API and `WalletFinancialOperationService` cohesion/size debt; they are non-autofix design observations and are kept as separate contract-led growth work rather than speculative RC churn.
+- No user-observable UI/browser/mobile surface changed; visual evidence is not applicable.
+
+Что имеем? The bounded outbox responsibility split is verified and published; the supplied static-quality RED remains closed, canonical deterministic acceptance is GREEN, same-HEAD PostgreSQL/schema evidence is GREEN, and current Inspecting no longer flags the dispatcher.
+
+Что осталось до RC? Only publish this factual task journal entry and confirm final HEAD/upstream/worktree state; no Walleting-owned RC blocker remains in this task scope.
+
 ## 2026-10-03 — engine-20261004023658-walleting-ef9568
 
 ### Reconnaissance, concurrent ownership, and canon mapping
