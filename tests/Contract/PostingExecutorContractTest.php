@@ -24,8 +24,12 @@ abstract class PostingExecutorContractTest extends KernelTestCase
     protected function setUp(): void
     {
         self::bootKernel();
-        $this->connection = self::getContainer()->get('doctrine.dbal.default_connection');
-        $this->entityManager = self::getContainer()->get('doctrine.orm.entity_manager');
+        $connection = self::getContainer()->get('doctrine.dbal.default_connection');
+        $entityManager = self::getContainer()->get('doctrine.orm.entity_manager');
+        self::assertInstanceOf(Connection::class, $connection);
+        self::assertInstanceOf(EntityManagerInterface::class, $entityManager);
+        $this->connection = $connection;
+        $this->entityManager = $entityManager;
         self::assertInstanceOf(\Doctrine\DBAL\Platforms\PostgreSQLPlatform::class, $this->connection->getDatabasePlatform());
     }
 
@@ -107,7 +111,7 @@ abstract class PostingExecutorContractTest extends KernelTestCase
         }
     }
 
-    /** @return array{Account, Account, ?Account} */
+    /** @return array{WalletAccount, WalletAccount, ?WalletAccount} */
     private function accounts(bool $includeThirdAccount = false): array
     {
         $walletId = Uuid::v7()->toRfc4122();
@@ -125,7 +129,6 @@ abstract class PostingExecutorContractTest extends KernelTestCase
             'slug' => 'wallet:'.$walletId,
             'first_title' => 'posting-executor-contract',
             'created_at' => $now,
-            'status' => 'active',
         ]);
         foreach ([
             [$assetId, 'asset', 'asset', false],

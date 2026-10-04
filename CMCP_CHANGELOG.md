@@ -1,5 +1,62 @@
 # CMCP orchestration journal
 
+## 2026-10-03 — engine-20261004041201-walleting-0749b0
+
+### Reconnaissance and RC static-quality hardening
+
+- Authoritative execution plane: Console MCP workspace `D:\\PhpstormProjects\\www\\Walleting`, branch `task/walleting-ledger-foundation`; preserved unrelated deleted `.gating/README.md`, generated `.console-mcp/`, and untracked `PRODUCT_CAPABILITY_AUDIT.adoc` without reset, stash, clean, overwrite, or sibling mutation.
+- Read the complete execution specification; Walleting README/Composer/package/test/journal surfaces; supplied historical code-style RED and supplied Inspecting baseline; mandatory Objecting, Cruding, Viewing, Interfacing and Gating responsibility/package contracts; and Canonization README plus normative Canon018, Canon019, Canon021 and Canon022 textual rules.
+- Canon mapping: preserve `walleting/wallet` -> `App\\Walleting\\ => src/` and Wallet-prefixed subject vocabulary; technical-role-first Symfony topology; no `Domain/Application/Infrastructure/Port/Adapter/Adaptor` roots; generic CRUD remains owned by Cruding; standalone platform dependencies remain direct.
+- Market/enterprise RC baseline remains immutable double-entry history, balanced atomic writes, integer money, idempotency, concurrency safety, reconciliation, auditable correction and operator diagnostics. Split tender, refund-to-wallet policy, expiry/restrictions, broader rails and richer finance/operator UX remain growth work.
+- The supplied historical formatter RED names only `migrations/Version20260923102500.php`; fresh aggregate `composer quality` reports 0/201 formatter findings, repository PHPStan no errors, Symfony container/Doctrine mapping GREEN, PHPUnit 118 tests / 356 assertions, and Gating 0 failed / 0 warning.
+- Accepted the current bounded `PostingExecutorContractTest` static-analysis hardening: narrow Symfony container services before typed-property assignment, correct the account tuple PHPDoc to `WalletAccount`, and remove a duplicate wallet fixture `status` key without changing effective fixture data or financial behavior.
+- Fresh post-mutation Inspecting initially reported 77 test-scope PHPStan adapter findings plus seven medium structural observations while `phpstan.errors` remained 0. Addressed two immediately actionable findings in `PostgreSqlConcurrencyTest`: explicit Connection narrowing and duplicate wallet `status` fixture key removal.
+- No browser/mobile/user-observable UI changed; visual evidence is not applicable.
+
+### Workstreams
+
+- RC-critical: close safe deterministic test-scope static-analysis ambiguity without changing ledger runtime semantics, then re-run canonical quality, PostgreSQL acceptance and post-mutation Inspecting.
+- Growth: remaining entity/public-API/cohesion observations and product capability expansion remain separate contract-sensitive workstreams.
+
+Что имеем? The historical style RED is closed, canonical deterministic quality is GREEN, and two bounded test static-quality clusters have been materially hardened without production behavior changes.
+
+Что осталось до RC? Re-run quality and post-mutation Inspecting after the concurrency-test repair, execute PostgreSQL integration acceptance, then commit/publish only the coherent test+journal surface while preserving unrelated dirty/generated paths.
+
+## 2026-10-03 — engine-20261004040405-walleting-ec10df
+
+### Reconnaissance, test-contract hardening, and RC verification
+
+- Authoritative execution plane: Console MCP workspace `D:\\PhpstormProjects\\www\\Walleting`, branch `task/walleting-ledger-foundation`; preserved pre-existing deleted `.gating/README.md`, generated/untracked `.console-mcp/`, and untracked `PRODUCT_CAPABILITY_AUDIT.adoc` without reset, stash, clean, overwrite, or sibling mutation.
+- Read the complete execution specification, current Walleting README/Composer/journal surfaces, mandatory Objecting, Cruding, Viewing, Interfacing and Gating responsibility contracts, and Canonization README plus normative Canon018, Canon019, Canon021 and Canon022 textual rules.
+- Canon mapping remains `walleting/wallet` -> `App\\Walleting\\ => src/`, Wallet-prefixed subject vocabulary, technical-role-first Symfony topology, no `Domain/Application/Infrastructure/Port/Adapter/Adaptor` roots, generic application CRUD owned by Cruding, and direct standalone platform dependencies.
+- Market/enterprise RC baseline remains immutable double-entry history, atomic balanced writes, integer money, idempotency, concurrency safety, reconciliation, auditable correction and operator diagnostics; broader rails, programmable flow composition and richer finance UX remain growth work.
+- The supplied historical code-style RED does not reproduce: fresh `composer cs:check` reports 0/201 fixable files and fresh repository `composer stan` reports no errors.
+- Fresh Inspecting report `D:\\PhpstormProjects\\www\\Inspecting\\.inspecting\\reports\\D--PhpstormProjects-www-Walleting-20261004-040729.json` records seven medium structural observations with max complexity 14 plus the established 95 test-scope PHPStan adapter findings while `phpstan.errors` remains 0.
+- Selected a bounded static-quality repair in `tests/Contract/PostingExecutorContractTest.php`: assert/narrow container services before assigning typed properties, correct the helper PHPDoc to `WalletAccount`, and remove a duplicate `status` fixture key. Effective fixture data and production Walleting behavior remain unchanged.
+- No user-observable browser/mobile UI changed; visual behavioral evidence is not applicable.
+
+### Workstreams
+
+- RC-critical: reduce deterministic external/static-analysis ambiguity in a core posting executor contract test without touching ledger runtime semantics, then re-run repository gates and post-mutation Inspecting.
+- Growth: the seven medium Entity/service cohesion/public-API observations remain separate contract-sensitive redesign candidates and do not block this bounded RC pass.
+
+Что имеем? The historical formatter RED remains closed, fresh current structural evidence is known, and one safe test-contract quality cluster has been materially repaired without changing production financial behavior.
+
+### Verification and acceptance closure
+
+- Changed PHP syntax: GREEN.
+- Strict Composer lock validation and `composer validate:prod`: GREEN.
+- Aggregate `composer quality`: GREEN; PHP-CS-Fixer 0/201, repository PHPStan no errors, Symfony container and Doctrine mapping GREEN, PHPUnit 118 tests / 356 assertions, Gating 10 rules with 0 failed / 0 warning and three profile-only skips.
+- `composer schema:parity`: GREEN; migrations are current and Doctrine schema parity is synchronized.
+- Repository-owned `bin/bootstrap-local-integration.ps1`: GREEN on a fresh isolated PostgreSQL database; 30 migrations / 297 SQL queries, production readiness all `ok:true`, 53 integration tests / 499 assertions, isolated database dropped.
+- Post-mutation Inspecting completed at `D:\\PhpstormProjects\\www\\Inspecting\\.inspecting\\reports\\D--PhpstormProjects-www-Walleting-20261004-041659.json`: generic test-scope PHPStan findings decreased 95 -> 77, `phpstan.errors` remains 0, and the seven medium structural observations/max complexity 14 are unchanged. This proves the selected contract-test type/PHPDoc/duplicate-key cluster was removed without altering the structural production baseline.
+- The remaining 77 generic analyzer findings are test-scope adapter debt outside Walleting's canonical `phpstan.neon` scope; repository-owned PHPStan and the complete aggregate quality gate are GREEN. The seven medium findings are broad Entity/service API/cohesion observations and remain separate contract-sensitive growth work.
+- No user-observable UI changed; Panther/Playwright screenshots and visual artifacts are not applicable.
+
+Что имеем? The historical static-quality RED remains closed; the selected contract-test static-analysis cluster is materially removed, aggregate deterministic acceptance is GREEN, clean-database PostgreSQL acceptance is GREEN, and post-mutation Inspecting improved from 95 to 77 adapter findings without any production structural regression.
+
+Что осталось до RC? Only final Git ownership inspection and signed publication of `tests/Contract/PostingExecutorContractTest.php` plus this task journal entry. Preserve outside this task: deleted `.gating/README.md`, generated `.console-mcp/`, untracked `PRODUCT_CAPABILITY_AUDIT.adoc`, and the concurrently appeared `tests/Integration/PostgreSqlConcurrencyTest.php` modification; none is absorbed into this commit.
+
 ## 2026-10-03 — engine-20261004033242-walleting-b9ed9a
 
 ### Reconnaissance, RC hardening, and acceptance
