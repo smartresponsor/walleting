@@ -1,5 +1,27 @@
 # CMCP orchestration journal
 
+## 2026-10-03 — engine-20261004042627-walleting-701600
+
+### Reconnaissance, RC acceptance, and publication checkpoint
+
+- Authoritative execution plane: Console MCP workspace `D:\\PhpstormProjects\\www\\Walleting`, branch `task/walleting-ledger-foundation`, baseline HEAD `d0540bb127b0785f4c9677eb16ccc6e00cbd35f7`; upstream started synchronized at 0 ahead / 0 behind. Preserved unrelated deleted `.gating/README.md`, generated/untracked `.console-mcp/`, and untracked `PRODUCT_CAPABILITY_AUDIT.adoc` without reset, stash, clean, overwrite, or sibling mutation.
+- Read the complete execution specification; Walleting README, Composer development/production manifests, outbox/Messenger/production documentation, quality/test configuration, current orchestration journal, supplied CanonScanning code-style RED, and current Inspecting evidence. Read mandatory Objecting, Cruding, Viewing, Interfacing and Gating contracts plus Canonization `AGENTS.md`, architecture baseline, and normative Canon005, Canon007, Canon008, Canon009, Canon017, Canon018, Canon019, Canon038 and Canon054 textual rules.
+- Canon mapping remains `walleting/wallet` -> `App\\Walleting\\ => src/` with Wallet-prefixed subject vocabulary, literal PSR-4 identity, role-first Symfony topology, explicit foreign Composer dependencies, generic CRUD ownership in Cruding, no `Domain/Application/Infrastructure/Port/Adapter/Adaptor` roots, collision-safe component configuration, and lower-snake-case current Doctrine identifiers.
+- Market/enterprise baseline remains immutable double-entry accounting, atomic balanced writes, integer money, idempotency, concurrency safety, reconciliation, auditable correction, and operator diagnostics. Split tender, refund-to-wallet, expiry/restriction policy, broader provider rails, programmable flow composition and richer finance/operator UX remain a separate growth workstream.
+- The supplied historical code-style RED no longer reproduces: fresh `composer cs:check` reports 0/201 fixable files. Current reusable Inspecting report `D:\\PhpstormProjects\\www\\Inspecting\\.inspecting\\reports\\D--PhpstormProjects-www-Walleting-20261004-042239.json` has seven medium structural observations, maximum complexity 14, and `phpstan.errors = 0`; its 75 test-scope adapter findings remain known external analyzer scope/configuration drift relative to Walleting's canonical repository PHPStan.
+- Fresh deterministic acceptance on the current HEAD is GREEN: strict Composer lock validation; aggregate `composer quality` with PHP-CS-Fixer 0/201, PHPStan no errors, Symfony container lint, Doctrine mapping, PHPUnit 118 tests / 356 assertions, and Gating 10 rules with 0 failed / 0 warning; production manifest validation; and schema parity with no pending migrations.
+- Fresh PostgreSQL behavioral acceptance is GREEN without restarting a managed runtime: migration state 30/30, `walleting:production:check --json` all `ok:true`, and 53 integration tests / 502 assertions.
+- No production source, test, schema, route, browser/mobile, or user-observable UI surface was changed in this execution window. The seven remaining Inspecting observations concern broad Entity/public-API/service-cohesion redesign and are not promoted into speculative RC churn without a correctness or operability failure.
+
+### Workstreams
+
+- RC-critical: publish this factual orchestration checkpoint only, preserving all unrelated/generated dirty paths.
+- Growth (non-blocking): address the seven remaining structural observations incrementally with financial regression protection; continue split-tender/refund/expiry/provider/operator maturity separately.
+
+Что имеем? The supplied static-quality RED is factually closed, deterministic and PostgreSQL acceptance are GREEN on the synchronized current branch, and no safe narrow Walleting-owned RC remediation remains justified by current evidence.
+
+Что осталось до RC? Commit/push only this task journal entry and verify final HEAD/upstream/worktree state while preserving unrelated/generated paths. No user-observable UI changed, so visual behavioral evidence is not applicable.
+
 ## 2026-10-03 — engine-20261004041908-walleting-f02a2e
 
 ### Reconnaissance and RC acceptance
