@@ -1,5 +1,29 @@
 # CMCP orchestration journal
 
+## 2026-10-05 — engine-20261004035711-walleting-43f07f
+
+### Reconnaissance, acceptance, and RC closure
+
+- Authoritative Windows MCP workspace: `D:\\PhpstormProjects\\www\\Walleting`, branch `task/walleting-ledger-foundation`; current HEAD `fe94c8ee5527ddd285abafbd9cc0b29615c8948e` is synchronized 0 ahead / 0 behind with `origin/task/walleting-ledger-foundation`.
+- Preserved the only current unrelated/generated dirty paths without reset, stash, clean, overwrite, or absorption: deleted `.gating/README.md`, untracked `.console-mcp/`, and untracked `PRODUCT_CAPABILITY_AUDIT.adoc`.
+- Read the authoritative execution specification, current Walleting Composer/source/test/journal surfaces, current post-mutation Inspecting evidence, Objecting and Cruding responsibility contracts, Viewing package contract, Interfacing responsibility contract, Gating package contract, and Canonization identity/topology rules relevant to the current repository state.
+- Canon mapping remains `walleting/wallet` -> `App\\Walleting\\ => src/` with Wallet-prefixed component types, technical-role-first Symfony structure, no `Domain/Application/Infrastructure/Port/Adapter/Adaptor` taxonomy, generic CRUD owned by Cruding, reusable entity/system fields owned by Objecting, presentation rendering owned by Viewing, shell/interface ownership kept in Interfacing, and executable enforcement delegated to Gating.
+- Market/enterprise RC baseline remains immutable double-entry history, atomic balanced writes, integer money, idempotency, concurrency safety, auditable correction, reconciliation, and operational diagnostics. Broader provider rails, programmable flow composition, split-tender/refund-to-wallet policy, expiry/restrictions, and richer finance/operator UX remain growth work.
+- The current concurrency-harness hardening is present in `tests/Integration/PostgreSqlPostingServiceTest.php`: worker readiness allows 15 seconds instead of the prior 5-second startup window. It was already integrated as signed branch commit `fe94c8e` (`harden Walleting concurrency integration readiness`) before this closure pass attempted any duplicate mutation.
+- Fresh deterministic acceptance in this execution window is GREEN: strict Composer validation, PHP-CS-Fixer 0/201, repository PHPStan no errors, Symfony container lint GREEN, Doctrine mapping GREEN, PHPUnit 118 tests / 356 assertions, and Gating 10 rules with 0 failed / 0 warning.
+- Fresh post-mutation Inspecting report `D:\\PhpstormProjects\\www\\Inspecting\\.inspecting\\reports\\D--PhpstormProjects-www-Walleting-20261004-035056.json` contains seven medium, non-autofix php-structure observations and zero general PHPStan errors. The remaining findings are broad public-API/cohesion observations in financial entities and `WalletFinancialOperationService`, including one large-class observation; no narrow complexity or formatter defect remains that can be safely repaired without redesigning public financial contracts.
+- The established 95 test-scope PHPStan adapter findings remain external Inspecting scope/configuration drift while Walleting's repository-owned PHPStan acceptance is GREEN. Existing same-HEAD PostgreSQL acceptance remains 53 tests / 491 assertions with migrations 30/30 and production readiness all `ok:true`.
+- No user-observable browser/mobile UI changed; Panther/Playwright screenshots and central visual artifacts are not applicable.
+
+### Workstreams
+
+- RC-critical: no reproducible Walleting-owned blocker remains; preserve the already-published concurrency-harness hardening and avoid speculative redesign of verified financial contracts.
+- Growth: address the seven medium structural observations as separate contract-led refactoring work, and continue broader wallet/product capability maturity independently of RC.
+
+Что имеем? The stale static-quality front remains closed, the only current bounded harness hardening is already verified and published, HEAD/upstream are synchronized, and no safe narrow Walleting source remediation remains justified by fresh evidence.
+
+Что осталось до RC? Publish this factual orchestration journal entry while preserving the three unrelated/generated dirty paths, then confirm final HEAD/upstream/worktree state.
+
 ## 2026-10-03 — engine-20261004043510-walleting-3e4086
 
 ### Reconnaissance and RC static-quality hardening
