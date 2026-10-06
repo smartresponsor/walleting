@@ -1,5 +1,32 @@
 # CMCP orchestration journal
 
+## 2026-10-06 — engine-20261003203720-walleting-121f91
+
+### Reconnaissance, verification, and RC closure
+
+- Authoritative Console MCP workspace: `D:\\PhpstormProjects\\www\\Walleting`, branch `task/walleting-ledger-foundation`, baseline HEAD `d45b2975e684ea715993d98dbed7927de130d8b9`, synchronized 0 ahead / 0 behind with `origin/task/walleting-ledger-foundation`.
+- Preserved the pre-existing unrelated/generated dirty paths without reset, stash, clean, overwrite, or sibling mutation: deleted `.gating/README.md`, untracked `.console-mcp/`, and untracked `PRODUCT_CAPABILITY_AUDIT.adoc`.
+- Read the authoritative execution specification, current Walleting product/package/production/outbox/Messenger/test surfaces, the supplied historical static-quality RED, and current Objecting, Cruding, Viewing, Interfacing, Gating, and Canonization contracts.
+- Normative Canonization rules consulted directly: Canon018 Composer identity, Canon019 role-first/no alternative layer taxonomy, Canon021 Cruding generic-CRUD ownership, Canon022 standalone dependency baseline, Canon052 Gating integration/artifact boundary, and Canon054 Doctrine physical identifier naming.
+- Canon mapping remains `walleting/wallet` -> `App\\Walleting\\ => src/` with Wallet-prefixed subject vocabulary, Symfony technical-role topology, no `Domain/Application/Infrastructure/Port/Adapter/Adaptor` roots, generic CRUD owned by Cruding, the complete standalone dependency baseline declared directly, artifact-only consumer `.gating/`, and lower-snake-case current Doctrine identifiers.
+- Current market/enterprise comparison against Modern Treasury and TigerBeetle continues to support immutable double-entry accounting, atomic balanced writes, integer money, idempotency, auditability, reconciliation, and operational correctness as the RC baseline. Broader rails, programmable flow composition, split-tender/refund-to-wallet policy, expiry/restrictions, and richer finance/operator UX remain growth work.
+- The supplied historical PHP-CS-Fixer RED for `migrations/Version20260923102500.php` no longer reproduces: current formatter acceptance reports 0/201 fixable files.
+- Fresh strict Composer validation is GREEN.
+- Fresh aggregate `composer quality` is GREEN: PHP-CS-Fixer 0/201, repository-configured PHPStan no errors, Symfony container lint GREEN, Doctrine mapping GREEN, PHPUnit 118 tests / 356 assertions, and Gating 10 rules with 0 failed / 0 warning and three profile-related skips. An earlier asynchronous aggregate attempt lost process lifecycle after PHPStan; its constituent gates and the later complete aggregate run supersede that transport artifact.
+- `composer validate:prod` and `composer schema:parity` are GREEN; migrations are current and Doctrine parity is synchronized.
+- Repository-owned `bin/bootstrap-local-integration.ps1` is GREEN with exit code 0 on an isolated PostgreSQL database: 30 migrations / 297 SQL queries, production-readiness JSON all `ok:true`, 53 integration tests / 505 assertions, and the isolated database was dropped.
+- Fresh Inspecting report: `D:\\PhpstormProjects\\www\\Inspecting\\.inspecting\\reports\\D--PhpstormProjects-www-Walleting-20261006-115007.json`. Production structural evidence is seven medium, non-autofix design/maintainability observations with maximum complexity 14. Inspecting also emits 54 high test-scope PHPStan findings while its aggregate metric records `phpstan.errors=0`; Walleting's canonical `phpstan.neon` scopes `src` and `composer quality` PHPStan is GREEN, so those test-scope adapter findings remain external verifier scope/configuration debt rather than a Walleting production regression.
+- No browser/mobile/user-observable UI surface changed in this task; Panther/Playwright screenshots and visual artifacts are not applicable.
+
+### Workstreams
+
+- RC-critical: no reproducible Walleting-owned correctness, static-quality, schema, packaging, or runtime blocker remains; preserve the verified source state and publish only this factual orchestration journal entry.
+- Growth: address the seven broad Inspecting public-API/cohesion/large-class observations as separate contract-led refactors with financial regression protection; continue split-tender, refund-to-wallet, expiry/restriction, provider breadth, programmable flow composition, and richer operator/reconciliation UX separately.
+
+Что имеем? The historical static-quality RED is closed and the complete current Walleting deterministic plus clean-database PostgreSQL acceptance contour is GREEN on the synchronized branch.
+
+Что осталось до RC? Commit and publish only this task journal entry, then verify final HEAD/upstream/worktree state while preserving the three unrelated/generated dirty paths.
+
 ## 2026-10-05 — engine-20261004035711-walleting-43f07f
 
 ### Reconnaissance, acceptance, and RC closure
